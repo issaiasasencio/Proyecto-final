@@ -1,0 +1,22 @@
+# Entornos Virtuales y Cache
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Modelos Pesados de IA y Pesos
+*.pt
+yolo*.pt
+*.onnx
+*.tflite
+*_ncnn_model/
+
+# Archivos de Entrenamiento, Logs y Dataset
+Proyecto_Cinta/
+runs/
+dataset/
+videos_crudos/
+
+# Sistema Operativo
+.DS_Store
+Thumbs.db
