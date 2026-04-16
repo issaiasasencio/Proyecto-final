@@ -1,0 +1,6 @@
+opencv-python
+ultralytics
+pyserial
+gpiozero
+lgpio
+numpy
