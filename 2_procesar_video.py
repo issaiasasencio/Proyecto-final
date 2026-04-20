@@ -138,6 +138,7 @@ def procesar_video():
         print(f"Mapeo Hardware: Clase {class_id} -> Servo {servo_id}")
 
     # 6. Procesar el video con OpenCV
+    MIN_DURACION = 10  # Tiempo mínimo en segundos
     es_webcam = (video_path == "webcam")
 
     if es_webcam:
@@ -158,6 +159,15 @@ def procesar_video():
 
     if fps <= 0:
         fps = 30.0  # Valor seguro por defecto si no lo lee correctamente
+
+    # --- VERIFICACIÓN DE DURACIÓN MÍNIMA (PARA ARCHIVOS) ---
+    if not es_webcam:
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        duracion_video = total_frames / fps
+        if duracion_video < MIN_DURACION:
+            print(f"\n[ERROR] Video demasiado corto: {duracion_video:.1f}s.")
+            print(f"[REQUERIDO] Mínimo {MIN_DURACION}s para asegurar calidad de entrenamiento.")
+            return
 
     # Avanza ~300ms por iteración.
     frames_a_saltar = max(1, int(fps * 0.3))
@@ -204,6 +214,9 @@ def procesar_video():
     else:
         print(f"Procesando video local a {fps:.2f} FPS. Extrayendo fotogramas...")
 
+    # Tiempo de inicio para control de grabación
+    start_time_live = time.time()
+
     while True:
         ret, frame = cap.read()
         if not ret:  # Si no hay más frames, romper ciclo
@@ -248,13 +261,30 @@ def procesar_video():
                 cv2.circle(vis_frame, (30, 30), 10, (0, 0, 255), -1)
                 cv2.putText(vis_frame, "REC", (50, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
+            # --- FEEDBACK DE TIEMPO MÍNIMO ---
+            tiempo_actual = time.time() - start_time_live
+            if tiempo_actual < MIN_DURACION:
+                color_msg = (0, 165, 255)  # Naranja
+                txt_msg = f"TIEMPO RESTANTE: {int(MIN_DURACION - tiempo_actual)}s"
+                cv2.rectangle(vis_frame, (10, real_h - 40), (400, real_h - 10), (0, 0, 0), -1)
+                cv2.putText(vis_frame, txt_msg, (20, real_h - 15),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color_msg, 2)
+            else:
+                cv2.rectangle(vis_frame, (10, real_h - 40), (250, real_h - 10), (0, 0, 0), -1)
+                cv2.putText(vis_frame, "LISTO (Q para parar)", (20, real_h - 15),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
             nombre_ventana = f"Grabando automáticamente - {categoria} (Presioná 'q' para salir)"
             cv2.imshow(nombre_ventana, vis_frame)
+            tecla = cv2.waitKey(1) & 0xFF
+            if tecla == ord('q'):
+                if tiempo_actual >= MIN_DURACION:
+                    break
+                else:
+                    print(f"\n[ATENCIÓN] Grabación muy corta ({int(tiempo_actual)}s). Falta llegar a {MIN_DURACION}s.")
+
             if frame_count == 0:
                 cv2.setWindowProperty(nombre_ventana, cv2.WND_PROP_TOPMOST, 1)
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
 
         # Si el conteo coincide con nuestro paso de 300 ms, capturamos el frame
         if frame_count % frames_a_saltar == 0:
