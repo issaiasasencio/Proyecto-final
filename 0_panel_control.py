@@ -21,13 +21,13 @@ class ServoSelectorDialog(ctk.CTkToplevel):
     def __init__(self, parent, categoria):
         super().__init__(parent)
         self.title("Asignación de Hardware Físico")
-        
+
         # Dimensiones y centrado
         w, h = 500, 350
         x = int((self.winfo_screenwidth() / 2) - (w / 2))
         y = int((self.winfo_screenheight() / 2) - (h / 2))
         self.geometry(f"{w}x{h}+{x}+{y}")
-        
+
         self.servo_id = None
 
         # Mantener ventana al frente y modal
@@ -125,11 +125,11 @@ class HistoryDialog(ctk.CTkToplevel):
         for f in files:
             f_path = os.path.join(self.archive_dir, f)
             metadata_path = f_path.replace(".pt", ".json")
-            
+
             # Datos básicos por defecto
             mtime = time.strftime("%d/%m/%Y %H:%M", time.localtime(os.path.getmtime(f_path)))
             description = "Sin metadatos detallados"
-            
+
             # Cargar metadatos si existen
             if os.path.exists(metadata_path):
                 try:
@@ -152,10 +152,10 @@ class HistoryDialog(ctk.CTkToplevel):
             text_container.pack(side="left", padx=10, pady=5, fill="both", expand=True)
 
             ctk.CTkLabel(text_container, text=f, font=ctk.CTkFont(size=13, weight="bold"),
-                        anchor="w").pack(fill="x")
+                         anchor="w").pack(fill="x")
             ctk.CTkLabel(text_container, text=f"Fecha: {mtime}", font=ctk.CTkFont(size=11),
-                        text_color="#AAAAAA", anchor="w").pack(fill="x")
-            
+                         text_color="#AAAAAA", anchor="w").pack(fill="x")
+
             # Color distintivo para la lista de objetos
             lbl_desc = ctk.CTkLabel(text_container, text=description, font=ctk.CTkFont(size=11),
                                     text_color="#4CAF50", anchor="w", wraplength=300, justify="left")
@@ -173,7 +173,7 @@ class HistoryDialog(ctk.CTkToplevel):
             config["active_model"] = path
             with open(self.config_path, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=4)
-            
+
             messagebox.showinfo("Éxito", f"Modelo activo cambiado a:\n{os.path.basename(path)}")
             self.parent.log(f"\n[HISTORIAL] Modelo activo seleccionado: {os.path.basename(path)}")
             self.destroy()
@@ -186,13 +186,13 @@ class ReportDialog(ctk.CTkToplevel):
         super().__init__(parent)
         self.title("Calidad de Inteligencia Artificial")
         self.geometry("500x550")
-        
+
         # Centrar
         w, h = 500, 550
         x = int((self.winfo_screenwidth() / 2) - (w / 2))
         y = int((self.winfo_screenheight() / 2) - (h / 2))
         self.geometry(f"{w}x{h}+{x}+{y}")
-        
+
         self.attributes('-topmost', True)
         self.transient(parent)
         self.grab_set()
@@ -201,9 +201,9 @@ class ReportDialog(ctk.CTkToplevel):
         self.image_path = os.path.join("Proyecto_Cinta", "entrenamientos", "modelo_produccion", "results.png")
 
         self.grid_columnconfigure(0, weight=1)
-        
+
         ctk.CTkLabel(self, text="📈 Reporte de Desempeño", font=ctk.CTkFont(size=22, weight="bold")).pack(pady=20)
-        
+
         self.content_frame = ctk.CTkFrame(self)
         self.content_frame.pack(pady=10, padx=20, fill="both", expand=True)
 
@@ -218,7 +218,6 @@ class ReportDialog(ctk.CTkToplevel):
                     if reader:
                         last_row = reader[-1]
                         # Buscar la columna mAP50 ajustando por posibles espacios en nombres
-                        keys = [k.strip() for k in last_row.keys()]
                         val_key = next((k for k in last_row.keys() if "mAP50(B)" in k), None)
                         if val_key:
                             map50 = float(last_row[val_key])
@@ -237,11 +236,12 @@ class ReportDialog(ctk.CTkToplevel):
         # UI del Score
         ctk.CTkLabel(self.content_frame, text=status, font=ctk.CTkFont(size=24, weight="bold"),
                      text_color=color).pack(pady=(20, 5))
-        
+
+        # Score Gauge
         gauge = ctk.CTkProgressBar(self.content_frame, height=20, progress_color=color, fg_color="#333333")
         gauge.set(map50)
         gauge.pack(fill="x", padx=40, pady=10)
-        
+
         ctk.CTkLabel(self.content_frame, text=f"Puntaje de Precisión: {score_pct:.1f}%",
                      font=ctk.CTkFont(size=14)).pack()
 
@@ -262,7 +262,7 @@ class ReportDialog(ctk.CTkToplevel):
                 ctk.CTkLabel(self.content_frame, text="", image=img_ctk).pack(pady=10)
             except Exception:
                 pass
-        
+
         ctk.CTkButton(self, text="Entendido", command=self.destroy).pack(pady=20)
 
 
@@ -270,13 +270,13 @@ class SettingsDialog(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.title("Ajustes del Sistema FLEX-SORT")
-        
+
         # Dimensiones y centrado
         w, h = 450, 550
         x = int((self.winfo_screenwidth() / 2) - (w / 2))
         y = int((self.winfo_screenheight() / 2) - (h / 2))
         self.geometry(f"{w}x{h}+{x}+{y}")
-        
+
         self.config_path = "config.json"
 
         # Cargar configuración actual
@@ -300,8 +300,12 @@ class SettingsDialog(ctk.CTkToplevel):
         ctk.CTkLabel(frame_red, text="CONEXIÓN RASPBERRY PI", font=ctk.CTkFont(size=12, weight="bold"),
                      text_color="#1E88E5").pack(pady=5)
 
-        self.ip_entry = self.create_input(frame_red, "Dirección IP:", self.config_data.get("ip_raspberry", "192.168.1.10"))
-        self.user_entry = self.create_input(frame_red, "Usuario SSH:", self.config_data.get("usuario", "pi"))
+        self.ip_entry = self.create_input(
+            frame_red, "Dirección IP:", self.config_data.get("ip_raspberry", "192.168.1.10")
+        )
+        self.user_entry = self.create_input(
+            frame_red, "Usuario SSH:", self.config_data.get("usuario", "pi")
+        )
         self.pass_entry = self.create_input(
             frame_red, "Contraseña SSH:", self.config_data.get("contrasena", "12345678"), show="*"
         )
@@ -320,7 +324,9 @@ class SettingsDialog(ctk.CTkToplevel):
         ctk.CTkLabel(frame_ia, text="PARÁMETROS DE INTELIGENCIA", font=ctk.CTkFont(size=12, weight="bold"),
                      text_color="#F57C00").pack(pady=5)
 
-        self.epochs_entry = self.create_input(frame_ia, "Épocas de Entrenamiento:", str(self.config_data.get("epochs", 300)))
+        self.epochs_entry = self.create_input(
+            frame_ia, "Épocas de Entrenamiento:", str(self.config_data.get("epochs", 300))
+        )
         self.conf_entry = self.create_input(
             frame_ia, "Confianza Mínima (0.1 a 1.0):", str(self.config_data.get("confidence", 0.60))
         )
@@ -372,11 +378,15 @@ class SettingsDialog(ctk.CTkToplevel):
                 result = subprocess.run(["ping", "-n", "1", "-w", "2000", ip],
                                         capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
                 if result.returncode == 0:
-                    self.after(0, lambda: self.lbl_ping_status.configure(text="Estado: ONLINE ✅", text_color="#4CAF50"))
+                    self.after(0, lambda: self.lbl_ping_status.configure(text="Estado: ONLINE ✅",
+                                                                         text_color="#4CAF50"))
                 else:
-                    self.after(0, lambda: self.lbl_ping_status.configure(text="Estado: OFFLINE ❌", text_color="#F44336"))
+                    self.after(0, lambda: self.lbl_ping_status.configure(text="Estado: OFFLINE ❌",
+                                                                         text_color="#F44336"))
             except Exception as e:
-                self.after(0, lambda: self.lbl_ping_status.configure(text=f"Error: {str(e)}", text_color="#F44336"))
+                err_msg = str(e)
+                self.after(0, lambda m=err_msg: self.lbl_ping_status.configure(text=f"Error: {m}",
+                                                                               text_color="#F44336"))
 
         threading.Thread(target=ping, daemon=True).start()
 
@@ -452,8 +462,8 @@ class MLOpsPanel(ctk.CTk):
         self.btn_ingest.grid(row=3, column=0, padx=20, pady=10, sticky="ew")
 
         self.btn_train = ctk.CTkButton(
-            self.sidebar_frame, text="3. Entrenar modelo", command=self.run_train,
-            fg_color="#F57C00", hover_color="#E65100", font=ctk.CTkFont(size=14, weight="bold")
+            self.sidebar_frame, text="4. Entrenar Inteligencia", command=self.run_train,
+            fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold")
         )
         self.btn_train.grid(row=4, column=0, padx=20, pady=10, sticky="ew")
 
@@ -493,7 +503,7 @@ class MLOpsPanel(ctk.CTk):
         )
         self.switch_theme.grid(row=9, column=0, padx=20, pady=(0, 10), sticky="s")
 
-        self.lbl_hardware = ctk.CTkButton(
+        self.lbl_performance = ctk.CTkButton(
             self.sidebar_frame, text="📊 Ver Rendimiento", font=ctk.CTkFont(size=11),
             fg_color="transparent", text_color="#A5D6A7", command=self.toggle_performance
         )
@@ -501,8 +511,8 @@ class MLOpsPanel(ctk.CTk):
 
         # Frame de Rendimiento (Oculto por defecto)
         self.perf_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#222222", corner_radius=5)
-        self.perf_frame.grid_remove() # Oculto al inicio
-        
+        self.perf_frame.grid_remove()  # Oculto al inicio
+
         self.cpu_bar = self.create_perf_bar(self.perf_frame, "CPU:", "#4CAF50")
         self.ram_bar = self.create_perf_bar(self.perf_frame, "RAM:", "#1E88E5")
         self.gpu_bar = self.create_perf_bar(self.perf_frame, "GPU (RTX):", "#F57C00")
@@ -524,9 +534,12 @@ class MLOpsPanel(ctk.CTk):
         if os.path.exists(path_history_icon):
             try:
                 img_hist = Image.open(path_history_icon)
-                img_hist_ctk = ctk.CTkImage(light_image=img_hist, dark_image=img_hist, size=(24, 24))
-                self.btn_history = ctk.CTkButton(self.main_frame, text="", image=img_hist_ctk, width=30, height=30,
-                                                 fg_color="transparent", hover_color=("#DBDBDB", "#2B2B2B"),
+                img_hist_ctk = ctk.CTkImage(
+                    light_image=img_hist, dark_image=img_hist, size=(24, 24)
+                )
+                self.btn_history = ctk.CTkButton(self.main_frame, text="", image=img_hist_ctk,
+                                                 width=30, height=30, fg_color="transparent",
+                                                 hover_color=("#DBDBDB", "#2B2B2B"),
                                                  command=self.open_history)
                 self.btn_history.grid(row=0, column=0, sticky="e", padx=(0, 40))
             except Exception:
@@ -537,7 +550,9 @@ class MLOpsPanel(ctk.CTk):
         if os.path.exists(path_config_icon):
             try:
                 img_conf = Image.open(path_config_icon)
-                img_conf_ctk = ctk.CTkImage(light_image=img_conf, dark_image=img_conf, size=(24, 24))
+                img_conf_ctk = ctk.CTkImage(
+                    light_image=img_conf, dark_image=img_conf, size=(24, 24)
+                )
                 self.btn_settings = ctk.CTkButton(self.main_frame, text="", image=img_conf_ctk, width=30, height=30,
                                                   fg_color="transparent", hover_color=("#DBDBDB", "#2B2B2B"),
                                                   command=self.open_settings)
@@ -548,14 +563,12 @@ class MLOpsPanel(ctk.CTk):
                 self.btn_settings.grid(row=0, column=0, sticky="e", padx=(0, 5))
 
         # Botón de Reporte (Gráfico)
-        self.btn_report = ctk.CTkButton(self.main_frame, text="📊 Ver Calidad de IA", width=140, height=30,
-                                         fg_color="#333333", border_color="#1E88E5", border_width=1,
-                                         hover_color="#222222", command=self.open_report)
+        self.btn_report = ctk.CTkButton(
+            self.main_frame, text="📊 Ver Calidad de IA", width=140, height=30,
+            fg_color="#333333", border_color="#1E88E5", border_width=1,
+            hover_color="#222222", command=self.open_report
+        )
         self.btn_report.grid(row=0, column=0, sticky="e", padx=(0, 80))
-        else:
-            self.btn_settings = ctk.CTkButton(self.main_frame, text="⚙️", width=30, height=30,
-                                              fg_color="transparent", command=self.open_settings)
-            self.btn_settings.grid(row=0, column=0, sticky="e", padx=(0, 5))
 
         self.progressbar = ctk.CTkProgressBar(self.main_frame, mode="indeterminate",
                                               height=6, fg_color="#333333", progress_color="#1E88E5")
@@ -636,7 +649,7 @@ class MLOpsPanel(ctk.CTk):
             self.after(0, self.progressbar.stop)
             self.after(0, self.progressbar.set, 0)
             self.after(0, self.log, f"\n[ CÓDIGO FINALIZADO ]\n{'-'*70}\n")
-            
+
             if on_finish:
                 self.after(0, on_finish)
 
@@ -664,7 +677,8 @@ class MLOpsPanel(ctk.CTk):
         def get_gpu_usage():
             try:
                 cmd = ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"]
-                result = subprocess.run(cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                result = subprocess.run(cmd, capture_output=True, text=True,   # No window creation
+                                        creationflags=subprocess.CREATE_NO_WINDOW)
                 if result.returncode == 0:
                     return int(result.stdout.strip())
             except Exception:
@@ -789,7 +803,7 @@ class MLOpsPanel(ctk.CTk):
 
         self.log(
             "\n >>> Lanzando interfaz de mapeo... "
-            "Si usas cámara, mira la ventana emergente."
+            "Mira la ventana emergente."
         )
         self.run_subprocess(
             [self.python_exe, "2_procesar_video.py", video_path,
@@ -807,9 +821,10 @@ class MLOpsPanel(ctk.CTk):
         if respuesta is None:
             return
         modo = "finetune" if respuesta else "scratch"
-        
+
         def suggest_report():
-            if messagebox.askyesno("Entrenamiento Finalizado", "¿Deseás ver el Reporte de Calidad del nuevo modelo ahora?"):
+            txt = "¿Deseás ver el Reporte de Calidad del nuevo modelo ahora?"
+            if messagebox.askyesno("Entrenamiento Finalizado", txt):
                 self.open_report()
 
         self.run_subprocess([
@@ -948,8 +963,12 @@ class MLOpsPanel(ctk.CTk):
 
             # Buscar archivos TFLite, ONNX, o el best base
             for file in files:
-                if (file.endswith(".tflite") or file.endswith("best.pt") or
-                   file.endswith(".onnx") or (file.startswith("modelo_") and file.endswith(".pt"))):
+                is_model = (
+                    file.endswith(".tflite") or file.endswith("best.pt") or
+                    file.endswith(".onnx") or
+                    (file.startswith("modelo_") and file.endswith(".pt"))
+                )
+                if (is_model):
                     modelos_candidatos.append(os.path.join(root_dir, file))
 
         if not modelos_candidatos:
