@@ -1,6 +1,7 @@
 import os
-from ultralytics import YOLO
+
 import torch
+from ultralytics import YOLO
 
 
 def train():
@@ -19,7 +20,10 @@ def train():
     yaml_path = os.path.abspath(os.path.join(base_dir, "dataset", "data.yaml"))
 
     if not os.path.exists(yaml_path):
-        print("Error: El archivo data.yaml no existe. Ejecuta primero 1_setup_vacio.py y alimenta datos con procesar_video.")
+        print(
+            "Error: El archivo data.yaml no existe. "
+            "Ejecuta primero 1_setup_vacio.py y alimenta datos con procesar_video."
+        )
         return
 
     import sys
@@ -30,11 +34,16 @@ def train():
 
     if modo == "finetune" and os.path.exists(best_path):
         print(
-            f"[RECICLAJE] Modo APRENDIZAJE CONTINUO activado: Sumando conocimiento a tu último cerebro ({best_path})...")
+            f"[RECICLAJE] Modo APRENDIZAJE CONTINUO activado: "
+            f"Sumando conocimiento a tu último cerebro ({best_path})..."
+        )
         model = YOLO(best_path)
     else:
         if modo == "finetune":
-            print("[ATENCIÓN] Querías sumar a tu modelo anterior pero aún no existe. ¡No te preocupes! Arrancaremos creando el primero.")
+            print(
+                "[ATENCIÓN] Querías sumar a tu modelo anterior pero aún no existe. "
+                "¡No te preocupes! Arrancaremos creando el primero."
+            )
         print("[NUEVO] Modo DESDE CERO activado: Iniciando modelo pre-entrenado general (yolo11n.pt)...")
         model = YOLO("yolo11n.pt")
 
@@ -50,7 +59,7 @@ def train():
         name="modelo_produccion",  # Nombre de la corrida.
         exist_ok=True,   # Puesto en True actualiza la misma carpeta sin crear redundancias.
         # Parada anticipada permisiva: si tras 50 vueltas la pérdida no mejora, asume que llegó a la perfección y frena.
-        patience=50
+        patience=50,
     )
 
     best_path = os.path.join(base_dir, "entrenamientos", "modelo_produccion", "weights", "best.pt")

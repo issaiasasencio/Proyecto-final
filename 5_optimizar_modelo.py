@@ -1,11 +1,15 @@
-import sys
 import os
+import sys
+
 from ultralytics import YOLO
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("ERROR: Faltan argumentos.")
-        print("Uso: python 5_optimizar_modelo.py <ruta_modelo.pt> <formato: ncnn o tflite>")
+        print(
+            "Uso: python 5_optimizar_modelo.py "
+            "<ruta_modelo.pt> <formato: ncnn o tflite>"
+        )
         sys.exit(1)
 
     modelo_path = sys.argv[1]
@@ -15,8 +19,13 @@ if __name__ == "__main__":
     print(f"⚙️ Cargando modelo base de PyTorch: {os.path.basename(modelo_path)}")
     model = YOLO(modelo_path)
 
-    print(f"🚀 Iniciando exportación a formato '{formato.upper()}' para Raspberry Pi...")
-    print("Nota: La primera vez que exportes a un formato estructurado como NCNN puede tardar un poco mientras configura ONNX.")
+    print(
+        f"🚀 Iniciando exportación a formato '{formato.upper()}' para Raspberry Pi..."
+    )
+    print(
+        "Nota: La primera vez que exportes a un formato estructurado como NCNN "
+        "puede tardar un poco mientras configura ONNX."
+    )
 
     try:
         # Exportar el modelo. Ultralytics manejará todo el backend pesado
@@ -25,4 +34,7 @@ if __name__ == "__main__":
         print(f"📁 Modelo optimizado guardado en: {path_exportado}")
     except Exception as e:
         print(f"\n❌ ERROR durante la exportación: {e}")
-        print("Asegurate de estar conectado a internet si es la primera vez que exportás a este formato.")
+        print(
+            "Aseguráte de estar conectado a internet si es la primera vez "
+            "que exportás a este formato."
+        )

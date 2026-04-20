@@ -1,15 +1,15 @@
-import sys
+import contextlib
 import os
+import sys
 import time
+
 import paramiko
 from scp import SCPClient
 
 # Forzar salida en UTF-8 para evitar errores con los emojis en la consola de Windows
 if sys.stdout.encoding.lower() != 'utf-8':
-    try:
+    with contextlib.suppress(AttributeError):
         sys.stdout.reconfigure(encoding='utf-8')
-    except AttributeError:
-        pass
 
 
 def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
@@ -43,13 +43,15 @@ def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
         inicio = time.time()
 
         with SCPClient(ssh.get_transport()) as scp:
-            # recursive=True permite enviar carpetas enteras (ej. formato NCNN) o archivos
+            # recursive=True permite enviar carpetas enteras o archivos
             scp.put(ruta_modelo_pc, remote_path=ruta_destino_pi, recursive=True)
 
             # NUEVO: Enviar archivo de configuración JSON para los Servos
-            mapping_local = os.path.join(os.getcwd(), "Proyecto_Cinta", "dataset", "servo_mapping.json")
+            mapping_local = os.path.join(
+                os.getcwd(), "Proyecto_Cinta", "dataset", "servo_mapping.json"
+            )
             if os.path.exists(mapping_local):
-                print("⚙️ Detectado mapeo de servos local. Transfiriendo configuración...")
+                print("⚙️ Detectado mapeo de servos local. Transfiriendo...")
                 scp.put(mapping_local, remote_path=ruta_destino_pi)
             else:
                 print("⚠️ Aviso: No se encontró servo_mapping.json para enviar.")
@@ -59,11 +61,11 @@ def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
         print(f"Ruta remota: {ruta_destino_pi}{nombre_archivo}")
 
     except paramiko.ssh_exception.AuthenticationException:
-        print("❌ FALLO: Contraseña o usuario incorrecto. Verificá las variables en el script.")
+        print("❌ FALLO: Contraseña o usuario incorrecto. Verificá el script.")
     except Exception as e:
         print(f"❌ ERROR DE RED: {e}")
         print("Sugerencias:")
-        print(" 1. ¿Modificaste la IP_RASPBERRY en el script '6_enviar_a_raspberry.py'?")
+        print(" 1. ¿Modificaste la IP_RASPBERRY en '6_enviar_a_raspberry.py'?")
         print(" 2. ¿La Raspberry Pi está encendida y conectada al mismo WiFi/Red?")
         print(" 3. ¿Habilitaste 'SSH' en la configuración de la Raspberry?")
     finally:

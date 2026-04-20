@@ -1,11 +1,12 @@
+import json
+import os
+import random
+import shutil
+import sys
+import time
+
 import cv2
 import yaml
-import os
-import shutil
-import time
-import random
-import json
-import sys
 
 
 def limpiar_historial(base_dir):
@@ -41,7 +42,7 @@ def limpiar_historial(base_dir):
         'train': 'images/train',
         'val': 'images/val',
         'nc': 0,
-        'names': []
+        'names': [],
     }
     with open(yaml_path, 'w', encoding='utf-8') as f:
         yaml.dump(yaml_content, f, default_flow_style=False, sort_keys=False)
@@ -80,8 +81,11 @@ def procesar_video():
 
         # 2. Preguntar al usuario sobre la limpieza de la data (Opción A o B)
         while True:
-            opcion = input(
-                "¿Deseás (A) sumar este video al dataset existente, o (B) borrar todo el historial? (a/b): ").strip().lower()
+            prompt = (
+                "¿Deseás (A) sumar este video al dataset existente, "
+                "o (B) borrar todo el historial? (a/b): "
+            )
+            opcion = input(prompt).strip().lower()
             if opcion in ['a', 'b']:
                 break
             print("Opción no válida. Por favor, ingresá 'a' para anexar o 'b' para rehacer el dataset.")
@@ -97,7 +101,7 @@ def procesar_video():
         limpiar_historial(base_dir)
 
     # 4. Leer data.yaml, agregar categoría si no existe y conseguir class_id
-    with open(yaml_path, 'r', encoding='utf-8') as f:
+    with open(yaml_path, encoding='utf-8') as f:
         data = yaml.safe_load(f) or {}
 
     names = data.get('names', [])
@@ -121,7 +125,7 @@ def procesar_video():
         mapping = {}
         if os.path.exists(mapping_path):
             try:
-                with open(mapping_path, 'r', encoding='utf-8') as f:
+                with open(mapping_path, encoding='utf-8') as f:
                     mapping = json.load(f)
             except Exception:
                 pass
@@ -190,7 +194,7 @@ def procesar_video():
 
         if bbox_roi[2] > 0 and bbox_roi[3] > 0:
             x_r, y_r, w_r, h_r = bbox_roi
-            template_obj = frame[y_r:y_r+h_r, x_r:x_r+w_r]
+            template_obj = frame[y_r:y_r + h_r, x_r:x_r + w_r]
             bbox_w = w_r
             bbox_h = h_r
             print("\n✅ Molde capturado con ÉXITO. Ahora tu IA aprenderá la caja exacta matemática.")
@@ -229,12 +233,14 @@ def procesar_video():
             vis_frame = frame.copy()
 
             # Dibujar la Bounding Box exacta rastreada en TIPO TIEMPO REAL
-            x_vis = int((actual_x - actual_w/2) * real_w)
-            y_vis = int((actual_y - actual_h/2) * real_h)
+            x_vis = int((actual_x - actual_w / 2) * real_w)
+            y_vis = int((actual_y - actual_h / 2) * real_h)
             w_vis = int(actual_w * real_w)
             h_vis = int(actual_h * real_h)
 
-            cv2.rectangle(vis_frame, (x_vis, y_vis), (x_vis+w_vis, y_vis+h_vis), (0, 255, 0), 2)
+            cv2.rectangle(
+                vis_frame, (x_vis, y_vis), (x_vis + w_vis, y_vis + h_vis), (0, 255, 0), 2
+            )
             cv2.putText(vis_frame, "Auto-Etiquetado Inteligente", (x_vis, y_vis - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 

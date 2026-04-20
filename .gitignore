@@ -2,6 +2,7 @@
 venv/
 env/
 __pycache__/
+.ruff_cache/
 *.pyc
 
 # Modelos Pesados de IA y Pesos

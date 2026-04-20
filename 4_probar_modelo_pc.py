@@ -1,5 +1,6 @@
-import cv2
 import os
+
+import cv2
 from ultralytics import YOLO
 
 
@@ -36,8 +37,9 @@ def probar_en_pc():
         if not ret:
             break
 
-        # 1. Aplicar la red neuronal en el frame actual ('verbose=False' elimina el spam a consola)
-        # Modo Producción Activado: Confianza subida al 60% para eliminar fantasmas y falsos positivos (15%)
+        # 1. Aplicar la red neuronal en el frame actual
+        # ('verbose=False' elimina el spam a consola)
+        # Modo Producción: Confianza subida al 60% para eliminar falsos positivos
         results = model.predict(source=frame, conf=0.60, verbose=False)
         result = results[0]
 
@@ -51,8 +53,9 @@ def probar_en_pc():
             cls_id = int(box.cls[0])
             conf = float(box.conf[0])
 
-            # Evitar error si el modelo cargado no tiene la misma cantidad de clases (ej si usó el yolo base accidentalmente)
-            nombre_etiqueta = result.names[cls_id] if cls_id in result.names else f"Clase_{cls_id}"
+            # Evitar error si el modelo cargado no tiene la misma cantidad de clases
+            # (ej si usó el yolo base accidentalmente)
+            nombre_etiqueta = result.names.get(cls_id, f"Clase_{cls_id}")
 
             # Dibujar el Recuadro Verde del objeto
             cv2.rectangle(frame_anotado, (x1, y1), (x2, y2), (0, 255, 0), 3)
@@ -60,15 +63,21 @@ def probar_en_pc():
             # Crear un fondo negro para el texto para que sea súper legible
             label = f"{nombre_etiqueta.upper()} ({conf*100:.0f}%)"
             (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
-            cv2.rectangle(frame_anotado, (x1, y1 - th - 10), (x1 + tw, y1), (0, 255, 0), -1)  # Fondo verde brillante
+            # Fondo verde brillante para el texto
+            cv2.rectangle(
+                frame_anotado, (x1, y1 - th - 10), (x1 + tw, y1), (0, 255, 0), -1
+            )
 
             # Dibujar el nombre que el usuario escribió
             cv2.putText(frame_anotado, label, (x1, y1 - 5),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)  # Letras negras
 
         # Dibujar Stats de Motor
-        cv2.putText(frame_anotado, f"Detecciones: {len(result.boxes)} | Conf. Límite: 60%",
-                    (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+        stats_text = f"Detecciones: {len(result.boxes)} | Conf. Límite: 60%"
+        cv2.putText(
+            frame_anotado, stats_text, (10, 25),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2
+        )
 
         # 3. Mostrar la ventana visual interactiva
         cv2.imshow("Scanner AI - Detección en vivo", frame_anotado)

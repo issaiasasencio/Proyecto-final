@@ -1,4 +1,5 @@
 import os
+
 import yaml
 
 
@@ -11,7 +12,7 @@ def setup_project():
         os.path.join(base_dir, "dataset", "images", "val"),
         os.path.join(base_dir, "dataset", "labels", "train"),
         os.path.join(base_dir, "dataset", "labels", "val"),
-        os.path.join(base_dir, "videos_crudos")
+        os.path.join(base_dir, "videos_crudos"),
     ]
 
     # Crear las carpetas
@@ -28,7 +29,7 @@ def setup_project():
         'train': 'images/train',
         'val': 'images/val',
         'nc': 0,
-        'names': []
+        'names': [],
     }
 
     # Crear y guardar el archivo data.yaml
