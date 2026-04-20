@@ -68,11 +68,15 @@ class ScannerEngine:
 
     def load_resources(self):
         try:
+            if not os.path.exists(self.model_path):
+                self.status_msg = "Error: No se ha detectado ningun modelo entrenado en la ruta especificada."
+                return False
+            
             # Optimizacion para Pi 5: Cargar modelo con task detect explícito
             self.model = YOLO(self.model_path, task="detect")
             self.status_msg = "Modelo cargado."
         except Exception as e:  # noqa: BLE001
-            self.status_msg = f"Error Modelo: {e}"
+            self.status_msg = f"Error Crítico del Modelo: {e}"
             return False
 
         try:
