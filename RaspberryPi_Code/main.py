@@ -204,12 +204,12 @@ if __name__ == "__main__":
     model_rpi = "/home/pi/Desktop/Flex-Sort/Modelos/best_ncnn_model"
     engine = ScannerEngine(model_rpi)
     if engine.load_resources():
-        engine.start(lambda f: cv2.imshow("FLEX-SORT RPI", f))
+        # Ejecucion headless (Sin ventana extra OpenCV) para ahorrar VRAM
+        engine.start(lambda f: None)
         try:
+            print("Motor en marcha (Modo Headless). Presione Ctrl+C para detener.")
             while True:
-                if cv2.waitKey(1) & 0xFF == ord("q"):
-                    break
-                time.sleep(0.01)
+                time.sleep(1)
         except KeyboardInterrupt:
             pass
         engine.stop()
