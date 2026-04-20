@@ -197,8 +197,10 @@ class ReportDialog(ctk.CTkToplevel):
         self.transient(parent)
         self.grab_set()
 
-        self.results_path = os.path.join("Proyecto_Cinta", "entrenamientos", "modelo_produccion", "results.csv")
-        self.image_path = os.path.join("Proyecto_Cinta", "entrenamientos", "modelo_produccion", "results.png")
+        base_dir = "Proyecto_Cinta"
+        project_abs = os.path.abspath(os.path.join(base_dir, "entrenamientos"))
+        self.results_path = os.path.join(project_abs, "modelo_produccion", "results.csv")
+        self.image_path = os.path.join(project_abs, "modelo_produccion", "results.png")
 
         self.grid_columnconfigure(0, weight=1)
 
@@ -428,18 +430,18 @@ class MLOpsPanel(ctk.CTk):
             self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="FLEX-SORT",
                                            font=ctk.CTkFont(size=28, weight="bold"))
 
-        self.logo_label.grid(row=0, column=0, padx=20, pady=(30, 0))
+        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 0))
 
         self.lbl_subtitle = ctk.CTkLabel(
             self.sidebar_frame,
             text="Adaptive AI System\nv2.0.0 (FLEX Core)",
             font=ctk.CTkFont(size=12, slant="italic")
         )
-        self.lbl_subtitle.grid(row=1, column=0, padx=20, pady=(5, 30))
+        self.lbl_subtitle.grid(row=1, column=0, padx=20, pady=(2, 20))
 
         # Botones de Acción Estilizados
         self.init_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="transparent")
-        self.init_frame.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
+        self.init_frame.grid(row=2, column=0, padx=20, pady=4, sticky="ew")
         self.init_frame.grid_columnconfigure(0, weight=1)
         self.init_frame.grid_columnconfigure(1, weight=1)
 
@@ -459,39 +461,39 @@ class MLOpsPanel(ctk.CTk):
             self.sidebar_frame, text="2. Nuevo entrenamiento", command=self.run_ingest,
             fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold")
         )
-        self.btn_ingest.grid(row=3, column=0, padx=20, pady=10, sticky="ew")
+        self.btn_ingest.grid(row=3, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_train = ctk.CTkButton(
             self.sidebar_frame, text="4. Entrenar Inteligencia", command=self.run_train,
             fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold")
         )
-        self.btn_train.grid(row=4, column=0, padx=20, pady=10, sticky="ew")
+        self.btn_train.grid(row=4, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_test = ctk.CTkButton(
             self.sidebar_frame, text="4. Probar modelo / visión", command=self.run_infer,
             fg_color="#7B1FA2", hover_color="#4A148C", font=ctk.CTkFont(size=14, weight="bold")
         )
-        self.btn_test.grid(row=5, column=0, padx=20, pady=10, sticky="ew")
+        self.btn_test.grid(row=5, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_optimize = ctk.CTkButton(
             self.sidebar_frame, text="5. Optimizar (NCNN/TF)", command=self.run_optimize,
             fg_color="#E040FB", hover_color="#AA00FF", font=ctk.CTkFont(size=14, weight="bold")
         )
-        self.btn_optimize.grid(row=6, column=0, padx=20, pady=10, sticky="ew")
+        self.btn_optimize.grid(row=6, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_deploy = ctk.CTkButton(
             self.sidebar_frame, text="6. Enviar a Raspberry Pi", command=self.run_deploy,
             fg_color="#00897B", hover_color="#00695C", font=ctk.CTkFont(size=14, weight="bold")
         )
-        self.btn_deploy.grid(row=7, column=0, padx=20, pady=10, sticky="ew")
+        self.btn_deploy.grid(row=7, column=0, padx=20, pady=4, sticky="ew")
 
         path_icono_central = os.path.join("recursos", "icono_central.png")
         if os.path.exists(path_icono_central):
             try:
                 img_ic = Image.open(path_icono_central)
-                img_ic_ctk = ctk.CTkImage(light_image=img_ic, dark_image=img_ic, size=(100, 100))
+                img_ic_ctk = ctk.CTkImage(light_image=img_ic, dark_image=img_ic, size=(80, 80))
                 self.icono_label = ctk.CTkLabel(self.sidebar_frame, text="", image=img_ic_ctk)
-                self.icono_label.grid(row=8, column=0, padx=20, pady=(10, 10), sticky="s")
+                self.icono_label.grid(row=8, column=0, padx=20, pady=(5, 5))
             except Exception:
                 pass
 
@@ -501,13 +503,13 @@ class MLOpsPanel(ctk.CTk):
             self.sidebar_frame, text="Modo Oscuro", command=self.toggle_appearance_mode,
             variable=self.switch_var, onvalue="on", offvalue="of"
         )
-        self.switch_theme.grid(row=9, column=0, padx=20, pady=(0, 10), sticky="s")
+        self.switch_theme.grid(row=9, column=0, padx=20, pady=(0, 5))
 
         self.lbl_performance = ctk.CTkButton(
             self.sidebar_frame, text="📊 Ver Rendimiento", font=ctk.CTkFont(size=11),
             fg_color="transparent", text_color="#A5D6A7", command=self.toggle_performance
         )
-        self.lbl_performance.grid(row=10, column=0, padx=20, pady=(0, 5), sticky="s")
+        self.lbl_performance.grid(row=10, column=0, padx=20, pady=(0, 5))
 
         # Frame de Rendimiento (Oculto por defecto)
         self.perf_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#222222", corner_radius=5)
@@ -558,17 +560,11 @@ class MLOpsPanel(ctk.CTk):
                                                   command=self.open_settings)
                 self.btn_settings.grid(row=0, column=0, sticky="e", padx=(0, 5))
             except Exception:
-                self.btn_settings = ctk.CTkButton(self.main_frame, text="⚙️", width=30, height=30,
-                                                  fg_color="transparent", command=self.open_settings)
-                self.btn_settings.grid(row=0, column=0, sticky="e", padx=(0, 5))
-
-        # Botón de Reporte (Gráfico)
-        self.btn_report = ctk.CTkButton(
-            self.main_frame, text="📊 Ver Calidad de IA", width=140, height=30,
-            fg_color="#333333", border_color="#1E88E5", border_width=1,
-            hover_color="#222222", command=self.open_report
-        )
-        self.btn_report.grid(row=0, column=0, sticky="e", padx=(0, 80))
+                pass
+        else:
+            self.btn_settings = ctk.CTkButton(self.main_frame, text="⚙️", width=30, height=30,
+                                              fg_color="transparent", command=self.open_settings)
+            self.btn_settings.grid(row=0, column=0, sticky="e", padx=(0, 5))
 
         self.progressbar = ctk.CTkProgressBar(self.main_frame, mode="indeterminate",
                                               height=6, fg_color="#333333", progress_color="#1E88E5")

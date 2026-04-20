@@ -63,21 +63,23 @@ def train():
     epochs = config.get("epochs", 300)
 
     print("\n[INICIANDO] ¡Iniciando el entrenamiento profundo!")
-    # model.train ejecuta la estructura completa de PyTorch por debajo.
+
+    # Forzar rutas absolutas para evitar que YOLO use 'runs/detect/'
+    project_abs = os.path.abspath(os.path.join(base_dir, "entrenamientos"))
+
     model.train(
         data=yaml_path,
-        epochs=epochs,      # Industrial Level: Cargado dinámicamente.
-        imgsz=640,       # Tamaño de red a 640x640 pixeles.
-        batch=16,        # Tamaño de lote optimizado para exprimir al 100% tu Nvidia.
-        device=device,   # Dispositivo seleccionado arriba.
-        project=os.path.join(base_dir, "entrenamientos"),  # Directorio principal de resultados.
-        name="modelo_produccion",  # Nombre de la corrida.
-        exist_ok=True,   # Puesto en True actualiza la misma carpeta sin crear redundancias.
-        # Parada anticipada permisiva: si tras 50 vueltas la pérdida no mejora, asume que llegó a la perfección y frena.
+        epochs=epochs,
+        imgsz=640,
+        batch=16,
+        device=device,
+        project=project_abs,
+        name="modelo_produccion",
+        exist_ok=True,
         patience=50,
     )
 
-    best_path = os.path.join(base_dir, "entrenamientos", "modelo_produccion", "weights", "best.pt")
+    best_path = os.path.join(project_abs, "modelo_produccion", "weights", "best.pt")
     print("\n[FIN] ENTRENAMIENTO FINALIZADO [FIN]")
 
     archive_dir = os.path.join(base_dir, "modelos_archivados")
