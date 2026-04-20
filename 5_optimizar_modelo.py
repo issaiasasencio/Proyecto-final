@@ -25,4 +25,4 @@ if __name__ == "__main__":
         print(f"📁 Modelo optimizado guardado en: {path_exportado}")
     except Exception as e:
         print(f"\n❌ ERROR durante la exportación: {e}")
-        print("Asegúrate de que estás conectado a internet si es la primera vez que exportas a este formato.")
+        print("Asegurate de estar conectado a internet si es la primera vez que exportás a este formato.")

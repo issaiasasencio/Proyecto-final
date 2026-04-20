@@ -10,7 +10,7 @@ def train():
         print(f"VRAM disponible de GPU: {total_vram:.2f} GB")
         device = "0" # Fuerza la GPU Nvidia
     else:
-        print("[ATENCION] CUDA NO DETECTADO. Se entrenará por CPU (Esto será extremadamente lento).")
+        print("[ATENCIÓN] CUDA NO DETECTADO. Se entrenará por CPU (Esto será extremadamente lento).")
         device = "cpu"
     print("=====================================\n")
 
@@ -28,12 +28,12 @@ def train():
     modo = sys.argv[1] if len(sys.argv) > 1 else "scratch"
     
     if modo == "finetune" and os.path.exists(best_path):
-        print(f"[RECICLAJE] Modo APRENDIZAJE CONTINUO Activado: Sumando conocimiento a tu último cerebro ({best_path})...")
+        print(f"[RECICLAJE] Modo APRENDIZAJE CONTINUO activado: Sumando conocimiento a tu último cerebro ({best_path})...")
         model = YOLO(best_path)
     else:
         if modo == "finetune":
-            print("[ATENCION] Quisiste sumar a tu modelo anterior pero aún no existe. ¡No te preocupes! Arrancaremos creando el primero.")
-        print("[NUEVO] Modo DESDE CERO Activado: Iniciando Modelo Pre-Entrenado general (yolo11n.pt)...")
+            print("[ATENCIÓN] Querías sumar a tu modelo anterior pero aún no existe. ¡No te preocupes! Arrancaremos creando el primero.")
+        print("[NUEVO] Modo DESDE CERO activado: Iniciando modelo pre-entrenado general (yolo11n.pt)...")
         model = YOLO("yolo11n.pt")
 
     print("\n[INICIANDO] ¡Iniciando el entrenamiento profundo!")

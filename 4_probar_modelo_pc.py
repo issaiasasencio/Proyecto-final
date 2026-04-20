@@ -65,10 +65,10 @@ def probar_en_pc():
             cv2.putText(frame_anotado, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2) # Letras negras
             
         # Dibujar Stats de Motor
-        cv2.putText(frame_anotado, f"Detecciones: {len(result.boxes)} | Conf Limite: 60%", (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+        cv2.putText(frame_anotado, f"Detecciones: {len(result.boxes)} | Conf. Límite: 60%", (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
         # 3. Mostrar la ventana visual interactiva
-        cv2.imshow("Scanner AI - Deteccion en Vivo", frame_anotado)
+        cv2.imshow("Scanner AI - Detección en vivo", frame_anotado)
         
         # 4. Romper el bucle si detecta la tecla 'q' en el teclado de tu computadora.
         if cv2.waitKey(1) & 0xFF == ord('q'):

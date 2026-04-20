@@ -36,7 +36,7 @@ def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
         
         nombre_archivo = os.path.basename(ruta_modelo_pc)
         print(f"📤 Inicializando protocolo de transferencia para [{nombre_archivo}]")
-        print("⏳ Subiendo el cerebro a la Raspberry... Por favor espera.")
+        print("⏳ Subiendo el cerebro a la Raspberry Pi... Por favor esperá.")
         
         # Iniciar cronómetro simple
         inicio = time.time()
@@ -58,13 +58,13 @@ def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
         print(f"Ruta remota: {ruta_destino_pi}{nombre_archivo}")
 
     except paramiko.ssh_exception.AuthenticationException:
-        print("❌ FALLO: Contraseña o usuario incorrecto. Verifica las variables en el script 5.")
+        print("❌ FALLO: Contraseña o usuario incorrecto. Verificá las variables en el script.")
     except Exception as e:
         print(f"❌ ERROR DE RED: {e}")
         print("Sugerencias:")
-        print(" 1. ¿Modificaste la IP_RASPBERRY en el script '5_enviar_a_raspberry.py'?")
+        print(" 1. ¿Modificaste la IP_RASPBERRY en el script '6_enviar_a_raspberry.py'?")
         print(" 2. ¿La Raspberry Pi está encendida y conectada al mismo WiFi/Red?")
-        print(" 3. ¿Habilitaste 'SSH' en la configuración de Raspberry?")
+        print(" 3. ¿Habilitaste 'SSH' en la configuración de la Raspberry?")
     finally:
         ssh.close()
         print("🔌 Canal de comunicación cerrado de forma segura.")

@@ -4,9 +4,11 @@ import os
 import shutil
 import time
 import random
+import json
+import sys
 
 def limpiar_historial(base_dir):
-    """Vacia las carpetas de train/val e inicializa data.yaml a 0."""
+    """Vacía las carpetas de train/val e inicializa data.yaml a 0."""
     print("Limpiando el historial del dataset. Esto borrará datos anteriores...")
     # 3. Rutas a borrar y recrear
     carpetas_a_limpiar = [
@@ -43,20 +45,26 @@ def limpiar_historial(base_dir):
     with open(yaml_path, 'w', encoding='utf-8') as f:
         yaml.dump(yaml_content, f, default_flow_style=False, sort_keys=False)
     
-    print("Historial borrado. Dataset limpio y vuelto a cero.")
+    # Reiniciar mapeo de servos
+    mapping_path = os.path.join(base_dir, "dataset", "servo_mapping.json")
+    if os.path.exists(mapping_path):
+        try: os.remove(mapping_path)
+        except: pass
+    
+    print("Historial borrado. Dataset y mapeo de servos limpios.")
 
 def procesar_video():
     """Ingestor de datos. Procesa el video subido guardando frames redimensionados."""
     base_dir = "Proyecto_Cinta"
     yaml_path = os.path.join(base_dir, "dataset", "data.yaml")
 
-    import sys
-
     # 1. Checar si se pasaron argumentos (desde la GUI)
-    if len(sys.argv) == 4:
+    # El panel envía 4 argumentos: video_path, categoria, opcion, servo_id
+    if len(sys.argv) >= 4:
         video_path = sys.argv[1]
         categoria = sys.argv[2]
         opcion = sys.argv[3].lower()
+        servo_id = sys.argv[4] if len(sys.argv) >= 5 else None
     else:
         # Pedir por consola si se ejecuta directo
         video_path = input("Ingresa la ruta del video .mp4 (ej: videos_crudos/mitest.mp4): ")
@@ -68,10 +76,12 @@ def procesar_video():
 
         # 2. Preguntar al usuario sobre la limpieza de la data (Opción A o B)
         while True:
-            opcion = input("¿Deseas (A) sumar este video al dataset existente, o (B) borrar todo el historial? (a/b): ").strip().lower()
+            opcion = input("¿Deseás (A) sumar este video al dataset existente, o (B) borrar todo el historial? (a/b): ").strip().lower()
             if opcion in ['a', 'b']:
                 break
-            print("Opción no válida. Por favor, ingresa 'a' para anexar o 'b' para rehacer el dataset.")
+            print("Opción no válida. Por favor, ingresá 'a' para anexar o 'b' para rehacer el dataset.")
+        
+        servo_id = input("Ingresá el ID del servo (1, 2, 3 o 4): ").strip()
 
     if video_path != "webcam" and not os.path.exists(video_path):
         print(f"Error: No se encontró el archivo de video: {video_path}")
@@ -100,7 +110,24 @@ def procesar_video():
     class_id = names.index(categoria)
     print(f"Se utilizará el ID (class_id) '{class_id}' para la categoría '{categoria}'")
 
-    # 5. Procesar el video con OpenCV
+    # 5. Guardar el mapeo de Servo si existe
+    if servo_id:
+        mapping_path = os.path.join(base_dir, "dataset", "servo_mapping.json")
+        mapping = {}
+        if os.path.exists(mapping_path):
+            try:
+                with open(mapping_path, 'r', encoding='utf-8') as f:
+                    mapping = json.load(f)
+            except: pass
+        
+        # Mapeamos el string del class_id al servo_id
+        mapping[str(class_id)] = str(servo_id)
+        
+        with open(mapping_path, 'w', encoding='utf-8') as f:
+            json.dump(mapping, f, indent=4)
+        print(f"Mapeo Hardware: Clase {class_id} -> Servo {servo_id}")
+
+    # 6. Procesar el video con OpenCV
     es_webcam = (video_path == "webcam")
     
     if es_webcam:
@@ -133,35 +160,35 @@ def procesar_video():
     bbox_h = 0
     
     if es_webcam:
-        print(f"\n[AUTO-LABELER] SISTEMA DE MAXIMA PRECISION - CATEGORIA: {categoria}")
-        print(">>>>> Vamos a calibrar tu objeto. Colócalo frente a la cámara.")
-        print(">>>>> PRESIONA LA BARRA ESPACIADORA en la ventana cuando estés listo para congelar la imagen.")
+        print(f"\n[AUTO-LABELLER] SISTEMA DE MÁXIMA PRECISIÓN - CATEGORÍA: {categoria}")
+        print(">>>>> Vamos a calibrar tu objeto. Colocalo frente a la cámara.")
+        print(">>>>> PRESIONÁ LA BARRA ESPACIADORA en la ventana cuando estés listo para congelar la imagen.")
         
         while True:
             ret, frame = cap.read()
             if not ret: return
             
             # NO redimensionar forzosamente para no distorsionar la imagen nativa (aspect ratio)
-            cv2.imshow("CALIBRACION (Presiona ESPACIO cuando se vea bien)", frame)
+            cv2.imshow("CALIBRACIÓN (Presioná ESPACIO cuando se vea bien)", frame)
             if cv2.waitKey(1) & 0xFF == ord(' '):
                 break
-        cv2.destroyWindow("CALIBRACION (Presiona ESPACIO cuando se vea bien)")
+        cv2.destroyWindow("CALIBRACIÓN (Presioná ESPACIO cuando se vea bien)")
         
-        print(">>>>> MUY IMPORTANTE: Usa el mouse para DIBUJAR un recuadro MUY AJUSTADO alrededor del objeto.")
-        print(">>>>> Luego presiona 'ENTER' en tu teclado para disparar el Auto-Etiquetado Inteligente.")
+        print(">>>>> MUY IMPORTANTE: Usá el mouse para DIBUJAR un recuadro MUY AJUSTADO alrededor del objeto.")
+        print(">>>>> Luego presioná 'ENTER' en tu teclado para disparar el Auto-Etiquetado Inteligente.")
         
-        bbox_roi = cv2.selectROI(f"Dibuja una caja apretada y pulsa ENTER", frame, fromCenter=False, showCrosshair=True)
-        cv2.destroyWindow(f"Dibuja una caja apretada y pulsa ENTER")
+        bbox_roi = cv2.selectROI(f"Dibujá un recuadro ajustado y pulsá ENTER", frame, fromCenter=False, showCrosshair=True)
+        cv2.destroyWindow(f"Dibujá un recuadro ajustado y pulsá ENTER")
         
         if bbox_roi[2] > 0 and bbox_roi[3] > 0:
             x_r, y_r, w_r, h_r = bbox_roi
             template_obj = frame[y_r:y_r+h_r, x_r:x_r+w_r]
             bbox_w = w_r
             bbox_h = h_r
-            print("\n✅ Molde capturado con EXITO. Ahora tu IA aprenderá la caja exacta matemática.")
-            print("-> Mueve la lapicera muy lentamente frente a la cámara para generar el dataset hiper-preciso.")
+            print("\n✅ Molde capturado con ÉXITO. Ahora tu IA aprenderá la caja exacta matemática.")
+            print("-> Mové el objeto muy lentamente frente a la cámara para generar el dataset hiperpreciso.")
         else:
-            print("No dibujaste. Usando modo rústico (80% generico).")
+            print("No dibujaste nada. Usando modo genérico.")
     else:
         print(f"Procesando video local a {fps:.2f} FPS. Extrayendo fotogramas...")
 
@@ -206,7 +233,7 @@ def procesar_video():
                 cv2.circle(vis_frame, (30, 30), 10, (0, 0, 255), -1)
                 cv2.putText(vis_frame, "REC", (50, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
             
-            nombre_ventana = f"Grabando Automáticamente - {categoria} (Presiona 'q' para salir)"
+            nombre_ventana = f"Grabando automáticamente - {categoria} (Presioná 'q' para salir)"
             cv2.imshow(nombre_ventana, vis_frame)
             if frame_count == 0:
                 cv2.setWindowProperty(nombre_ventana, cv2.WND_PROP_TOPMOST, 1)
@@ -243,7 +270,7 @@ def procesar_video():
         frame_count += 1
 
     cap.release()
-    print(f"Término Exitoso! Se guardaron {guardados} fotogramas pre-etiquetados para la IA.")
+    print(f"¡Proceso finalizado con éxito! Se guardaron {guardados} fotogramas pre-etiquetados para la IA.")
 
 if __name__ == "__main__":
     procesar_video()

@@ -14,7 +14,7 @@ def setup_project():
     ]
 
     # Crear las carpetas
-    print("Iniciando la creación de la estructura de carpetas...")
+    print("Iniciando la creación de la estructura de directorios...")
     for carpeta in carpetas:
         os.makedirs(carpeta, exist_ok=True)
         print(f"Directorio creado o ya existente: {carpeta}")
@@ -36,7 +36,7 @@ def setup_project():
     
     # Confirmación final en consola
     print(f"Archivo generado exitosamente: {yaml_path}")
-    print("Estructura inicializada correctamente. ¡El sistema empieza en blanco!")
+    print("Estructura inicializada correctamente. ¡El sistema está listo para empezar!")
 
 if __name__ == "__main__":
     setup_project()

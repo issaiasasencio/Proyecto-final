@@ -23,7 +23,7 @@ class ServoSelectorDialog(ctk.CTkToplevel):
         self.transient(parent)
         self.grab_set()
         
-        lbl = ctk.CTkLabel(self, text=f"Objeto: {categoria.upper()}\n\nSelecciona a cuál brazo expulsor irá dirigido\n(Vista superior de la cinta):", font=ctk.CTkFont(size=16, weight="bold"))
+        lbl = ctk.CTkLabel(self, text=f"Objeto: {categoria.upper()}\n\nSeleccioná el brazo expulsor de destino\n(Vista superior de la cinta):", font=ctk.CTkFont(size=16, weight="bold"))
         lbl.pack(pady=(20, 10))
         
         frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -41,16 +41,16 @@ class ServoSelectorDialog(ctk.CTkToplevel):
             
         btn_font = ctk.CTkFont(size=18, weight="bold")
         
-        btn1 = ctk.CTkButton(frame, text="1\n(Izquierdo Cerca)", font=btn_font, corner_radius=15, fg_color="#1E88E5", hover_color="#1565C0", command=lambda: select('1'))
+        btn1 = ctk.CTkButton(frame, text="1\n(Izquierdo cerca)", font=btn_font, corner_radius=15, fg_color="#1E88E5", hover_color="#1565C0", command=lambda: select('1'))
         btn1.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
         
-        btn2 = ctk.CTkButton(frame, text="2\n(Derecho Cerca)", font=btn_font, corner_radius=15, fg_color="#1E88E5", hover_color="#1565C0", command=lambda: select('2'))
+        btn2 = ctk.CTkButton(frame, text="2\n(Derecho cerca)", font=btn_font, corner_radius=15, fg_color="#1E88E5", hover_color="#1565C0", command=lambda: select('2'))
         btn2.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
         
-        btn3 = ctk.CTkButton(frame, text="3\n(Izquierdo Lejos)", font=btn_font, corner_radius=15, fg_color="#F57C00", hover_color="#E65100", command=lambda: select('3'))
+        btn3 = ctk.CTkButton(frame, text="3\n(Izquierdo lejos)", font=btn_font, corner_radius=15, fg_color="#F57C00", hover_color="#E65100", command=lambda: select('3'))
         btn3.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
         
-        btn4 = ctk.CTkButton(frame, text="4\n(Derecho Lejos)", font=btn_font, corner_radius=15, fg_color="#F57C00", hover_color="#E65100", command=lambda: select('4'))
+        btn4 = ctk.CTkButton(frame, text="4\n(Derecho lejos)", font=btn_font, corner_radius=15, fg_color="#F57C00", hover_color="#E65100", command=lambda: select('4'))
         btn4.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 
 class MLOpsPanel(ctk.CTk):
@@ -94,19 +94,19 @@ class MLOpsPanel(ctk.CTk):
         self.lbl_subtitle.grid(row=1, column=0, padx=20, pady=(5, 30))
 
         # Botones de Acción Estilizados
-        self.btn_reset = ctk.CTkButton(self.sidebar_frame, text="0. Borrar Memoria Total", command=self.run_reset_all, fg_color="#D32F2F", hover_color="#C62828", font=ctk.CTkFont(size=14, weight="bold"))
+        self.btn_reset = ctk.CTkButton(self.sidebar_frame, text="0. Borrar memoria completa", command=self.run_reset_all, fg_color="#D32F2F", hover_color="#C62828", font=ctk.CTkFont(size=14, weight="bold"))
         self.btn_reset.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
 
-        self.btn_setup = ctk.CTkButton(self.sidebar_frame, text="1. Inicializar Variables", command=self.run_setup, fg_color="#333333", hover_color="#555555", font=ctk.CTkFont(size=14))
+        self.btn_setup = ctk.CTkButton(self.sidebar_frame, text="1. Inicializar variables", command=self.run_setup, fg_color="#333333", hover_color="#555555", font=ctk.CTkFont(size=14))
         self.btn_setup.grid(row=3, column=0, padx=20, pady=10, sticky="ew")
 
-        self.btn_ingest = ctk.CTkButton(self.sidebar_frame, text="2. Ingesta Dinámica", command=self.run_ingest, fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold"))
+        self.btn_ingest = ctk.CTkButton(self.sidebar_frame, text="2. Ingesta dinámica", command=self.run_ingest, fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold"))
         self.btn_ingest.grid(row=4, column=0, padx=20, pady=10, sticky="ew")
 
-        self.btn_train = ctk.CTkButton(self.sidebar_frame, text="3. Entrenamiento Lógico", command=self.run_train, fg_color="#F57C00", hover_color="#E65100", font=ctk.CTkFont(size=14, weight="bold"))
+        self.btn_train = ctk.CTkButton(self.sidebar_frame, text="3. Entrenamiento lógico", command=self.run_train, fg_color="#F57C00", hover_color="#E65100", font=ctk.CTkFont(size=14, weight="bold"))
         self.btn_train.grid(row=5, column=0, padx=20, pady=10, sticky="ew")
 
-        self.btn_test = ctk.CTkButton(self.sidebar_frame, text="4. Probar Modelo / Visión", command=self.run_infer, fg_color="#7B1FA2", hover_color="#4A148C", font=ctk.CTkFont(size=14, weight="bold"))
+        self.btn_test = ctk.CTkButton(self.sidebar_frame, text="4. Probar modelo / visión", command=self.run_infer, fg_color="#7B1FA2", hover_color="#4A148C", font=ctk.CTkFont(size=14, weight="bold"))
         self.btn_test.grid(row=6, column=0, padx=20, pady=10, sticky="ew")
 
         self.btn_optimize = ctk.CTkButton(self.sidebar_frame, text="5. Optimizar (NCNN/TF)", command=self.run_optimize, fg_color="#E040FB", hover_color="#AA00FF", font=ctk.CTkFont(size=14, weight="bold"))
@@ -130,22 +130,26 @@ class MLOpsPanel(ctk.CTk):
         self.switch_theme = ctk.CTkSwitch(self.sidebar_frame, text="Modo Oscuro", command=self.toggle_appearance_mode, variable=self.switch_var, onvalue="on", offvalue="off")
         self.switch_theme.grid(row=10, column=0, padx=20, pady=(0, 10), sticky="s")
 
-        self.lbl_hardware = ctk.CTkLabel(self.sidebar_frame, text="Controlador Nvidia Activo", font=ctk.CTkFont(size=11), text_color="#A5D6A7")
+        self.lbl_hardware = ctk.CTkLabel(self.sidebar_frame, text="Controlador NVIDIA activo", font=ctk.CTkFont(size=11), text_color="#A5D6A7")
         self.lbl_hardware.grid(row=11, column=0, padx=20, pady=(0, 20), sticky="s")
 
 
         # ---------------- PANEL PRINCIPAL (CONSOLA) ----------------
         self.main_frame = ctk.CTkFrame(self, corner_radius=10, fg_color="transparent")
         self.main_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
-        self.main_frame.grid_rowconfigure(1, weight=1)
+        self.main_frame.grid_rowconfigure(2, weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
 
-        self.console_label = ctk.CTkLabel(self.main_frame, text="Monitor de Eventos MLOps", font=ctk.CTkFont(size=16, weight="bold"))
-        self.console_label.grid(row=0, column=0, padx=0, pady=(0, 10), sticky="w")
+        self.console_label = ctk.CTkLabel(self.main_frame, text="Monitor de eventos MLOps", font=ctk.CTkFont(size=16, weight="bold"))
+        self.console_label.grid(row=0, column=0, padx=0, pady=(0, 5), sticky="w")
+        
+        self.progressbar = ctk.CTkProgressBar(self.main_frame, mode="indeterminate", height=6, fg_color="#333333", progress_color="#1E88E5")
+        self.progressbar.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        self.progressbar.set(0)
 
         # Textbox para los Logs estilo Terminal Avanzada
         self.console = ctk.CTkTextbox(self.main_frame, fg_color="#1A1A1A", text_color="#4CAF50", border_color="#333333", border_width=2, font=("Consolas", 13))
-        self.console.grid(row=1, column=0, sticky="nsew")
+        self.console.grid(row=2, column=0, sticky="nsew")
 
         # Forzar el uso estricto del ejecutable local
         self.python_exe = ".\\venv\\Scripts\\python.exe"
@@ -167,6 +171,7 @@ class MLOpsPanel(ctk.CTk):
 
     def run_subprocess(self, cmd):
         def task():
+            self.after(0, self.progressbar.start)
             self.log(f"> \n> EJECUTANDO: {' '.join(cmd)}\n")
             kwargs = {}
             if sys.platform == "win32":
@@ -191,6 +196,8 @@ class MLOpsPanel(ctk.CTk):
             for line in process.stdout:
                 self.after(0, self.log, line.strip()) # Evitar congelamiento usando after loop de CTK
             process.wait()
+            self.after(0, self.progressbar.stop)
+            self.after(0, self.progressbar.set, 0)
             self.after(0, self.log, f"\n[ CÓDIGO FINALIZADO ]\n{'-'*70}\n")
         
         # Ejecutar en segundo plano real
@@ -203,7 +210,7 @@ class MLOpsPanel(ctk.CTk):
             "- Todas las fotos y videos capturados\n"
             "- Todos los modelos de IA entrenados en la historia\n"
             "- El archivo de configuración de servos\n\n"
-            "¿Deseas FORMATEAR LA MEMORIA VIRTUAL para un proyecto nuevo?"
+            "¿Deseás REINICIAR LA MEMORIA VIRTUAL para un proyecto nuevo?"
         )
         if not respuesta: return
             
@@ -217,9 +224,9 @@ class MLOpsPanel(ctk.CTk):
             if os.path.exists(folder):
                 try:
                     shutil.rmtree(folder)
-                    self.log(f"  [-] Carpeta purgagada: {folder}")
+                    self.log(f"  [-] Carpeta purgada: {folder}")
                 except Exception as e:
-                    self.log(f"  [x] Error borrando {folder}: {e}")
+                    self.log(f"  [x] Error al borrar {folder}: {e}")
                     
         for f in files_to_delete:
             if os.path.exists(f):
@@ -243,13 +250,13 @@ class MLOpsPanel(ctk.CTk):
                     try: os.remove(os.path.join(r, file))
                     except: pass
 
-        self.log("\n[SISTEMA LIMPIO] Memoria totalmente virgen.\n>>> AHORA DALE A: '1. Inicializar Variables'.")
+        self.log("\n[SISTEMA LIMPIO] Memoria totalmente limpia.\n>>> AHORA PRESIONÁ EN: '1. Inicializar variables'.")
 
     def run_setup(self):
         self.run_subprocess([self.python_exe, "1_setup_vacio.py"])
 
     def run_ingest(self):
-        usar_webcam = messagebox.askyesno("Fuente de Ingreso", "¿Deseas habilitar la CÁMARA WEB LGT/Iriun para grabar el objeto en tiempo real?\n\n- SÍ = Modo Cámara en Vivo\n- NO = Cargar archivo manual (.mp4)")
+        usar_webcam = messagebox.askyesno("Fuente de ingreso", "¿Deseás habilitar la CÁMARA WEB para grabar el objeto en tiempo real?\n\n- SÍ = Modo cámara en vivo\n- NO = Cargar archivo manual (.mp4)")
         
         if usar_webcam:
             video_path = "webcam"
@@ -258,8 +265,8 @@ class MLOpsPanel(ctk.CTk):
             if not video_path:
                 return
             
-        fuente_display = "Cámara en Vivo" if usar_webcam else os.path.basename(video_path)
-        categoria = simpledialog.askstring("Etiqueta IA", f"Modo de ingesta: {fuente_display}\n\nEscribe qué tipo de objeto es (ej: manzana, pieza_metal):")
+        fuente_display = "Cámara en vivo" if usar_webcam else os.path.basename(video_path)
+        categoria = simpledialog.askstring("Etiqueta IA", f"Modo de ingesta: {fuente_display}\n\nIngresá el tipo de objeto (ej: manzana, pieza_metal):")
         
         if not categoria:
             return
@@ -272,7 +279,7 @@ class MLOpsPanel(ctk.CTk):
             self.log("\n[ABORTADO] No se asignó un servo al objeto.")
             return
             
-        es_limpio = messagebox.askyesno("Memoria IA", "El modelo tiene información anterior.\n\n¿Deseas FORMATEAR LA MEMORIA VIRTUAL y comenzar la IA 100% Desde Cero?\n\n- SÍ = Resetea Base de Datos\n- NO = Anexa conocimientos")
+        es_limpio = messagebox.askyesno("Memoria IA", "El modelo tiene información anterior.\n\n¿Deseás REINICIAR LA MEMORIA VIRTUAL y comenzar la IA 100% desde cero?\n\n- SÍ = Resetear base de datos\n- NO = Anexar conocimientos")
         opcion = "b" if es_limpio else "a"
         
         self.log("\n >>> Lanzando interfaz de mapeo... Si usas cámara, mira la ventana emergente.")
@@ -306,8 +313,8 @@ class MLOpsPanel(ctk.CTk):
             
             # Auto-Detectado
             respuesta = messagebox.askyesno(
-                "Historial de Inteligencia Artificial", 
-                f"El sistema ha localizado el último cerebro entrenado hace poco en:\n...{latest[-50:]}\n\n¿Quieres encender la cámara con este modelo?\n\n- SÍ = Extraer historial automático\n- NO = Cargar un modelo viejo manualmente."
+                "Historial de inteligencia artificial", 
+                f"El sistema ha localizado el último cerebro entrenado hace poco en:\n...{latest[-50:]}\n\n¿Querés encender la cámara con este modelo?\n\n- SÍ = Extraer historial automático\n- NO = Cargar un modelo viejo manualmente."
             )
             if respuesta:
                 modelo_path = latest
