@@ -141,7 +141,7 @@ class HistoryDialog(ctk.CTkToplevel):
                             description = "📦 Objetos: " + ", ".join(
                                 [f"{o['nombre']} (S{o['servo']})" for o in objetos]
                             )
-                except Exception:
+                except (json.JSONDecodeError, FileNotFoundError):
                     pass
 
             item_frame = ctk.CTkFrame(self.scroll_frame)
@@ -177,7 +177,7 @@ class HistoryDialog(ctk.CTkToplevel):
             messagebox.showinfo("Éxito", f"Modelo activo cambiado a:\n{os.path.basename(path)}")
             self.parent.log(f"\n[HISTORIAL] Modelo activo seleccionado: {os.path.basename(path)}")
             self.destroy()
-        except Exception as e:
+        except (json.JSONDecodeError, FileNotFoundError, PermissionError) as e:
             messagebox.showerror("Error", f"No se pudo activar el modelo: {e}")
 
 
@@ -223,7 +223,7 @@ class ReportDialog(ctk.CTkToplevel):
                         val_key = next((k for k in last_row.keys() if "mAP50(B)" in k), None)
                         if val_key:
                             map50 = float(last_row[val_key])
-            except Exception as e:
+            except (csv.Error, FileNotFoundError, ValueError, KeyError) as e:
                 print(f"Error al leer reporte: {e}")
 
         # Lógica de Veredicto
@@ -262,7 +262,7 @@ class ReportDialog(ctk.CTkToplevel):
                 img.thumbnail((400, 200))
                 img_ctk = ctk.CTkImage(light_image=img, dark_image=img, size=img.size)
                 ctk.CTkLabel(self.content_frame, text="", image=img_ctk).pack(pady=10)
-            except Exception:
+            except (IOError, AttributeError):
                 pass
 
         ctk.CTkButton(self, text="Entendido", command=self.destroy).pack(pady=20)
@@ -385,7 +385,7 @@ class SettingsDialog(ctk.CTkToplevel):
                 else:
                     self.after(0, lambda: self.lbl_ping_status.configure(text="Estado: OFFLINE ❌",
                                                                          text_color="#F44336"))
-            except Exception as e:
+            except (subprocess.SubprocessError, OSError) as e:
                 err_msg = str(e)
                 self.after(0, lambda m=err_msg: self.lbl_ping_status.configure(text=f"Error: {m}",
                                                                                text_color="#F44336"))
@@ -427,7 +427,7 @@ class MLOpsPanel(ctk.CTk):
                 img_pil = Image.open(path_logo_texto)
                 img_ctk = ctk.CTkImage(light_image=img_pil, dark_image=img_pil, size=(200, 50))
                 self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="", image=img_ctk)
-            except Exception:
+            except (IOError, AttributeError):
                 self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="FLEX-SORT",
                                                font=ctk.CTkFont(size=28, weight="bold"))
         else:
@@ -506,7 +506,7 @@ class MLOpsPanel(ctk.CTk):
                 img_ic_ctk = ctk.CTkImage(light_image=img_ic, dark_image=img_ic, size=(80, 80))
                 self.icono_label = ctk.CTkLabel(self.sidebar_frame, text="", image=img_ic_ctk)
                 self.icono_label.grid(row=8, column=0, padx=20, pady=(5, 5))
-            except Exception:
+            except (IOError, AttributeError):
                 pass
 
         # Configuración inferior
@@ -556,7 +556,7 @@ class MLOpsPanel(ctk.CTk):
                                                  hover_color=("#DBDBDB", "#2B2B2B"),
                                                  command=self.open_history)
                 self.btn_history.grid(row=0, column=0, sticky="e", padx=(0, 40))
-            except Exception:
+            except (IOError, AttributeError):
                 pass
 
         # Botón de Ajustes (Engranaje) en la parte superior derecha
@@ -571,7 +571,7 @@ class MLOpsPanel(ctk.CTk):
                                                   fg_color="transparent", hover_color=("#DBDBDB", "#2B2B2B"),
                                                   command=self.open_settings)
                 self.btn_settings.grid(row=0, column=0, sticky="e", padx=(0, 5))
-            except Exception:
+            except (IOError, AttributeError):
                 pass
         else:
             self.btn_settings = ctk.CTkButton(self.main_frame, text="⚙️", width=30, height=30,
@@ -689,7 +689,7 @@ class MLOpsPanel(ctk.CTk):
                                         creationflags=subprocess.CREATE_NO_WINDOW)
                 if result.returncode == 0:
                     return int(result.stdout.strip())
-            except Exception:
+            except (subprocess.SubprocessError, ValueError, OSError):
                 pass
             return 0
 
@@ -726,7 +726,7 @@ class MLOpsPanel(ctk.CTk):
                 try:
                     shutil.rmtree(folder)
                     self.log(f"  [-] Carpeta purgada: {folder}")
-                except Exception as e:
+                except OSError as e:
                     self.log(f"  [x] Error al borrar {folder}: {e}")
 
         for f in files_to_delete:
@@ -734,7 +734,7 @@ class MLOpsPanel(ctk.CTk):
                 try:
                     os.remove(f)
                     self.log(f"  [-] Archivo reseteado: {f}")
-                except Exception:
+                except OSError:
                     pass
 
         # Barrer todos los modelos basura optimizados
@@ -747,14 +747,14 @@ class MLOpsPanel(ctk.CTk):
                 if d.endswith("_ncnn_model"):
                     try:
                         shutil.rmtree(os.path.join(r, d))
-                    except Exception:
+                    except OSError:
                         pass
 
             for file in fs:
                 if file.endswith(".tflite") or file.endswith(".onnx") or (file.endswith(".pt") and "yolo" not in file):
                     try:
                         os.remove(os.path.join(r, file))
-                    except Exception:
+                    except OSError:
                         pass
 
         self.log("\n[SISTEMA LIMPIO] Memoria totalmente limpia.\n>>> AHORA PRESIONÁ EN: '1. Inicializar'.")
@@ -849,7 +849,7 @@ class MLOpsPanel(ctk.CTk):
             if active and os.path.exists(active):
                 modelo_path = active
                 self.log(f"\n[AUTO] Usando modelo ACTIVO del historial: {os.path.basename(active)}")
-        except Exception:
+        except (json.JSONDecodeError, FileNotFoundError, KeyError):
             pass
 
         if not modelo_path:
@@ -902,7 +902,7 @@ class MLOpsPanel(ctk.CTk):
             if active and os.path.exists(active) and active.endswith(".pt"):
                 modelo_path = active
                 self.log(f"\n[AUTO] Usando modelo ACTIVO para optimizar: {os.path.basename(active)}")
-        except Exception:
+        except (json.JSONDecodeError, FileNotFoundError, KeyError):
             pass
 
         if not modelo_path:
