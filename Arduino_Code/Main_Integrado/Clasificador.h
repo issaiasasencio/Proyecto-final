@@ -7,7 +7,9 @@
 enum EstadoServo {
   IDLE,
   ESPERANDO_GOLPE,
-  GOLPEANDO
+  SALIENDO,
+  ESPERANDO_RETORNO,
+  RETORNANDO
 };
 
 class Clasificador {
@@ -17,9 +19,16 @@ class Clasificador {
     
     EstadoServo estadoActual;
     unsigned long tiempoInicioEstado;
+    unsigned long tiempoUltimoPaso;
+    
+    int anguloActual;
+    int anguloObjetivo;
 
     const int RETARDO_ANTES_ACTUAR = 100;
     const int DURACION_GOLPE = 800;
+    const int PASO_MS = 15;        // Tiempo entre cada pasito del barrido (milisegundos)
+    const int PASO_GRADOS = 2;     // Cuántos grados avanza en cada paso
+
 
   public:
     Clasificador();

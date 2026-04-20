@@ -29,6 +29,7 @@ if __name__ == "__main__":
 
     try:
         # Exportar el modelo. Ultralytics manejará todo el backend pesado
+        # Forzar el tipo Float32 quitando half=True, ya que NCNN en esta Rasp causa NaNs ciegos.
         path_exportado = model.export(format=formato)
         print(f"\n✅ ¡Exportación exitosa a {formato.upper()}!")
         print(f"📁 Modelo optimizado guardado en: {path_exportado}")

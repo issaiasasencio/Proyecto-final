@@ -57,10 +57,26 @@ def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
         inicio = time.time()
 
         with SCPClient(ssh.get_transport()) as scp:
-            # recursive=True permite enviar carpetas enteras o archivos
+            # 1. Enviar modelo NCNN completo o archivo .pt
             scp.put(ruta_modelo_pc, remote_path=ruta_destino_pi, recursive=True)
 
-            # NUEVO: Enviar archivo de configuración JSON para los Servos
+            # --- NUEVO: ENVIAR METADATOS DEL MODELO ---
+            # Si enviamos un .pt, buscamos el .json con el mismo nombre
+            # Si enviamos una carpeta NCNN, buscamos el .json que la PC suele crear paralelo a ella
+            metadata_local = ""
+            if ruta_modelo_pc.endswith(".pt"):
+                metadata_local = ruta_modelo_pc.replace(".pt", ".json")
+            else:
+                # Caso carpeta NCNN: buscamos un .json con el mismo nombre base en la carpeta padre
+                ext = ".json"
+                metadata_local = ruta_modelo_pc.rstrip("/") + ext
+            
+            if os.path.exists(metadata_local):
+                print(f"📄 Detectado metadatos: {os.path.basename(metadata_local)}. Sincronizando...")
+                scp.put(metadata_local, remote_path=ruta_destino_pi)
+            # ------------------------------------------
+
+            # 2. Enviar archivo de configuración JSON para los Servos
             mapping_local = os.path.join(
                 os.getcwd(), "Proyecto_FlexSort", "dataset", "servo_mapping.json"
             )
@@ -70,8 +86,44 @@ def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
             else:
                 print("⚠️ Aviso: No se encontró servo_mapping.json para enviar.")
 
-        duracion = round(time.time() - inicio, 1)
-        print(f"📦 ¡Carga exitosa! Archivo subido en {duracion} segundos.")
+            # 3. Transferir los scripts lógicos asegurando que la Pi tenga lo último
+            # Vamos a mandar todo el contenido de la carpeta RaspberryPi_Code a la raíz de la app en la Pi
+            ruta_scripts_locales = os.path.join(os.getcwd(), "RaspberryPi_Code")
+            ruta_scripts_remota = "/home/pi/Desktop/Flex-Sort/" # Raíz del proyecto en Pi
+            
+            if os.path.exists(ruta_scripts_locales):
+                print("⚙️ Sincronizando código fuente con Raspberry Pi...")
+                for item in os.listdir(ruta_scripts_locales):
+                    item_path = os.path.join(ruta_scripts_locales, item)
+                    if os.path.isfile(item_path):
+                        scp.put(item_path, remote_path=ruta_scripts_remota)
+                print("✅ Código fuente Python sincronizado!")
+
+            # 4. NUEVO: Transferir todo el firmware de Arduino para flasheo directo
+            ruta_arduino_local = os.path.join(os.getcwd(), "Arduino_Code")
+            if os.path.exists(ruta_arduino_local):
+                print("⚙️ Sincronizando código firmware para Arduino...")
+                scp.put(ruta_arduino_local, remote_path=ruta_scripts_remota, recursive=True)
+                print("✅ Código C++ Firmware sincronizado!")
+
+            duracion = round(time.time() - inicio, 1)
+
+            # --- NUEVO: CREAR SELLO DE SINCRONIZACIÓN ---
+            sync_data = {
+                "fecha": time.strftime("%d/%m/%Y %H:%M:%S"),
+                "modelo": nombre_archivo,
+                "duracion_seg": duracion
+            }
+            sync_path_local = os.path.join(os.getcwd(), "last_sync.json")
+            with open(sync_path_local, "w", encoding="utf-8") as fsync:
+                json.dump(sync_data, fsync, indent=4)
+            
+            scp.put(sync_path_local, remote_path=ruta_scripts_remota)
+            print("📡 Sello de sincronización enviado correctamente.")
+            # -------------------------------------------
+
+            print(f"📦 ¡Carga exitosa! Archivo subido en {duracion} segundos.")
+
         print(f"Ruta remota: {ruta_destino_pi}{nombre_archivo}")
 
     except paramiko.ssh_exception.AuthenticationException:
@@ -97,6 +149,6 @@ if __name__ == "__main__":
 
     # La carpeta dentro de tu Raspberry donde van a vivir los modelos
     # Debe terminar con / para asegurar que entra en el directorio
-    carpeta_en_pi = "/home/pi/Desktop/Deteccion/Modelos/"
+    carpeta_en_pi = "/home/pi/Desktop/Flex-Sort/Modelos/"
 
     enviar_modelo_a_raspberry(modelo_generado, carpeta_en_pi)

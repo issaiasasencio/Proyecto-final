@@ -56,8 +56,8 @@ def train():
                 "[ATENCIÓN] Querías sumar a tu modelo anterior pero aún no existe. "
                 "¡No te preocupes! Arrancaremos creando el primero."
             )
-        print("[NUEVO] Modo DESDE CERO: Iniciando modelo YOLO (yolo11n.pt)...")
-        model = YOLO("yolo11n.pt")
+        print("[NUEVO] Modo DESDE CERO: Iniciando modelo YOLO de última gen (yolo26n.pt)...")
+        model = YOLO("yolo26n.pt")
 
     config = load_config()
     epochs = config.get("epochs", 300)

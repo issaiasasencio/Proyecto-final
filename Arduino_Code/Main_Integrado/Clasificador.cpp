@@ -37,26 +37,65 @@ void Clasificador::actualizar() {
     case ESPERANDO_GOLPE:
       if (ahora - tiempoInicioEstado >= RETARDO_ANTES_ACTUAR) {
         if (servoActivo != nullptr) {
-          // TODOS empujan a 90 grados
-          servoActivo->write(90);
+          // Determinar ángulo inicial según el servo (1 y 3 inician en 180, 2 y 4 en 0)
+          anguloActual = (servoActivo == &s1 || servoActivo == &s3) ? 180 : 0;
+          anguloObjetivo = 90;
+          estadoActual = SALIENDO;
+          tiempoUltimoPaso = ahora;
+        } else {
+          estadoActual = IDLE;
         }
-        estadoActual = GOLPEANDO;
-        tiempoInicioEstado = ahora;
       }
       break;
 
-    case GOLPEANDO:
-      if (ahora - tiempoInicioEstado >= DURACION_GOLPE) {
-        if (servoActivo != nullptr) {
-          // Devuelve al reposo: 1 y 3 a 180, 2 y 4 a 0
-          if (servoActivo == &s1 || servoActivo == &s3) {
-            servoActivo->write(180); 
-          } else {
-            servoActivo->write(0);   
-          }
+    case SALIENDO:
+      if (ahora - tiempoUltimoPaso >= PASO_MS) {
+        // Mover hacia el objetivo a pasos de 2 grados
+        if (anguloActual < anguloObjetivo) {
+          anguloActual += PASO_GRADOS;
+          if (anguloActual > anguloObjetivo) anguloActual = anguloObjetivo;
+        } else if (anguloActual > anguloObjetivo) {
+          anguloActual -= PASO_GRADOS;
+          if (anguloActual < anguloObjetivo) anguloActual = anguloObjetivo;
         }
-        estadoActual = IDLE;
-        servoActivo = nullptr;
+        
+        servoActivo->write(anguloActual);
+        tiempoUltimoPaso = ahora;
+
+        if (anguloActual == anguloObjetivo) {
+           estadoActual = ESPERANDO_RETORNO;
+           tiempoInicioEstado = ahora;
+        }
+      }
+      break;
+
+    case ESPERANDO_RETORNO:
+      if (ahora - tiempoInicioEstado >= DURACION_GOLPE) {
+         // Determinar el ángulo de reposo según el servo
+         anguloObjetivo = (servoActivo == &s1 || servoActivo == &s3) ? 180 : 0;
+         estadoActual = RETORNANDO;
+         tiempoUltimoPaso = ahora;
+      }
+      break;
+
+    case RETORNANDO:
+      if (ahora - tiempoUltimoPaso >= PASO_MS) {
+        // Mover suavemente hacia el reposo final
+        if (anguloActual < anguloObjetivo) {
+          anguloActual += PASO_GRADOS;
+          if (anguloActual > anguloObjetivo) anguloActual = anguloObjetivo;
+        } else if (anguloActual > anguloObjetivo) {
+          anguloActual -= PASO_GRADOS;
+          if (anguloActual < anguloObjetivo) anguloActual = anguloObjetivo;
+        }
+        
+        servoActivo->write(anguloActual);
+        tiempoUltimoPaso = ahora;
+
+        if (anguloActual == anguloObjetivo) {
+           estadoActual = IDLE;
+           servoActivo = nullptr;
+        }
       }
       break;
       

@@ -472,7 +472,7 @@ class MLOpsPanel(ctk.CTk):
         self.btn_ingest.grid(row=3, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_train = ctk.CTkButton(
-            self.sidebar_frame, text="4. Entrenar Inteligencia", command=self.run_train,
+            self.sidebar_frame, text="3. Entrenar Inteligencia", command=self.run_train,
             fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold"),
             height=35
         )

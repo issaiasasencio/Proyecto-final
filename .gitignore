@@ -19,6 +19,8 @@ runs/
 dataset/
 videos_crudos/
 
-# Sistema Operativo
+# Sistema Operativo y Logs Locales
 .DS_Store
 Thumbs.db
+last_sync.json
+pi_config.json
