@@ -104,33 +104,38 @@ class MLOpsPanel(ctk.CTk):
         self.lbl_subtitle.grid(row=1, column=0, padx=20, pady=(5, 30))
 
         # Botones de Acción Estilizados
-        self.btn_reset = ctk.CTkButton(self.sidebar_frame, text="0. Borrar memoria completa", command=self.run_reset_all,
-                                       fg_color="#D32F2F", hover_color="#C62828", font=ctk.CTkFont(size=14, weight="bold"))
-        self.btn_reset.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
+        self.init_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="transparent")
+        self.init_frame.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
+        self.init_frame.grid_columnconfigure(0, weight=1)
+        self.init_frame.grid_columnconfigure(1, weight=1)
 
-        self.btn_setup = ctk.CTkButton(self.sidebar_frame, text="1. Inicializar variables",
-                                       command=self.run_setup, fg_color="#333333", hover_color="#555555", font=ctk.CTkFont(size=14))
-        self.btn_setup.grid(row=3, column=0, padx=20, pady=10, sticky="ew")
+        self.btn_reset = ctk.CTkButton(self.init_frame, text="0. Borrar memoria", command=self.run_reset_all,
+                                       fg_color="#D32F2F", hover_color="#C62828", font=ctk.CTkFont(size=13, weight="bold"))
+        self.btn_reset.grid(row=0, column=0, padx=(0, 5), sticky="ew")
 
-        self.btn_ingest = ctk.CTkButton(self.sidebar_frame, text="2. Ingesta dinámica", command=self.run_ingest,
+        self.btn_setup = ctk.CTkButton(self.init_frame, text="1. Inicializar",
+                                       command=self.run_setup, fg_color="#333333", hover_color="#555555", font=ctk.CTkFont(size=13))
+        self.btn_setup.grid(row=0, column=1, padx=(5, 0), sticky="ew")
+
+        self.btn_ingest = ctk.CTkButton(self.sidebar_frame, text="2. Nuevo entrenamiento", command=self.run_ingest,
                                         fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold"))
-        self.btn_ingest.grid(row=4, column=0, padx=20, pady=10, sticky="ew")
+        self.btn_ingest.grid(row=3, column=0, padx=20, pady=10, sticky="ew")
 
-        self.btn_train = ctk.CTkButton(self.sidebar_frame, text="3. Entrenamiento lógico", command=self.run_train,
+        self.btn_train = ctk.CTkButton(self.sidebar_frame, text="3. Entrenar modelo", command=self.run_train,
                                        fg_color="#F57C00", hover_color="#E65100", font=ctk.CTkFont(size=14, weight="bold"))
-        self.btn_train.grid(row=5, column=0, padx=20, pady=10, sticky="ew")
+        self.btn_train.grid(row=4, column=0, padx=20, pady=10, sticky="ew")
 
         self.btn_test = ctk.CTkButton(self.sidebar_frame, text="4. Probar modelo / visión", command=self.run_infer,
                                       fg_color="#7B1FA2", hover_color="#4A148C", font=ctk.CTkFont(size=14, weight="bold"))
-        self.btn_test.grid(row=6, column=0, padx=20, pady=10, sticky="ew")
+        self.btn_test.grid(row=5, column=0, padx=20, pady=10, sticky="ew")
 
         self.btn_optimize = ctk.CTkButton(self.sidebar_frame, text="5. Optimizar (NCNN/TF)", command=self.run_optimize,
                                           fg_color="#E040FB", hover_color="#AA00FF", font=ctk.CTkFont(size=14, weight="bold"))
-        self.btn_optimize.grid(row=7, column=0, padx=20, pady=10, sticky="ew")
+        self.btn_optimize.grid(row=6, column=0, padx=20, pady=10, sticky="ew")
 
         self.btn_deploy = ctk.CTkButton(self.sidebar_frame, text="6. Enviar a Raspberry Pi", command=self.run_deploy,
                                         fg_color="#00897B", hover_color="#00695C", font=ctk.CTkFont(size=14, weight="bold"))
-        self.btn_deploy.grid(row=8, column=0, padx=20, pady=10, sticky="ew")
+        self.btn_deploy.grid(row=7, column=0, padx=20, pady=10, sticky="ew")
 
         path_icono_central = "icono_central.png"
         if os.path.exists(path_icono_central):
@@ -138,7 +143,7 @@ class MLOpsPanel(ctk.CTk):
                 img_ic = Image.open(path_icono_central)
                 img_ic_ctk = ctk.CTkImage(light_image=img_ic, dark_image=img_ic, size=(100, 100))
                 self.icono_label = ctk.CTkLabel(self.sidebar_frame, text="", image=img_ic_ctk)
-                self.icono_label.grid(row=9, column=0, padx=20, pady=(10, 10), sticky="s")
+                self.icono_label.grid(row=8, column=0, padx=20, pady=(10, 10), sticky="s")
             except Exception:
                 pass
 
@@ -146,11 +151,11 @@ class MLOpsPanel(ctk.CTk):
         self.switch_var = ctk.StringVar(value="on")
         self.switch_theme = ctk.CTkSwitch(self.sidebar_frame, text="Modo Oscuro",
                                           command=self.toggle_appearance_mode, variable=self.switch_var, onvalue="on", offvalue="of")
-        self.switch_theme.grid(row=10, column=0, padx=20, pady=(0, 10), sticky="s")
+        self.switch_theme.grid(row=9, column=0, padx=20, pady=(0, 10), sticky="s")
 
         self.lbl_hardware = ctk.CTkLabel(self.sidebar_frame, text="Controlador NVIDIA activo",
                                          font=ctk.CTkFont(size=11), text_color="#A5D6A7")
-        self.lbl_hardware.grid(row=11, column=0, padx=20, pady=(0, 20), sticky="s")
+        self.lbl_hardware.grid(row=10, column=0, padx=20, pady=(0, 20), sticky="s")
 
         # ---------------- PANEL PRINCIPAL (CONSOLA) ----------------
         self.main_frame = ctk.CTkFrame(self, corner_radius=10, fg_color="transparent")
@@ -226,15 +231,15 @@ class MLOpsPanel(ctk.CTk):
         threading.Thread(target=task, daemon=True).start()
 
     def run_reset_all(self):
-        respuesta = messagebox.askyesno(
+        respuesta = messagebox.askyesnocancel(
             "PELIGRO: BORRADO MASIVO",
             "Estás a punto de ELIMINAR permanentemente:\n"
             "- Todas las fotos y videos capturados\n"
-            "- Todos los modelos de IA entrenados en la historia\n"
+            "- Todas los modelos de IA entrenados en la historia\n"
             "- El archivo de configuración de servos\n\n"
             "¿Deseás REINICIAR LA MEMORIA VIRTUAL para un proyecto nuevo?"
         )
-        if not respuesta:
+        if not respuesta or respuesta is None:
             return
 
         self.log("\n[FORMATEO] Eliminando archivos antiguos de la IA...")
@@ -279,14 +284,17 @@ class MLOpsPanel(ctk.CTk):
                     except Exception:
                         pass
 
-        self.log("\n[SISTEMA LIMPIO] Memoria totalmente limpia.\n>>> AHORA PRESIONÁ EN: '1. Inicializar variables'.")
+        self.log("\n[SISTEMA LIMPIO] Memoria totalmente limpia.\n>>> AHORA PRESIONÁ EN: '1. Inicializar'.")
 
     def run_setup(self):
         self.run_subprocess([self.python_exe, "1_setup_vacio.py"])
 
     def run_ingest(self):
-        usar_webcam = messagebox.askyesno(
+        usar_webcam = messagebox.askyesnocancel(
             "Fuente de ingreso", "¿Deseás habilitar la CÁMARA WEB para grabar el objeto en tiempo real?\n\n- SÍ = Modo cámara en vivo\n- NO = Cargar archivo manual (.mp4)")
+
+        if usar_webcam is None:  # X o Cancel
+            return
 
         if usar_webcam:
             video_path = "webcam"
@@ -311,21 +319,25 @@ class MLOpsPanel(ctk.CTk):
             self.log("\n[ABORTADO] No se asignó un servo al objeto.")
             return
 
-        es_limpio = messagebox.askyesno(
+        es_limpio = messagebox.askyesnocancel(
             "Memoria IA", "El modelo tiene información anterior.\n\n¿Deseás REINICIAR LA MEMORIA VIRTUAL y comenzar la IA 100% desde cero?\n\n- SÍ = Resetear base de datos\n- NO = Anexar conocimientos")
+        if es_limpio is None:
+            return
         opcion = "b" if es_limpio else "a"
 
         self.log("\n >>> Lanzando interfaz de mapeo... Si usas cámara, mira la ventana emergente.")
         self.run_subprocess([self.python_exe, "2_procesar_video.py", video_path, categoria, opcion, servo_id])
 
     def run_train(self):
-        respuesta = messagebox.askyesno(
+        respuesta = messagebox.askyesnocancel(
             "Protocolo de Entrenamiento",
             "Atención: Se transferirá todo el procesamiento lógico a tu GPU NVIDIA RTX 2060.\n\n"
             "¿Deseas aplicar Transfer Learning sobre tu modelo viejo?\n\n"
             "- SÍ: Evolución Continua (Actualiza el modelo).\n"
             "- NO: Red Neuronal limpia."
         )
+        if respuesta is None:
+            return
         modo = "finetune" if respuesta else "scratch"
         self.run_subprocess([self.python_exe, "3_entrenar_modelo.py", modo])
 
@@ -346,10 +358,12 @@ class MLOpsPanel(ctk.CTk):
             latest = pt_files[0]
 
             # Auto-Detectado
-            respuesta = messagebox.askyesno(
+            respuesta = messagebox.askyesnocancel(
                 "Historial de inteligencia artificial",
                 f"El sistema ha localizado el último cerebro entrenado hace poco en:\n...{latest[-50:]}\n\n¿Querés encender la cámara con este modelo?\n\n- SÍ = Extraer historial automático\n- NO = Cargar un modelo viejo manualmente."
             )
+            if respuesta is None:
+                return
             if respuesta:
                 modelo_path = latest
 
@@ -379,8 +393,10 @@ class MLOpsPanel(ctk.CTk):
             pt_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
             latest = pt_files[0]
 
-            respuesta = messagebox.askyesno(
+            respuesta = messagebox.askyesnocancel(
                 "Optimizar Modelo", f"Se detectó tu último modelo PyTorch:\n...{latest[-50:]}\n\n¿Quieres usar este base?\n\n- SÍ = Autodetectado\n- NO = Seleccionar manualmente.")
+            if respuesta is None:
+                return
             if respuesta:
                 modelo_path = latest
 
