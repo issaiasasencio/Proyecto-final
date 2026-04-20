@@ -7,17 +7,17 @@ if __name__ == "__main__":
         print("ERROR: Faltan argumentos.")
         print("Uso: python 5_optimizar_modelo.py <ruta_modelo.pt> <formato: ncnn o tflite>")
         sys.exit(1)
-        
+
     modelo_path = sys.argv[1]
     formato = sys.argv[2]
-    
-    print(f"\n[OPTIMIZACIÓN EDGE]")
+
+    print("\n[OPTIMIZACIÓN EDGE]")
     print(f"⚙️ Cargando modelo base de PyTorch: {os.path.basename(modelo_path)}")
     model = YOLO(modelo_path)
-    
+
     print(f"🚀 Iniciando exportación a formato '{formato.upper()}' para Raspberry Pi...")
     print("Nota: La primera vez que exportes a un formato estructurado como NCNN puede tardar un poco mientras configura ONNX.")
-    
+
     try:
         # Exportar el modelo. Ultralytics manejará todo el backend pesado
         path_exportado = model.export(format=formato)

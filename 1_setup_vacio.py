@@ -1,6 +1,7 @@
 import os
 import yaml
 
+
 def setup_project():
     """Inicializa la estructura de carpetas y crea el data.yaml base."""
     # Definir la estructura base de carpetas
@@ -21,7 +22,7 @@ def setup_project():
 
     # Configuración inicial para el archivo data.yaml
     yaml_path = os.path.join(base_dir, "dataset", "data.yaml")
-    
+
     # Este será nuestro archivo "pelado"
     yaml_content = {
         'train': 'images/train',
@@ -33,10 +34,11 @@ def setup_project():
     # Crear y guardar el archivo data.yaml
     with open(yaml_path, 'w', encoding='utf-8') as f:
         yaml.dump(yaml_content, f, default_flow_style=False, sort_keys=False)
-    
+
     # Confirmación final en consola
     print(f"Archivo generado exitosamente: {yaml_path}")
     print("Estructura inicializada correctamente. ¡El sistema está listo para empezar!")
+
 
 if __name__ == "__main__":
     setup_project()

@@ -18,6 +18,7 @@ servos = [servo0, servo1, servo2, servo3]
 # 3: servo3 (Categoría 3 - metal)
 class_to_servo = {0: servo0, 1: servo1, 2: servo2, 3: servo3}
 
+
 def activate_servo(servo, open_position=0.25, close_position=0):  # 0.25 ~ 45°, 0 ~ 0°
     print(f"Abriendo servo a {open_position} (45°)...")
     servo.value = open_position
@@ -25,6 +26,7 @@ def activate_servo(servo, open_position=0.25, close_position=0):  # 0.25 ~ 45°,
     print(f"Cerrando servo a {close_position} (0°)...")
     servo.value = close_position
     time.sleep(1)  # Estabilizar
+
 
 # Paso 2: Cargar el modelo entrenado
 # Elige qué modelo quieres usar cambiando el nombre del archivo.
@@ -56,7 +58,7 @@ while True:
     # Dibujar las cajas y etiquetas en el fotograma
     for r in results:
         annotated_frame = r.plot()
-        
+
         if r.boxes is not None:
             for box in r.boxes:
                 cls = int(box.cls.item())

@@ -11,6 +11,7 @@ if sys.stdout.encoding.lower() != 'utf-8':
     except AttributeError:
         pass
 
+
 def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
     # =========================================================================
     # ¡IMPORTANTE! EDITA ESTAS CREDENCIALES CON LOS DATOS DE TU RASPBERRY PI
@@ -19,12 +20,12 @@ def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
     usuario = 'pi'                  # <-- Modifica si no usas 'pi'
     contrasena = '12345678'        # <-- Modifica con tu contraseña real
     # =========================================================================
-    
-    print(f"\n[TRANSFERENCIA EDGE]")
+
+    print("\n[TRANSFERENCIA EDGE]")
     print(f"📡 Intentando conectar con {ip_raspberry}...")
 
     ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy()) 
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     try:
         # Timeout de 5 segundos para que te des cuenta rápido si la IP está mal
@@ -33,18 +34,18 @@ def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
 
         # Nos aseguramos de que el directorio remoto exista
         ssh.exec_command(f"mkdir -p {ruta_destino_pi}")
-        
+
         nombre_archivo = os.path.basename(ruta_modelo_pc)
         print(f"📤 Inicializando protocolo de transferencia para [{nombre_archivo}]")
         print("⏳ Subiendo el cerebro a la Raspberry Pi... Por favor esperá.")
-        
+
         # Iniciar cronómetro simple
         inicio = time.time()
-        
+
         with SCPClient(ssh.get_transport()) as scp:
             # recursive=True permite enviar carpetas enteras (ej. formato NCNN) o archivos
             scp.put(ruta_modelo_pc, remote_path=ruta_destino_pi, recursive=True)
-            
+
             # NUEVO: Enviar archivo de configuración JSON para los Servos
             mapping_local = os.path.join(os.getcwd(), "Proyecto_Cinta", "dataset", "servo_mapping.json")
             if os.path.exists(mapping_local):
@@ -52,7 +53,7 @@ def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
                 scp.put(mapping_local, remote_path=ruta_destino_pi)
             else:
                 print("⚠️ Aviso: No se encontró servo_mapping.json para enviar.")
-            
+
         duracion = round(time.time() - inicio, 1)
         print(f"📦 ¡Carga exitosa! Archivo subido en {duracion} segundos.")
         print(f"Ruta remota: {ruta_destino_pi}{nombre_archivo}")
@@ -69,16 +70,17 @@ def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
         ssh.close()
         print("🔌 Canal de comunicación cerrado de forma segura.")
 
+
 if __name__ == "__main__":
     # Obtenemos la ruta del modelo seleccionada en el Panel de Control
     if len(sys.argv) < 2:
         print("FATAL: No se proporcionó la ruta del modelo.")
         sys.exit(1)
-        
+
     modelo_generado = sys.argv[1]
-    
+
     # La carpeta dentro de tu Raspberry donde van a vivir los modelos
     # Debe terminar con / para asegurar que entra en el directorio
     carpeta_en_pi = "/home/pi/Desktop/Deteccion/Modelos/"
-    
+
     enviar_modelo_a_raspberry(modelo_generado, carpeta_en_pi)
