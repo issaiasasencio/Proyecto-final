@@ -495,19 +495,37 @@ class SettingsDialog(ctk.CTkToplevel):
         self.conf_slider.set(self.parent.engine.conf_threshold)
         self.conf_slider.pack(pady=5, padx=20, fill="x")
         
-        # Forzar foco y captura de eventos para entornos VNC
-        self.grab_set()
-        self.focus_set()
-
-        # Belt Speed
-        ctk.CTkLabel(self, text="Velocidad Transportadora:").pack(pady=(20, 0))
-        self.speed_entry = ctk.CTkEntry(self, placeholder_text="0.07")
-        self.speed_entry.insert(0, str(self.parent.engine.VELOCIDAD_CINTA))
-        self.speed_entry.pack(pady=5)
+        # Velocidad de la Cinta (Dinámica)
+        self.lbl_speed_val = ctk.CTkLabel(
+            self, text=f"Velocidad Transportadora: {self.parent.engine.VELOCIDAD_CINTA:.2f}"
+        )
+        self.lbl_speed_val.pack(pady=(20, 0))
+        
+        self.speed_slider = ctk.CTkSlider(
+            self, from_=0.01, to=0.30, command=self.update_speed
+        )
+        self.speed_slider.set(self.parent.engine.VELOCIDAD_CINTA)
+        self.speed_slider.pack(pady=5, padx=20, fill="x")
 
         ctk.CTkButton(
-            self, text="Guardar y Aplicar", fg_color="#2E7D32", command=self.apply
+            self, text="Cerrar Ajustes", fg_color="#2E7D32", command=self.apply
         ).pack(pady=30)
+        
+        # Forzar foco y captura de eventos de forma segura (con pequeño delay)
+        # Esto previene el TclError si la ventana aun no es "viewable"
+        self.after(200, self.safe_grab)
+
+    def safe_grab(self):
+        try:
+            self.grab_set()
+            self.focus_set()
+        except Exception: # noqa: BLE001
+            pass
+
+    def update_speed(self, val):
+        self.lbl_speed_val.configure(text=f"Velocidad Transportadora: {val:.2f}")
+        self.parent.engine.VELOCIDAD_CINTA = val
+        self.parent.config_data["belt_speed"] = val
 
     def update_conf(self, val):
         self.lbl_conf_val.configure(text=f"Umbral de Confianza: {val:.2f}")
@@ -515,14 +533,8 @@ class SettingsDialog(ctk.CTkToplevel):
         self.parent.config_data["confidence"] = val
 
     def apply(self):
-        try:
-            speed = float(self.speed_entry.get())
-            self.parent.engine.VELOCIDAD_CINTA = speed
-            self.parent.config_data["belt_speed"] = speed
-            self.parent.save_config()
-            self.destroy()
-        except Exception:  # noqa: BLE001
-            messagebox.showerror("Error", "Valor de velocidad inválido")
+        self.parent.save_config()
+        self.destroy()
 
 
 class HistoryDialog(ctk.CTkToplevel):
