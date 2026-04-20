@@ -1,8 +1,6 @@
 import cv2
 import time
 import serial
-import json
-import os
 import threading
 from collections import deque
 from ultralytics import YOLO
@@ -32,6 +30,10 @@ class VideoGet:
         self.stream.release()
 
 class ScannerEngine:
+    def __init__(self, model_path, arduino_port='/dev/ttyUSB0', baudrate=115200):
+        # Configuracion de limites y parametros
+        self.Y_LIMITE_SUP = 90
+        self.Y_LIMITE_INF = 400
         self.X_CINTA_IZQ = 100
         self.X_CINTA_DER = 540
         self.DISTANCIAS = {"1": 0.20, "2": 0.20, "3": 0.45, "4": 0.45}
@@ -84,7 +86,8 @@ class ScannerEngine:
         self.mapa_categorias = {str(k).lower(): str(v) for k, v in mapping_dict.items()}
 
     def start(self, frame_callback):
-        if self.running: return
+        if self.running: 
+            return
         self.running = True
         self.video_getter = VideoGet(src=0).start()
         self.thread = threading.Thread(target=self._loop, args=(frame_callback,), daemon=True)
@@ -106,7 +109,7 @@ class ScannerEngine:
             try:
                 self.arduino.write(f"{servo_id}\n".encode('utf-8'))
                 return True
-            except:
+            except Exception:
                 self.arduino_ready = False
                 return False
         return False
@@ -165,7 +168,8 @@ class ScannerEngine:
                     if self.arduino and self.arduino.is_open:
                         try:
                             self.arduino.write(f"{evento['letra']}\n".encode('utf-8'))
-                        except: pass
+                        except Exception:
+                            pass
                 else:
                     break
 
@@ -180,7 +184,9 @@ if __name__ == "__main__":
         engine.start(lambda f: cv2.imshow("FLEX-SORT RPI", f))
         try:
             while True: 
-                if cv2.waitKey(1) & 0xFF == ord('q'): break
+                if cv2.waitKey(1) & 0xFF == ord('q'): 
+                    break
                 time.sleep(0.01)
-        except KeyboardInterrupt: pass
+        except KeyboardInterrupt: 
+            pass
         engine.stop()

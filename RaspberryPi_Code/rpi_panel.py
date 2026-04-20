@@ -209,14 +209,19 @@ class RPiOperatorPanel(ctk.CTk):
                     if f.endswith(".pt") or f.endswith("_ncnn_model") or f.endswith(".json") and f != "servo_mapping.json":
                         path = os.path.join(self.modelos_dir, f)
                         try:
-                            if os.path.isdir(path): shutil.rmtree(path)
-                            else: os.remove(path)
-                        except: pass
+                            if os.path.isdir(path): 
+                                shutil.rmtree(path)
+                            else: 
+                                os.remove(path)
+                        except Exception: 
+                            pass
             
             # Eliminar mapeo
             if os.path.exists(self.mapping_path):
-                try: os.remove(self.mapping_path)
-                except: pass
+                try: 
+                    os.remove(self.mapping_path)
+                except Exception: 
+                    pass
                 
             self.engine.set_mapping({}) # Vaciar mapeo en RAM
             self.update_servo_assignments()
@@ -252,7 +257,8 @@ class RPiOperatorPanel(ctk.CTk):
         for lbl in self.assignment_labels:
             lbl.configure(text="(Sin asignar)", text_color="#AAAAAA")
             
-        if not self.engine.model: return
+        if not self.engine.model: 
+            return
 
         # Revertir el mapa: Categoría -> Servo
         # self.engine.mapa_categorias es { "id_objeto": "id_servo" }
@@ -265,7 +271,7 @@ class RPiOperatorPanel(ctk.CTk):
                 s_idx = int(servo_id) - 1
                 if 0 <= s_idx < 4:
                     self.assignment_labels[s_idx].configure(text=name, text_color="#1E88E5")
-            except:
+            except Exception:
                 pass
 
     def check_sync_loop(self):
@@ -275,7 +281,8 @@ class RPiOperatorPanel(ctk.CTk):
                     data = json.load(f)
                     txt = f"Fecha: {data['fecha']}\nModelo: {data['modelo']}"
                     self.lbl_sync_info.configure(text=txt, text_color="#A5D6A7")
-            except: pass
+            except Exception: 
+                pass
         self.after(5000, self.check_sync_loop)
 
     def update_stats_loop(self):
@@ -284,7 +291,8 @@ class RPiOperatorPanel(ctk.CTk):
             with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
                 t = int(f.read()) / 1000
                 self.lbl_temp.configure(text=f"Temp: {t:.1f}°C", text_color="#F44336" if t > 70 else "#AAAAAA")
-        except: pass
+        except Exception: 
+            pass
 
         # CPU y RAM RPi
         try:
@@ -304,7 +312,8 @@ class RPiOperatorPanel(ctk.CTk):
             used = total - free - buffers - cached
             ram_pct = (used / total) * 100
             self.lbl_ram.configure(text=f"RAM: {ram_pct:.1f}%")
-        except: pass
+        except Exception: 
+            pass
         
         # Arduino Status
         if self.engine.is_arduino_connected():
@@ -363,7 +372,7 @@ class SettingsDialog(ctk.CTkToplevel):
             self.parent.config_data["belt_speed"] = speed
             self.parent.save_config()
             self.destroy()
-        except:
+        except Exception:
             messagebox.showerror("Error", "Valor de velocidad inválido")
 
 class HistoryDialog(ctk.CTkToplevel):
@@ -397,7 +406,8 @@ class HistoryDialog(ctk.CTkToplevel):
                 try:
                     with open(meta_path, "r", encoding="utf-8") as f:
                         meta_info = json.load(f)
-                except: pass
+                except Exception: 
+                    pass
             
             # Timestamp para ordenar (prioridad al del JSON, sino fecha archivo)
             try:
@@ -406,7 +416,7 @@ class HistoryDialog(ctk.CTkToplevel):
                     ts = time.mktime(time.strptime(date_str, "%d/%m/%Y %H:%M:%S"))
                 else:
                     ts = os.path.getmtime(m_path)
-            except:
+            except Exception:
                 ts = os.path.getmtime(m_path)
             
             model_data_list.append({
@@ -444,6 +454,7 @@ class HistoryDialog(ctk.CTkToplevel):
             details = ctk.CTkFrame(f, fg_color="transparent")
             details.pack(fill="x", padx=15, pady=5)
             
+            fecha = meta.get("fecha", time.strftime("%d/%m/%y %H:%M", time.localtime(data["timestamp"])))
             ctk.CTkLabel(details, text=f"Fecha: {fecha}", font=ctk.CTkFont(size=10), text_color="#888888").pack(anchor="w")
             
             objs = meta.get("objetos", [])
@@ -462,19 +473,21 @@ class HistoryDialog(ctk.CTkToplevel):
                     color = "#4CAF50" if score > 0.8 else "#FFC107" if score > 0.5 else "#F44336"
                     score_txt = f"{score*100:.1f}%" if score <= 1.0 else f"{score:.1f}"
                     ctk.CTkLabel(details, text=f"Precision: {score_txt}", font=ctk.CTkFont(size=11, weight="bold"), text_color=color).pack(anchor="w")
-                except:
+                except Exception:
                     ctk.CTkLabel(details, text=f"Precision: {acc}", font=ctk.CTkFont(size=11)).pack(anchor="w")
 
     def activate(self, model_name):
         full_path = os.path.join(self.parent.modelos_dir, model_name)
         was_running = self.parent.engine.running
-        if was_running: self.parent.engine.stop()
+        if was_running: 
+            self.parent.engine.stop()
         
         self.parent.engine.model_path = full_path
         self.parent.config_data["active_model"] = full_path
         self.parent.save_config()
         
-        if was_running: self.parent.toggle_scanner() # Reiniciar
+        if was_running: 
+            self.parent.toggle_scanner() # Reiniciar
         self.destroy()
         messagebox.showinfo("Modelo Cambiado", f"Se ha activado: {model_name}")
 
