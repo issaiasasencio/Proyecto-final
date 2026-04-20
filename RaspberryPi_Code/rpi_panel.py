@@ -16,7 +16,7 @@ ctk.set_default_color_theme("blue")
 class RPiOperatorPanel(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("FLEX-SORT | Operator Dashboard (Raspberry Pi 5)")
+        self.title("FLEX-SORT | Panel de Operacion (Raspberry Pi 5)")
         
         # Dimensiones para Raspberry Pi (VNC u Monitor HDMI)
         self.geometry("1024x720")
@@ -47,6 +47,10 @@ class RPiOperatorPanel(ctk.CTk):
         self.grid_columnconfigure(1, weight=3)
 
         self.setup_ui()
+        
+        # Intentar conectar hardware desde el arranque
+        threading.Thread(target=self.engine.load_resources, daemon=True).start()
+        
         self.update_stats_loop()
         self.check_sync_loop()
 
@@ -66,8 +70,15 @@ class RPiOperatorPanel(ctk.CTk):
             self.logo = ctk.CTkLabel(self.header, text="FLEX-SORT", font=ctk.CTkFont(size=24, weight="bold"))
             self.logo.pack(side="left", padx=20)
 
-        self.status_indicator = ctk.CTkLabel(self.header, text="● SISTEMA LISTO", text_color="#4CAF50", font=ctk.CTkFont(weight="bold"))
+        self.status_indicator = ctk.CTkLabel(self.header, text="SISTEMA LISTO", text_color="#4CAF50", font=ctk.CTkFont(weight="bold"))
         self.status_indicator.pack(side="right", padx=20)
+
+        # Botón Configuración (Engranaje)
+        conf_path = os.path.join(self.recursos_dir, "config_icon.png")
+        if os.path.exists(conf_path):
+            img_c = ctk.CTkImage(Image.open(conf_path), size=(26, 26))
+            self.btn_conf = ctk.CTkButton(self.header, text="", image=img_c, width=40, fg_color="transparent", hover_color="#333333", command=self.open_settings)
+            self.btn_conf.pack(side="right", padx=5)
 
         # Botón Historial (Reloj)
         hist_path = os.path.join(self.recursos_dir, "history_icon.png")
@@ -76,12 +87,9 @@ class RPiOperatorPanel(ctk.CTk):
             self.btn_hist = ctk.CTkButton(self.header, text="", image=img_h, width=40, fg_color="transparent", hover_color="#333333", command=self.open_history)
             self.btn_hist.pack(side="right", padx=5)
 
-        # Botón Configuración (Engranaje)
-        conf_path = os.path.join(self.recursos_dir, "config_icon.png")
-        if os.path.exists(conf_path):
-            img_c = ctk.CTkImage(Image.open(conf_path), size=(26, 26))
-            self.btn_conf = ctk.CTkButton(self.header, text="", image=img_c, width=40, fg_color="transparent", hover_color="#333333", command=self.open_settings)
-            self.btn_conf.pack(side="right", padx=5)
+        # Botón Factory Reset
+        self.btn_reset = ctk.CTkButton(self.header, text="RESET", width=60, fg_color="#b71c1c", hover_color="#d32f2f", command=self.confirm_reset)
+        self.btn_reset.pack(side="right", padx=15)
 
         # ---------------- SIDEBAR (CONTROLES) ----------------
         self.sidebar = ctk.CTkFrame(self, width=250, corner_radius=0)
@@ -100,10 +108,22 @@ class RPiOperatorPanel(ctk.CTk):
         self.lbl_sync_info = ctk.CTkLabel(self.sync_frame, text="Sincronizando...", font=ctk.CTkFont(size=10), text_color="#AAAAAA")
         self.lbl_sync_info.pack(pady=5)
 
-        # Monitor RPi
-        ctk.CTkLabel(self.sidebar, text="SALUD RASPBERRY PI 5", font=ctk.CTkFont(size=11, weight="bold")).pack(pady=(20,5))
+        # Monitor Hardware
+        self.hw_frame = ctk.CTkFrame(self.sidebar, fg_color="transparent")
+        self.hw_frame.pack(pady=(20, 5), padx=20, fill="x")
+        ctk.CTkLabel(self.hw_frame, text="ESTADO HARDWARE", font=ctk.CTkFont(size=11, weight="bold"), text_color="#1E88E5").pack(anchor="center")
+        
+        self.lbl_arduino_status = ctk.CTkLabel(self.hw_frame, text="Arduino: DESCONECTADO", font=ctk.CTkFont(size=11), text_color="#F44336")
+        self.lbl_arduino_status.pack(anchor="center")
+
         self.lbl_temp = ctk.CTkLabel(self.sidebar, text="Temp: --°C")
-        self.lbl_temp.pack()
+        self.lbl_temp.pack(anchor="center")
+        
+        self.lbl_cpu = ctk.CTkLabel(self.sidebar, text="CPU: --%", text_color="#AAAAAA")
+        self.lbl_cpu.pack(anchor="center")
+        
+        self.lbl_ram = ctk.CTkLabel(self.sidebar, text="RAM: --%", text_color="#AAAAAA")
+        self.lbl_ram.pack(anchor="center")
         
         # ---------------- MAIN (VISIÓN) ----------------
         self.main_view = ctk.CTkFrame(self, corner_radius=10, fg_color="#000000")
@@ -113,12 +133,12 @@ class RPiOperatorPanel(ctk.CTk):
         self.video_label.pack(expand=True, fill="both")
 
         # ---------------- FOOTER (SERVO HUB) ----------------
-        self.footer = ctk.CTkFrame(self, height=120, fg_color="transparent")
-        self.footer.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=10)
+        self.footer = ctk.CTkFrame(self, height=140, fg_color="transparent")
+        self.footer.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
         
         self.servo_labels = []
         for i in range(1, 5):
-            f = ctk.CTkFrame(self.footer, height=110, border_width=2, border_color="#333333")
+            f = ctk.CTkFrame(self.footer, height=130, border_width=2, border_color="#333333")
             f.pack(side="left", padx=10, expand=True, fill="x")
             f.pack_propagate(False)
             ctk.CTkLabel(f, text=f"SERVO {i}", font=ctk.CTkFont(size=12, weight="bold")).pack(pady=(8,2))
@@ -127,8 +147,13 @@ class RPiOperatorPanel(ctk.CTk):
             lbl_asig.pack()
             self.assignment_labels.append(lbl_asig)
 
+            # Botón de Prueba Manual (Centrado y más ancho)
+            btn_test = ctk.CTkButton(f, text="TEST", width=100, height=24, font=ctk.CTkFont(size=11, weight="bold"), 
+                                    fg_color="#333333", hover_color="#444444", command=lambda x=i: self.test_servo(x))
+            btn_test.pack(pady=(5,0), anchor="center")
+
             lbl_status = ctk.CTkLabel(f, text="LIBRE", text_color="#666666", font=ctk.CTkFont(size=16, weight="bold"))
-            lbl_status.pack(pady=5)
+            lbl_status.pack(pady=(5,8), anchor="center")
             self.servo_labels.append(lbl_status)
 
     def toggle_scanner(self):
@@ -142,13 +167,13 @@ class RPiOperatorPanel(ctk.CTk):
                 self.update_servo_assignments()
                 self.btn_power.configure(text="DETENER SCANNER", fg_color="#D32F2F", hover_color="#C62828")
                 self.engine.start(self.update_video_frame)
-                self.status_indicator.configure(text="● ESCANEANDO", text_color="#1E88E5")
+                self.status_indicator.configure(text="ESCANEANDO", text_color="#1E88E5")
             else:
                 messagebox.showerror("Error", self.engine.status_msg)
         else:
             self.engine.stop()
             self.btn_power.configure(text="ENCENDER SCANNER", fg_color="#2E7D32", hover_color="#1B5E20")
-            self.status_indicator.configure(text="● SISTEMA LISTO", text_color="#4CAF50")
+            self.status_indicator.configure(text="SISTEMA LISTO", text_color="#4CAF50")
             self.video_label.configure(image="")
 
     def load_config(self):
@@ -166,6 +191,52 @@ class RPiOperatorPanel(ctk.CTk):
 
     def open_history(self):
         HistoryDialog(self)
+
+    def confirm_reset(self):
+        res = messagebox.askyesno("Reset de Fabrica", "ESTA SEGURO que desea ELIMINAR todos los entrenamientos, modelos y configuracion de servos?\n\nEsta accion dejara la placa como nueva y no se puede deshacer.", parent=self)
+        if res:
+            self.status_indicator.configure(text="FORMATEANDO...", text_color="#F44336")
+            self.update()
+            
+            if self.engine.running:
+                self.engine.stop()
+            
+            time.sleep(0.5)
+            # Eliminar todos los modelos (*.pt y *_ncnn_model)
+            if os.path.exists(self.modelos_dir):
+                import shutil
+                for f in os.listdir(self.modelos_dir):
+                    if f.endswith(".pt") or f.endswith("_ncnn_model") or f.endswith(".json") and f != "servo_mapping.json":
+                        path = os.path.join(self.modelos_dir, f)
+                        try:
+                            if os.path.isdir(path): shutil.rmtree(path)
+                            else: os.remove(path)
+                        except: pass
+            
+            # Eliminar mapeo
+            if os.path.exists(self.mapping_path):
+                try: os.remove(self.mapping_path)
+                except: pass
+                
+            self.engine.set_mapping({}) # Vaciar mapeo en RAM
+            self.update_servo_assignments()
+            
+            messagebox.showinfo("Reset Exitoso", "El sistema ha sido purgado correctamente.", parent=self)
+            self.status_indicator.configure(text="● SISTEMA LISTO", text_color="#4CAF50")
+
+    def test_servo(self, servo_id):
+        """Envía un pulso de prueba al servo sin necesidad de que el scanner esté prendido."""
+        # Intentar conectar si no lo está
+        if not self.engine.arduino_ready:
+            self.engine.load_resources()
+            
+        if self.engine.send_manual_cmd(str(servo_id)):
+            # Feedback visual momentáneo
+            idx = servo_id - 1
+            self.servo_labels[idx].configure(text="TESTING", text_color="#F57C00")
+            self.after(1000, lambda: self.servo_labels[idx].configure(text="LIBRE", text_color="#666666"))
+        else:
+            messagebox.showwarning("Hardware", f"No se pudo enviar comando al Servo {servo_id}. Verifique la conexion del Arduino.")
 
     def update_video_frame(self, frame):
         # Convertir a imagen de Tkinter
@@ -214,7 +285,33 @@ class RPiOperatorPanel(ctk.CTk):
                 t = int(f.read()) / 1000
                 self.lbl_temp.configure(text=f"Temp: {t:.1f}°C", text_color="#F44336" if t > 70 else "#AAAAAA")
         except: pass
+
+        # CPU y RAM RPi
+        try:
+            # CPU
+            load1, _, _ = os.getloadavg()
+            cpu_cores = os.cpu_count() or 4
+            cpu_pct = min(100.0, (load1 / cpu_cores) * 100)
+            self.lbl_cpu.configure(text=f"CPU: {cpu_pct:.1f}%")
+            
+            # RAM
+            with open('/proc/meminfo', 'r') as f:
+                lines = f.readlines()
+            total = int(lines[0].split()[1])
+            free = int(lines[1].split()[1])
+            buffers = int(lines[3].split()[1])
+            cached = int(lines[4].split()[1])
+            used = total - free - buffers - cached
+            ram_pct = (used / total) * 100
+            self.lbl_ram.configure(text=f"RAM: {ram_pct:.1f}%")
+        except: pass
         
+        # Arduino Status
+        if self.engine.is_arduino_connected():
+            self.lbl_arduino_status.configure(text="Arduino: CONECTADO", text_color="#4CAF50")
+        else:
+            self.lbl_arduino_status.configure(text="Arduino: DESCONECTADO", text_color="#F44336")
+
         # Servo Status based on queue
         if self.engine.running:
             occupied = [False]*4
@@ -222,7 +319,7 @@ class RPiOperatorPanel(ctk.CTk):
                 idx = int(e['letra']) - 1
                 if 0 <= idx < 4:
                     occupied[idx] = True
-                    self.servo_labels[idx].configure(text="¡OCUPADO!", text_color="#F57C00")
+                    self.servo_labels[idx].configure(text="OCUPADO", text_color="#F57C00")
             
             for index, is_occ in enumerate(occupied):
                 if not is_occ:
@@ -239,7 +336,7 @@ class SettingsDialog(ctk.CTkToplevel):
         self.attributes("-topmost", True)
         self.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(self, text="⚙️ CONFIGURACIÓN LOCAL", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=20)
+        ctk.CTkLabel(self, text="CONFIGURACION LOCAL", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=20)
         
         # Confidence
         ctk.CTkLabel(self, text=f"Umbral de Confianza: {self.parent.engine.conf_threshold:.2f}").pack(pady=(10,0))
@@ -274,10 +371,10 @@ class HistoryDialog(ctk.CTkToplevel):
         super().__init__(parent)
         self.parent = parent
         self.title("Historial de Modelos")
-        self.geometry("600x650") # Más ancho para los detalles
+        self.geometry("600x650") # Mas ancho para los detalles
         self.attributes("-topmost", True)
         
-        ctk.CTkLabel(self, text="📚 HISTORIAL DE CEREBROS", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=20)
+        ctk.CTkLabel(self, text="HISTORIAL DE CEREBROS", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=20)
         
         self.scroll = ctk.CTkScrollableFrame(self)
         self.scroll.pack(fill="both", expand=True, padx=20, pady=10)
@@ -347,8 +444,7 @@ class HistoryDialog(ctk.CTkToplevel):
             details = ctk.CTkFrame(f, fg_color="transparent")
             details.pack(fill="x", padx=15, pady=5)
             
-            fecha = meta.get("fecha", time.strftime("%d/%m/%y %H:%M", time.localtime(data["timestamp"])))
-            ctk.CTkLabel(details, text=f"📅 {fecha}", font=ctk.CTkFont(size=10), text_color="#888888").pack(anchor="w")
+            ctk.CTkLabel(details, text=f"Fecha: {fecha}", font=ctk.CTkFont(size=10), text_color="#888888").pack(anchor="w")
             
             objs = meta.get("objetos", [])
             mapping = meta.get("servos", {})
@@ -356,7 +452,7 @@ class HistoryDialog(ctk.CTkToplevel):
             # Resumen de entrenamiento
             if objs:
                 resumen = " | ".join([f"{o.upper()} (S{mapping.get(o, '?')})" for o in objs])
-                ctk.CTkLabel(details, text=f"🎯 {resumen}", font=ctk.CTkFont(size=11), wraplength=400, justify="left").pack(anchor="w", pady=2)
+                ctk.CTkLabel(details, text=f"Objetos: {resumen}", font=ctk.CTkFont(size=11), wraplength=400, justify="left").pack(anchor="w", pady=2)
             
             # Precisión
             acc = meta.get("precision", meta.get("mAP50", "N/A"))
@@ -365,9 +461,9 @@ class HistoryDialog(ctk.CTkToplevel):
                     score = float(acc)
                     color = "#4CAF50" if score > 0.8 else "#FFC107" if score > 0.5 else "#F44336"
                     score_txt = f"{score*100:.1f}%" if score <= 1.0 else f"{score:.1f}"
-                    ctk.CTkLabel(details, text=f"📊 Precisión: {score_txt}", font=ctk.CTkFont(size=11, weight="bold"), text_color=color).pack(anchor="w")
+                    ctk.CTkLabel(details, text=f"Precision: {score_txt}", font=ctk.CTkFont(size=11, weight="bold"), text_color=color).pack(anchor="w")
                 except:
-                    ctk.CTkLabel(details, text=f"📊 Precisión: {acc}", font=ctk.CTkFont(size=11)).pack(anchor="w")
+                    ctk.CTkLabel(details, text=f"Precision: {acc}", font=ctk.CTkFont(size=11)).pack(anchor="w")
 
     def activate(self, model_name):
         full_path = os.path.join(self.parent.modelos_dir, model_name)
@@ -380,7 +476,7 @@ class HistoryDialog(ctk.CTkToplevel):
         
         if was_running: self.parent.toggle_scanner() # Reiniciar
         self.destroy()
-        messagebox.showinfo("Cerebro Cambiado", f"Se ha activado: {model_name}")
+        messagebox.showinfo("Modelo Cambiado", f"Se ha activado: {model_name}")
 
 if __name__ == "__main__":
     app = RPiOperatorPanel()

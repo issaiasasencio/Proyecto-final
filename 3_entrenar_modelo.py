@@ -19,12 +19,12 @@ def load_config():
 def train():
     print("=== Configuración del Motor ===")
     if torch.cuda.is_available():
-        print(f"[OK] ¡CUDA detectado! Entrenamiento en: {torch.cuda.get_device_name(0)}")
+        print(f"[OK] CUDA detectado. Entrenamiento en: {torch.cuda.get_device_name(0)}")
         total_vram = torch.cuda.get_device_properties(0).total_memory / 1024**3
         print(f"VRAM disponible de GPU: {total_vram:.2f} GB")
         device = "0"  # Fuerza la GPU Nvidia
     else:
-        print("[ATENCIÓN] CUDA NO DETECTADO. Se entrenará por CPU (lento).")
+        print("[ATENCION] CUDA no detectado. Se entrenara por CPU.")
         device = "cpu"
     print("=====================================\n")
 
@@ -46,23 +46,23 @@ def train():
 
     if modo == "finetune" and os.path.exists(best_path):
         print(
-            f"[RECICLAJE] Modo APRENDIZAJE CONTINUO activado: "
-            f"Sumando conocimiento a tu último cerebro ({best_path})..."
+            f"[INFO] Modo aprendizaje continuo activado: "
+            f"Optimizando modelo previo ({best_path})..."
         )
         model = YOLO(best_path)
     else:
         if modo == "finetune":
             print(
-                "[ATENCIÓN] Querías sumar a tu modelo anterior pero aún no existe. "
-                "¡No te preocupes! Arrancaremos creando el primero."
+                "[INFO] No se encontro modelo previo para aprendizaje continuo. "
+                "Iniciando nuevo entrenamiento."
             )
-        print("[NUEVO] Modo DESDE CERO: Iniciando modelo YOLO de última gen (yolo26n.pt)...")
+        print("[INFO] Modo desde cero: Iniciando modelo YOLOv8 Nano...")
         model = YOLO("yolo26n.pt")
 
     config = load_config()
     epochs = config.get("epochs", 300)
 
-    print("\n[INICIANDO] ¡Iniciando el entrenamiento profundo!")
+    print("\n[INFO] Iniciando proceso de entrenamiento.")
 
     # Forzar rutas absolutas para evitar que YOLO use 'runs/detect/'
     project_abs = os.path.abspath(os.path.join(base_dir, "entrenamientos"))
@@ -107,13 +107,14 @@ def train():
 
     if os.path.exists(best_path):
         shutil.copy2(best_path, archive_path)
-        print(f"📦 ¡Cerebro archivado automáticamente como: {versioned_name}!")
+        print(f"[INFO] Modelo archivado correctamente como: {versioned_name}")
 
         # --- GENERAR METADATOS ENRIQUECIDOS ---
         metadata = {
             "version": versioned_name,
-            "fecha": time.strftime("%d/%m/%Y %H:%M"),
-            "objetos": []
+            "fecha": time.strftime("%d/%m/%Y %H:%M:%S"), # Formato completo para ordenado
+            "objetos": [],
+            "servos": {}
         }
 
         # Leer clases y servos
@@ -133,14 +134,15 @@ def train():
 
         for i, name in enumerate(names):
             servo = mapping.get(str(i), "N/A")
-            metadata["objetos"].append({"nombre": name, "servo": servo})
+            metadata["objetos"].append(name)
+            metadata["servos"][name] = servo
 
         metadata_path = archive_path.replace(".pt", ".json")
         with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=4)
-        print(f"📝 Metadatos guardados en: {os.path.basename(metadata_path)}")
+        print(f"[INFO] Metadatos sincronizados en: {os.path.basename(metadata_path)}")
 
-    print(f"Olla MLOps completada. Tu modelo central ha sido guardado en: {best_path}")
+    print(f"Proceso MLOps completado. Modelo guardado en: {best_path}")
 
 
 if __name__ == "__main__":

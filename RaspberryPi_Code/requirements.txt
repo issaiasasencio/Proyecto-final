@@ -5,3 +5,5 @@ gpiozero
 lgpio
 numpy
 ncnn
+customtkinter
+Pillow

@@ -101,7 +101,7 @@ class HistoryDialog(ctk.CTkToplevel):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        header = ctk.CTkLabel(self, text="📚 Modelos Archivados", font=ctk.CTkFont(size=20, weight="bold"))
+        header = ctk.CTkLabel(self, text="Modelos Archivados", font=ctk.CTkFont(size=20, weight="bold"))
         header.grid(row=0, column=0, pady=20)
 
         # Scrollable list
@@ -137,9 +137,10 @@ class HistoryDialog(ctk.CTkToplevel):
                         meta_data = json.load(meta_f)
                         mtime = meta_data.get("fecha", mtime)
                         objetos = meta_data.get("objetos", [])
+                        servos = meta_data.get("servos", {})
                         if objetos:
-                            description = "📦 Objetos: " + ", ".join(
-                                [f"{o['nombre']} (S{o['servo']})" for o in objetos]
+                            description = "Objetos: " + ", ".join(
+                                [f"{o} (S{servos.get(o, '?')})" for o in objetos]
                             )
                 except (json.JSONDecodeError, FileNotFoundError):
                     pass
@@ -204,7 +205,7 @@ class ReportDialog(ctk.CTkToplevel):
 
         self.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(self, text="📈 Reporte de Desempeño", font=ctk.CTkFont(size=22, weight="bold")).pack(pady=20)
+        ctk.CTkLabel(self, text="Reporte de Desempeño", font=ctk.CTkFont(size=22, weight="bold")).pack(pady=20)
 
         self.content_frame = ctk.CTkFrame(self)
         self.content_frame.pack(pady=10, padx=20, fill="both", expand=True)
@@ -229,11 +230,11 @@ class ReportDialog(ctk.CTkToplevel):
         # Lógica de Veredicto
         score_pct = map50 * 100
         if score_pct >= 90:
-            status, color, msg = "EXCELENTE ✅", "#4CAF50", "¡Súper Inteligente! El sistema está listo para la fábrica."
+            status, color, msg = "EXCELENTE", "#4CAF50", "Precision optima. El sistema esta listo para produccion."
         elif score_pct >= 70:
-            status, color, msg = "BUENO ⚠️", "#FBC02D", "Funciona bien, pero podría tener errores leves."
+            status, color, msg = "ACEPTABLE", "#FBC02D", "Funcionamiento estable. Podria presentar variaciones menores."
         else:
-            status, color, msg = "INSUFICIENTE ❌", "#F44336", "Necesitás grabar más videos con mejor luz."
+            status, color, msg = "INSUFICIENTE", "#F44336", "Se requiere mayor volumen de datos para entrenamiento."
 
         # UI del Score
         ctk.CTkLabel(self.content_frame, text=status, font=ctk.CTkFont(size=24, weight="bold"),
@@ -293,7 +294,7 @@ class SettingsDialog(ctk.CTkToplevel):
         # Layout
         self.grid_columnconfigure(0, weight=1)
 
-        header = ctk.CTkLabel(self, text="⚙️ Configuración Maestra", font=ctk.CTkFont(size=20, weight="bold"))
+        header = ctk.CTkLabel(self, text="Configuracion Maestra", font=ctk.CTkFont(size=20, weight="bold"))
         header.pack(pady=(20, 10))
 
         # --- SECCIÓN: RED ---
@@ -313,7 +314,7 @@ class SettingsDialog(ctk.CTkToplevel):
         )
 
         # Botón de Ping
-        self.btn_ping = ctk.CTkButton(frame_red, text="📡 Probar Conexión (Ping)", command=self.run_ping_test,
+        self.btn_ping = ctk.CTkButton(frame_red, text="Probar Conexion (Ping)", command=self.run_ping_test,
                                       fg_color="#333333", hover_color="#444444")
         self.btn_ping.pack(pady=10, padx=10, fill="x")
 
@@ -380,10 +381,10 @@ class SettingsDialog(ctk.CTkToplevel):
                 result = subprocess.run(["ping", "-n", "1", "-w", "2000", ip],
                                         capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
                 if result.returncode == 0:
-                    self.after(0, lambda: self.lbl_ping_status.configure(text="Estado: ONLINE ✅",
+                    self.after(0, lambda: self.lbl_ping_status.configure(text="Estado: ONLINE",
                                                                          text_color="#4CAF50"))
                 else:
-                    self.after(0, lambda: self.lbl_ping_status.configure(text="Estado: OFFLINE ❌",
+                    self.after(0, lambda: self.lbl_ping_status.configure(text="Estado: OFFLINE",
                                                                          text_color="#F44336"))
             except (subprocess.SubprocessError, OSError) as e:
                 err_msg = str(e)
@@ -396,7 +397,7 @@ class SettingsDialog(ctk.CTkToplevel):
 class MLOpsPanel(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("FLEX-SORT - Adaptive AI Classification System")
+        self.title("FLEX-SORT - Sistema de Clasificacion por IA Adaptativa")
 
         # Dimensiones y centrado de ventana
         window_width = 900
@@ -438,7 +439,7 @@ class MLOpsPanel(ctk.CTk):
 
         self.lbl_subtitle = ctk.CTkLabel(
             self.sidebar_frame,
-            text="Adaptive AI System\nv2.0.0 (FLEX Core)",
+            text="Sistema de IA Adaptativa\nv2.0.0 (Nucleo FLEX)",
             font=ctk.CTkFont(size=12, slant="italic")
         )
         self.lbl_subtitle.grid(row=1, column=0, padx=20, pady=(2, 20))
@@ -518,7 +519,7 @@ class MLOpsPanel(ctk.CTk):
         self.switch_theme.grid(row=9, column=0, padx=20, pady=(0, 5))
 
         self.lbl_performance = ctk.CTkButton(
-            self.sidebar_frame, text="📊 Ver Rendimiento", font=ctk.CTkFont(size=11),
+            self.sidebar_frame, text="Ver Rendimiento", font=ctk.CTkFont(size=11),
             fg_color="transparent", text_color="#A5D6A7", command=self.toggle_performance
         )
         self.lbl_performance.grid(row=10, column=0, padx=20, pady=(0, 5))
@@ -574,7 +575,7 @@ class MLOpsPanel(ctk.CTk):
             except (IOError, AttributeError):
                 pass
         else:
-            self.btn_settings = ctk.CTkButton(self.main_frame, text="⚙️", width=30, height=30,
+            self.btn_settings = ctk.CTkButton(self.main_frame, text="Config", width=30, height=30,
                                               fg_color="transparent", command=self.open_settings)
             self.btn_settings.grid(row=0, column=0, sticky="e", padx=(0, 5))
 
@@ -718,7 +719,13 @@ class MLOpsPanel(ctk.CTk):
         self.log("\n[FORMATEO] Eliminando archivos antiguos de la IA...")
 
         # Eliminar carpetas problemáticas enteras
-        folders_to_delete = ["Proyecto_FlexSort/dataset/images", "Proyecto_FlexSort/dataset/labels", "runs"]
+        folders_to_delete = [
+            "Proyecto_FlexSort/dataset/images",
+            "Proyecto_FlexSort/dataset/labels",
+            "Proyecto_FlexSort/entrenamientos",
+            "Proyecto_FlexSort/modelos_archivados",
+            "runs"
+        ]
         files_to_delete = ["Proyecto_FlexSort/dataset/data.yaml", "Proyecto_FlexSort/dataset/servo_mapping.json"]
 
         for folder in folders_to_delete:
