@@ -56,8 +56,16 @@ class ServoSelectorDialog(ctk.CTkToplevel):
 class MLOpsPanel(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("MLOps Edge Dashboard - Clasificador Inteligente")
-        self.geometry("900x650")
+        self.title("FLEX-SORT - Adaptive AI Classification System")
+        
+        # Dimensiones y centrado de ventana
+        window_width = 900
+        window_height = 650
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x_cordinate = int((screen_width/2) - (window_width/2))
+        y_cordinate = int((screen_height/2) - (window_height/2))
+        self.geometry(f"{window_width}x{window_height}+{x_cordinate}+{y_cordinate}")
         
         # Grid Layout Base: Dividimos la pantalla en 2 columnas
         # Columna 0: Panel lateral (menú) | Columna 1: Consola principal
@@ -69,10 +77,10 @@ class MLOpsPanel(ctk.CTk):
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(9, weight=1) # Espacio flexible abajo
 
-        self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="IA Edge\nDashboard", font=ctk.CTkFont(size=24, weight="bold"))
+        self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="FLEX-SORT", font=ctk.CTkFont(size=28, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(30, 0))
         
-        self.lbl_subtitle = ctk.CTkLabel(self.sidebar_frame, text="Versión 1.0.0 (GPU Core)", font=ctk.CTkFont(size=12, slant="italic"))
+        self.lbl_subtitle = ctk.CTkLabel(self.sidebar_frame, text="Adaptive AI System\nv1.0.0 (GPU Core)", font=ctk.CTkFont(size=12, slant="italic"))
         self.lbl_subtitle.grid(row=1, column=0, padx=20, pady=(5, 30))
 
         # Botones de Acción Estilizados
@@ -98,6 +106,10 @@ class MLOpsPanel(ctk.CTk):
         self.btn_deploy.grid(row=8, column=0, padx=20, pady=10, sticky="ew")
 
         # Configuración inferior
+        self.switch_var = ctk.StringVar(value="on")
+        self.switch_theme = ctk.CTkSwitch(self.sidebar_frame, text="Modo Oscuro", command=self.toggle_appearance_mode, variable=self.switch_var, onvalue="on", offvalue="off")
+        self.switch_theme.grid(row=9, column=0, padx=20, pady=(0, 10), sticky="s")
+
         self.lbl_hardware = ctk.CTkLabel(self.sidebar_frame, text="Controlador Nvidia Activo", font=ctk.CTkFont(size=11), text_color="#A5D6A7")
         self.lbl_hardware.grid(row=10, column=0, padx=20, pady=(0, 20), sticky="s")
 
@@ -118,6 +130,16 @@ class MLOpsPanel(ctk.CTk):
         # Forzar el uso estricto del ejecutable local
         self.python_exe = ".\\venv\\Scripts\\python.exe"
         self.log(f"[SISTEMA INICIADO] Conectado al intérprete virtual: {self.python_exe}\nEsperando instrucciones...\n{'-'*60}")
+
+    def toggle_appearance_mode(self):
+        if self.switch_var.get() == "on":
+            ctk.set_appearance_mode("Dark")
+            self.console.configure(fg_color="#1A1A1A", text_color="#4CAF50", border_color="#333333")
+            self.switch_theme.configure(text="Modo Oscuro")
+        else:
+            ctk.set_appearance_mode("Light")
+            self.console.configure(fg_color="#FFFFFF", text_color="#006400", border_color="#CCCCCC")
+            self.switch_theme.configure(text="Modo Claro  ")
 
     def log(self, text):
         self.console.insert(ctk.END, text + "\n")
