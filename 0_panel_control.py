@@ -507,7 +507,7 @@ class MLOpsPanel(ctk.CTk):
             self.sidebar_frame, text="📊 Ver Rendimiento", font=ctk.CTkFont(size=11),
             fg_color="transparent", text_color="#A5D6A7", command=self.toggle_performance
         )
-        self.lbl_hardware.grid(row=10, column=0, padx=20, pady=(0, 5), sticky="s")
+        self.lbl_performance.grid(row=10, column=0, padx=20, pady=(0, 5), sticky="s")
 
         # Frame de Rendimiento (Oculto por defecto)
         self.perf_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#222222", corner_radius=5)
@@ -668,10 +668,10 @@ class MLOpsPanel(ctk.CTk):
     def toggle_performance(self):
         if self.perf_frame.winfo_viewable():
             self.perf_frame.grid_remove()
-            self.lbl_hardware.configure(text="📊 Ver Rendimiento")
+            self.lbl_performance.configure(text="📊 Ver Rendimiento")
         else:
             self.perf_frame.grid(row=11, column=0, padx=10, pady=(0, 20), sticky="ew")
-            self.lbl_hardware.configure(text="📊 Ocultar Rendimiento")
+            self.lbl_performance.configure(text="📊 Ocultar Rendimiento")
 
     def update_performance_stats(self):
         def get_gpu_usage():
