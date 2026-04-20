@@ -5,7 +5,7 @@ import threading
 import sys
 import os
 import shutil
-
+from PIL import Image
 # Configuración global de entorno Moderno
 ctk.set_appearance_mode("Dark") # Opciones: "Dark", "Light"
 ctk.set_default_color_theme("blue") # Opciones: "blue", "green", "dark-blue"
@@ -77,10 +77,20 @@ class MLOpsPanel(ctk.CTk):
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(9, weight=1) # Espacio flexible abajo
 
-        self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="FLEX-SORT", font=ctk.CTkFont(size=28, weight="bold"))
+        path_logo_texto = "logo_texto.png"
+        if os.path.exists(path_logo_texto):
+            try:
+                img_pil = Image.open(path_logo_texto)
+                img_ctk = ctk.CTkImage(light_image=img_pil, dark_image=img_pil, size=(200, 50))
+                self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="", image=img_ctk)
+            except Exception:
+                self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="FLEX-SORT", font=ctk.CTkFont(size=28, weight="bold"))
+        else:
+            self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="FLEX-SORT", font=ctk.CTkFont(size=28, weight="bold"))
+            
         self.logo_label.grid(row=0, column=0, padx=20, pady=(30, 0))
         
-        self.lbl_subtitle = ctk.CTkLabel(self.sidebar_frame, text="Adaptive AI System\nv1.0.0 (GPU Core)", font=ctk.CTkFont(size=12, slant="italic"))
+        self.lbl_subtitle = ctk.CTkLabel(self.sidebar_frame, text="Adaptive AI System\nv2.0.0 (FLEX Core)", font=ctk.CTkFont(size=12, slant="italic"))
         self.lbl_subtitle.grid(row=1, column=0, padx=20, pady=(5, 30))
 
         # Botones de Acción Estilizados
@@ -105,13 +115,23 @@ class MLOpsPanel(ctk.CTk):
         self.btn_deploy = ctk.CTkButton(self.sidebar_frame, text="6. Enviar a Raspberry Pi", command=self.run_deploy, fg_color="#00897B", hover_color="#00695C", font=ctk.CTkFont(size=14, weight="bold"))
         self.btn_deploy.grid(row=8, column=0, padx=20, pady=10, sticky="ew")
 
+        path_icono_central = "icono_central.png"
+        if os.path.exists(path_icono_central):
+            try:
+                img_ic = Image.open(path_icono_central)
+                img_ic_ctk = ctk.CTkImage(light_image=img_ic, dark_image=img_ic, size=(100, 100))
+                self.icono_label = ctk.CTkLabel(self.sidebar_frame, text="", image=img_ic_ctk)
+                self.icono_label.grid(row=9, column=0, padx=20, pady=(10, 10), sticky="s")
+            except Exception:
+                pass
+
         # Configuración inferior
         self.switch_var = ctk.StringVar(value="on")
         self.switch_theme = ctk.CTkSwitch(self.sidebar_frame, text="Modo Oscuro", command=self.toggle_appearance_mode, variable=self.switch_var, onvalue="on", offvalue="off")
-        self.switch_theme.grid(row=9, column=0, padx=20, pady=(0, 10), sticky="s")
+        self.switch_theme.grid(row=10, column=0, padx=20, pady=(0, 10), sticky="s")
 
         self.lbl_hardware = ctk.CTkLabel(self.sidebar_frame, text="Controlador Nvidia Activo", font=ctk.CTkFont(size=11), text_color="#A5D6A7")
-        self.lbl_hardware.grid(row=10, column=0, padx=20, pady=(0, 20), sticky="s")
+        self.lbl_hardware.grid(row=11, column=0, padx=20, pady=(0, 20), sticky="s")
 
 
         # ---------------- PANEL PRINCIPAL (CONSOLA) ----------------
