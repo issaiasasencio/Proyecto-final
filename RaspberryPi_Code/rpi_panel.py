@@ -483,15 +483,21 @@ class SettingsDialog(ctk.CTkToplevel):
             self, text="CONFIGURACION LOCAL", font=ctk.CTkFont(size=18, weight="bold")
         ).pack(pady=20)
 
-        # Confidence
-        ctk.CTkLabel(
+        # Umbral de Confianza
+        self.lbl_conf_val = ctk.CTkLabel(
             self, text=f"Umbral de Confianza: {self.parent.engine.conf_threshold:.2f}"
-        ).pack(pady=(10, 0))
+        )
+        self.lbl_conf_val.pack(pady=(10, 0))
+        
         self.conf_slider = ctk.CTkSlider(
             self, from_=0.1, to=0.9, command=self.update_conf
         )
         self.conf_slider.set(self.parent.engine.conf_threshold)
         self.conf_slider.pack(pady=5, padx=20, fill="x")
+        
+        # Forzar foco y captura de eventos para entornos VNC
+        self.grab_set()
+        self.focus_set()
 
         # Belt Speed
         ctk.CTkLabel(self, text="Velocidad Transportadora:").pack(pady=(20, 0))
@@ -504,6 +510,7 @@ class SettingsDialog(ctk.CTkToplevel):
         ).pack(pady=30)
 
     def update_conf(self, val):
+        self.lbl_conf_val.configure(text=f"Umbral de Confianza: {val:.2f}")
         self.parent.engine.conf_threshold = val
         self.parent.config_data["confidence"] = val
 
