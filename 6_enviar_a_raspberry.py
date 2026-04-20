@@ -62,7 +62,7 @@ def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
 
             # NUEVO: Enviar archivo de configuración JSON para los Servos
             mapping_local = os.path.join(
-                os.getcwd(), "Proyecto_Cinta", "dataset", "servo_mapping.json"
+                os.getcwd(), "Proyecto_FlexSort", "dataset", "servo_mapping.json"
             )
             if os.path.exists(mapping_local):
                 print("⚙️ Detectado mapeo de servos local. Transfiriendo...")

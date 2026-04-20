@@ -6,7 +6,7 @@ import yaml
 def setup_project():
     """Inicializa la estructura de carpetas y crea el data.yaml base."""
     # Definir la estructura base de carpetas
-    base_dir = "Proyecto_Cinta"
+    base_dir = "Proyecto_FlexSort"
     carpetas = [
         os.path.join(base_dir, "dataset", "images", "train"),
         os.path.join(base_dir, "dataset", "images", "val"),

@@ -19,7 +19,7 @@ def probar_en_pc():
     if len(sys.argv) > 1:
         best_path = sys.argv[1]
     else:
-        best_path = os.path.join("Proyecto_Cinta", "entrenamientos", "modelo_produccion", "weights", "best.pt")
+        best_path = os.path.join("Proyecto_FlexSort", "entrenamientos", "modelo_produccion", "weights", "best.pt")
 
     if not os.path.exists(best_path):
         print(f"Error Crítico: No se encontró el cerebro de IA en -> {best_path}")

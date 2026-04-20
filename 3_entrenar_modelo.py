@@ -28,7 +28,7 @@ def train():
         device = "cpu"
     print("=====================================\n")
 
-    base_dir = "Proyecto_Cinta"
+    base_dir = "Proyecto_FlexSort"
     yaml_path = os.path.abspath(os.path.join(base_dir, "dataset", "data.yaml"))
 
     if not os.path.exists(yaml_path):

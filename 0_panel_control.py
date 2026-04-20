@@ -85,7 +85,7 @@ class HistoryDialog(ctk.CTkToplevel):
         self.title("Historial de Inteligencia Artificial")
         self.geometry("500x450")
         self.parent = parent
-        self.archive_dir = os.path.join("Proyecto_Cinta", "modelos_archivados")
+        self.archive_dir = os.path.join("Proyecto_FlexSort", "modelos_archivados")
         self.config_path = "config.json"
 
         # Centrar
@@ -197,7 +197,7 @@ class ReportDialog(ctk.CTkToplevel):
         self.transient(parent)
         self.grab_set()
 
-        base_dir = "Proyecto_Cinta"
+        base_dir = "Proyecto_FlexSort"
         project_abs = os.path.abspath(os.path.join(base_dir, "entrenamientos"))
         self.results_path = os.path.join(project_abs, "modelo_produccion", "results.csv")
         self.image_path = os.path.join(project_abs, "modelo_produccion", "results.png")
@@ -718,8 +718,8 @@ class MLOpsPanel(ctk.CTk):
         self.log("\n[FORMATEO] Eliminando archivos antiguos de la IA...")
 
         # Eliminar carpetas problemáticas enteras
-        folders_to_delete = ["Proyecto_Cinta/dataset/images", "Proyecto_Cinta/dataset/labels", "runs"]
-        files_to_delete = ["Proyecto_Cinta/dataset/data.yaml", "Proyecto_Cinta/dataset/servo_mapping.json"]
+        folders_to_delete = ["Proyecto_FlexSort/dataset/images", "Proyecto_FlexSort/dataset/labels", "runs"]
+        files_to_delete = ["Proyecto_FlexSort/dataset/data.yaml", "Proyecto_FlexSort/dataset/servo_mapping.json"]
 
         for folder in folders_to_delete:
             if os.path.exists(folder):

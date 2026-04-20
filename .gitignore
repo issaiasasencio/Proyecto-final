@@ -14,7 +14,7 @@ yolo*.pt
 *_ncnn_model/
 
 # Archivos de Entrenamiento, Logs y Dataset
-Proyecto_Cinta/
+Proyecto_FlexSort/
 runs/
 dataset/
 videos_crudos/

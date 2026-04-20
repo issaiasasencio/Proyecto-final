@@ -60,7 +60,7 @@ def limpiar_historial(base_dir):
 
 def procesar_video():
     """Ingestor de datos. Procesa el video subido guardando frames redimensionados."""
-    base_dir = "Proyecto_Cinta"
+    base_dir = "Proyecto_FlexSort"
     yaml_path = os.path.join(base_dir, "dataset", "data.yaml")
 
     # 1. Checar si se pasaron argumentos (desde la GUI)

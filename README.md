@@ -1,4 +1,4 @@
-# Clasificador Inteligente de Residuos mediante Visión Artificial y Edge Computing
+# FLEX-SORT: Clasificador Inteligente de Residuos mediante Visión Artificial
 
 Este repositorio contiene el código fuente desarrollado para el proyecto de tesis de ingeniería enfocado en la clasificación automatizada de residuos sólidos utilizando modelos de aprendizaje profundo (YOLO) y sistemas embebidos en el borde.
 
