@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import time
@@ -18,12 +19,12 @@ def load_config():
 def train():
     print("=== Configuración del Motor ===")
     if torch.cuda.is_available():
-        print(f"[OK] ¡CUDA detectado! Entrenamiento Acelerado en: {torch.cuda.get_device_name(0)}")
+        print(f"[OK] ¡CUDA detectado! Entrenamiento en: {torch.cuda.get_device_name(0)}")
         total_vram = torch.cuda.get_device_properties(0).total_memory / 1024**3
         print(f"VRAM disponible de GPU: {total_vram:.2f} GB")
         device = "0"  # Fuerza la GPU Nvidia
     else:
-        print("[ATENCIÓN] CUDA NO DETECTADO. Se entrenará por CPU (Esto será extremadamente lento).")
+        print("[ATENCIÓN] CUDA NO DETECTADO. Se entrenará por CPU (lento).")
         device = "cpu"
     print("=====================================\n")
 
@@ -55,7 +56,7 @@ def train():
                 "[ATENCIÓN] Querías sumar a tu modelo anterior pero aún no existe. "
                 "¡No te preocupes! Arrancaremos creando el primero."
             )
-        print("[NUEVO] Modo DESDE CERO activado: Iniciando modelo pre-entrenado general (yolo11n.pt)...")
+        print("[NUEVO] Modo DESDE CERO: Iniciando modelo YOLO (yolo11n.pt)...")
         model = YOLO("yolo11n.pt")
 
     config = load_config()
@@ -78,25 +79,30 @@ def train():
 
     best_path = os.path.join(base_dir, "entrenamientos", "modelo_produccion", "weights", "best.pt")
     print("\n[FIN] ENTRENAMIENTO FINALIZADO [FIN]")
-    
-    # --- ARCHIVADO DINÁMICO (VERSIONADO) ---
+
     archive_dir = os.path.join(base_dir, "modelos_archivados")
     os.makedirs(archive_dir, exist_ok=True)
-    
+
     # Encontrar la última versión para autoincrementar
-    existing_versions = [f for f in os.listdir(archive_dir) if f.startswith("modelo_v") and f.endswith(".pt")]
+    existing_versions = [
+        f for f in os.listdir(archive_dir)
+        if f.startswith("modelo_v") and f.endswith(".pt")
+    ]
     next_v = 1
     if existing_versions:
         try:
             # Extraer números de 'modelo_v1.pt', 'modelo_v2.pt', etc.
-            version_nums = [int(f.replace("modelo_v", "").replace(".pt", "")) for f in existing_versions]
+            version_nums = [
+                int(f.replace("modelo_v", "").replace(".pt", ""))
+                for f in existing_versions
+            ]
             next_v = max(version_nums) + 1
         except ValueError:
             pass
-            
+
     versioned_name = f"modelo_v{next_v}.pt"
     archive_path = os.path.join(archive_dir, versioned_name)
-    
+
     if os.path.exists(best_path):
         shutil.copy2(best_path, archive_path)
         print(f"📦 ¡Cerebro archivado automáticamente como: {versioned_name}!")
@@ -131,7 +137,7 @@ def train():
         with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=4)
         print(f"📝 Metadatos guardados en: {os.path.basename(metadata_path)}")
-    
+
     print(f"Olla MLOps completada. Tu modelo central ha sido guardado en: {best_path}")
 
 

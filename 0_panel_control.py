@@ -213,6 +213,8 @@ class SettingsDialog(ctk.CTkToplevel):
         ctk.CTkLabel(frame_red, text="CONEXIÓN RASPBERRY PI", font=ctk.CTkFont(size=12, weight="bold"),
                      text_color="#1E88E5").pack(pady=5)
 
+        self.ip_entry = self.create_input(frame_red, "Dirección IP:", self.config_data.get("ip_raspberry", "192.168.1.10"))
+        self.user_entry = self.create_input(frame_red, "Usuario SSH:", self.config_data.get("usuario", "pi"))
         self.pass_entry = self.create_input(
             frame_red, "Contraseña SSH:", self.config_data.get("contrasena", "12345678"), show="*"
         )
