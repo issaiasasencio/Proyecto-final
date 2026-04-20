@@ -444,57 +444,39 @@ class MLOpsPanel(ctk.CTk):
         )
         self.lbl_subtitle.grid(row=1, column=0, padx=20, pady=(2, 20))
 
-        # Botones de Acción Estilizados
-        self.init_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="transparent")
-        self.init_frame.grid(row=2, column=0, padx=20, pady=4, sticky="ew")
-        self.init_frame.grid_columnconfigure(0, weight=1)
-        self.init_frame.grid_columnconfigure(1, weight=1)
-
-        self.btn_reset = ctk.CTkButton(
-            self.init_frame, text="0. Borrar memoria", command=self.run_reset_all,
-            fg_color="#D32F2F", hover_color="#C62828", font=ctk.CTkFont(size=13, weight="bold")
-        )
-        self.btn_reset.grid(row=0, column=0, padx=(0, 5), sticky="ew")
-
         # Spacer row above main buttons
         self.sidebar_frame.grid_rowconfigure(2, weight=1)
 
-        self.btn_setup = ctk.CTkButton(
-            self.init_frame, text="1. Inicializar", command=self.run_setup,
-            fg_color="#333333", hover_color="#555555", font=ctk.CTkFont(size=13)
-        )
-        self.btn_setup.grid(row=0, column=1, padx=(5, 0), sticky="ew")
-
         self.btn_ingest = ctk.CTkButton(
-            self.sidebar_frame, text="2. Nuevo entrenamiento", command=self.run_ingest,
+            self.sidebar_frame, text="1. Nuevo entrenamiento", command=self.run_ingest,
             fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold"),
             height=35
         )
         self.btn_ingest.grid(row=3, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_train = ctk.CTkButton(
-            self.sidebar_frame, text="3. Entrenar Inteligencia", command=self.run_train,
+            self.sidebar_frame, text="2. Entrenar Inteligencia", command=self.run_train,
             fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold"),
             height=35
         )
         self.btn_train.grid(row=4, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_test = ctk.CTkButton(
-            self.sidebar_frame, text="4. Probar modelo / visión", command=self.run_infer,
+            self.sidebar_frame, text="3. Probar modelo / visión", command=self.run_infer,
             fg_color="#7B1FA2", hover_color="#4A148C", font=ctk.CTkFont(size=14, weight="bold"),
             height=35
         )
         self.btn_test.grid(row=5, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_optimize = ctk.CTkButton(
-            self.sidebar_frame, text="5. Optimizar (NCNN/TF)", command=self.run_optimize,
+            self.sidebar_frame, text="4. Optimizar (NCNN/TF)", command=self.run_optimize,
             fg_color="#E040FB", hover_color="#AA00FF", font=ctk.CTkFont(size=14, weight="bold"),
             height=35
         )
         self.btn_optimize.grid(row=6, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_deploy = ctk.CTkButton(
-            self.sidebar_frame, text="6. Enviar a Raspberry Pi", command=self.run_deploy,
+            self.sidebar_frame, text="5. Enviar a Raspberry Pi", command=self.run_deploy,
             fg_color="#00897B", hover_color="#00695C", font=ctk.CTkFont(size=14, weight="bold"),
             height=35
         )
@@ -543,6 +525,14 @@ class MLOpsPanel(ctk.CTk):
         self.console_label = ctk.CTkLabel(self.main_frame, text="Monitor de eventos MLOps",
                                           font=ctk.CTkFont(size=16, weight="bold"))
         self.console_label.grid(row=0, column=0, padx=0, pady=(0, 5), sticky="w")
+
+        # Botón Factory Reset (A la par del reloj de historial)
+        self.btn_factory = ctk.CTkButton(
+            self.main_frame, text="Resetear de Fabrica", command=self.run_reset_all,
+            fg_color="#D32F2F", hover_color="#C62828", font=ctk.CTkFont(size=12, weight="bold"),
+            width=130, height=30
+        )
+        self.btn_factory.grid(row=0, column=0, sticky="e", padx=(0, 80))
 
         # Botón de Historial (Reloj) al lado del engranaje
         path_history_icon = os.path.join("recursos", "history_icon.png")
@@ -764,7 +754,8 @@ class MLOpsPanel(ctk.CTk):
                     except OSError:
                         pass
 
-        self.log("\n[SISTEMA LIMPIO] Memoria totalmente limpia.\n>>> AHORA PRESIONÁ EN: '1. Inicializar'.")
+        self.log("\n[SISTEMA LIMPIO] Memoria totalmente purgada.\n[AUTO-INIT] Creando directorios y configuraciones de fábrica automáticamente...")
+        self.run_setup()
 
     def run_setup(self):
         self.run_subprocess([self.python_exe, "1_setup_vacio.py"])
