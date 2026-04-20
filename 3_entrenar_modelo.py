@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 
 import torch
 from ultralytics import YOLO
@@ -76,6 +77,34 @@ def train():
 
     best_path = os.path.join(base_dir, "entrenamientos", "modelo_produccion", "weights", "best.pt")
     print("\n[FIN] ENTRENAMIENTO FINALIZADO [FIN]")
+    
+    # --- ARCHIVADO DINÁMICO (VERSIONADO) ---
+    archive_dir = os.path.join(base_dir, "modelos_archivados")
+    os.makedirs(archive_dir, exist_ok=True)
+    
+    # Encontrar la última versión para autoincrementar
+    existing_versions = [f for f in os.listdir(archive_dir) if f.startswith("modelo_v") and f.endswith(".pt")]
+    next_v = 1
+    if existing_versions:
+        try:
+            # Extraer números de 'modelo_v1.pt', 'modelo_v2.pt', etc.
+            version_nums = [int(f.replace("modelo_v", "").replace(".pt", "")) for f in existing_versions]
+            next_v = max(version_nums) + 1
+        except ValueError:
+            pass
+            
+    versioned_name = f"modelo_v{next_v}.pt"
+    archive_path = os.path.join(archive_dir, versioned_name)
+    
+    if os.path.exists(best_path):
+        shutil.copy2(best_path, archive_path)
+        print(f"📦 ¡Cerebro archivado automáticamente como: {versioned_name}!")
+        
+        # Opcional: Actualizar config.json para que sea el modelo activo por defecto
+        config["active_model"] = archive_path
+        with open("config.json", "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=4)
+    
     print(f"Olla MLOps completada. Tu modelo central ha sido guardado en: {best_path}")
 
 

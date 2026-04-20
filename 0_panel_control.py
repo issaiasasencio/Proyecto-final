@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
 from tkinter import filedialog, messagebox, simpledialog
 
 import customtkinter as ctk
@@ -18,7 +19,13 @@ class ServoSelectorDialog(ctk.CTkToplevel):
     def __init__(self, parent, categoria):
         super().__init__(parent)
         self.title("Asignación de Hardware Físico")
-        self.geometry("500x350")
+        
+        # Dimensiones y centrado
+        w, h = 500, 350
+        x = int((self.winfo_screenwidth() / 2) - (w / 2))
+        y = int((self.winfo_screenheight() / 2) - (h / 2))
+        self.geometry(f"{w}x{h}+{x}+{y}")
+        
         self.servo_id = None
 
         # Mantener ventana al frente y modal
@@ -70,11 +77,90 @@ class ServoSelectorDialog(ctk.CTkToplevel):
         btn4.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 
 
+class HistoryDialog(ctk.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Historial de Inteligencia Artificial")
+        self.geometry("500x450")
+        self.parent = parent
+        self.archive_dir = os.path.join("Proyecto_Cinta", "modelos_archivados")
+        self.config_path = "config.json"
+
+        # Centrar
+        w, h = 500, 450
+        x = int((self.winfo_screenwidth() / 2) - (w / 2))
+        y = int((self.winfo_screenheight() / 2) - (h / 2))
+        self.geometry(f"{w}x{h}+{x}+{y}")
+
+        self.attributes('-topmost', True)
+        self.transient(parent)
+        self.grab_set()
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+
+        header = ctk.CTkLabel(self, text="📚 Modelos Archivados", font=ctk.CTkFont(size=20, weight="bold"))
+        header.grid(row=0, column=0, pady=20)
+
+        # Scrollable list
+        self.scroll_frame = ctk.CTkScrollableFrame(self, label_text="Versiones Guardadas")
+        self.scroll_frame.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
+
+        self.load_history()
+
+    def load_history(self):
+        if not os.path.exists(self.archive_dir):
+            os.makedirs(self.archive_dir, exist_ok=True)
+
+        files = [f for f in os.listdir(self.archive_dir) if f.endswith(".pt")]
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(self.archive_dir, x)), reverse=True)
+
+        if not files:
+            ctk.CTkLabel(self.scroll_frame, text="No hay modelos guardados aún.").pack(pady=20)
+            return
+
+        for f in files:
+            f_path = os.path.join(self.archive_dir, f)
+            mtime = time.ctime(os.path.getmtime(f_path))
+            size = os.path.getsize(f_path) / (1024 * 1024)
+
+            item_frame = ctk.CTkFrame(self.scroll_frame)
+            item_frame.pack(fill="x", pady=5, padx=5)
+
+            lbl_info = ctk.CTkLabel(item_frame, text=f"{f}\n{mtime} | {size:.1f} MB",
+                                    font=ctk.CTkFont(size=11), justify="left")
+            lbl_info.pack(side="left", padx=10, pady=5)
+
+            btn_activate = ctk.CTkButton(item_frame, text="Activar", width=80,
+                                         command=lambda p=f_path: self.activate_model(p))
+            btn_activate.pack(side="right", padx=10)
+
+    def activate_model(self, path):
+        try:
+            with open(self.config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            config["active_model"] = path
+            with open(self.config_path, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=4)
+            
+            messagebox.showinfo("Éxito", f"Modelo activo cambiado a:\n{os.path.basename(path)}")
+            self.parent.log(f"\n[HISTORIAL] Modelo activo seleccionado: {os.path.basename(path)}")
+            self.destroy()
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo activar el modelo: {e}")
+
+
 class SettingsDialog(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.title("Ajustes del Sistema FLEX-SORT")
-        self.geometry("450x550")
+        
+        # Dimensiones y centrado
+        w, h = 450, 550
+        x = int((self.winfo_screenwidth() / 2) - (w / 2))
+        y = int((self.winfo_screenheight() / 2) - (h / 2))
+        self.geometry(f"{w}x{h}+{x}+{y}")
+        
         self.config_path = "config.json"
 
         # Cargar configuración actual
@@ -98,11 +184,17 @@ class SettingsDialog(ctk.CTkToplevel):
         ctk.CTkLabel(frame_red, text="CONEXIÓN RASPBERRY PI", font=ctk.CTkFont(size=12, weight="bold"),
                      text_color="#1E88E5").pack(pady=5)
 
-        self.ip_entry = self.create_input(frame_red, "Dirección IP:", self.config_data.get("ip_raspberry", "192.168.1.10"))
-        self.user_entry = self.create_input(frame_red, "Usuario SSH:", self.config_data.get("usuario", "pi"))
         self.pass_entry = self.create_input(
             frame_red, "Contraseña SSH:", self.config_data.get("contrasena", "12345678"), show="*"
         )
+
+        # Botón de Ping
+        self.btn_ping = ctk.CTkButton(frame_red, text="📡 Probar Conexión (Ping)", command=self.run_ping_test,
+                                      fg_color="#333333", hover_color="#444444")
+        self.btn_ping.pack(pady=10, padx=10, fill="x")
+
+        self.lbl_ping_status = ctk.CTkLabel(frame_red, text="Estado: Desconocido", font=ctk.CTkFont(size=11))
+        self.lbl_ping_status.pack(pady=(0, 5))
 
         # --- SECCIÓN: IA ---
         frame_ia = ctk.CTkFrame(self)
@@ -151,6 +243,25 @@ class SettingsDialog(ctk.CTkToplevel):
         except ValueError:
             messagebox.showerror("Error", "Por favor ingresá valores numéricos válidos en Épocas y Confianza.")
 
+    def run_ping_test(self):
+        ip = self.ip_entry.get()
+        self.lbl_ping_status.configure(text="Estado: Verificando...", text_color="white")
+        self.update_idletasks()
+
+        def ping():
+            try:
+                # -n 1 para Windows (1 paquete), -w 2000 (timeout 2s)
+                result = subprocess.run(["ping", "-n", "1", "-w", "2000", ip],
+                                        capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                if result.returncode == 0:
+                    self.after(0, lambda: self.lbl_ping_status.configure(text="Estado: ONLINE ✅", text_color="#4CAF50"))
+                else:
+                    self.after(0, lambda: self.lbl_ping_status.configure(text="Estado: OFFLINE ❌", text_color="#F44336"))
+            except Exception as e:
+                self.after(0, lambda: self.lbl_ping_status.configure(text=f"Error: {str(e)}", text_color="#F44336"))
+
+        threading.Thread(target=ping, daemon=True).start()
+
 
 class MLOpsPanel(ctk.CTk):
     def __init__(self):
@@ -176,7 +287,7 @@ class MLOpsPanel(ctk.CTk):
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(9, weight=1)  # Espacio flexible abajo
 
-        path_logo_texto = "logo_texto.png"
+        path_logo_texto = os.path.join("recursos", "logo_texto.png")
         if os.path.exists(path_logo_texto):
             try:
                 img_pil = Image.open(path_logo_texto)
@@ -246,7 +357,7 @@ class MLOpsPanel(ctk.CTk):
         )
         self.btn_deploy.grid(row=7, column=0, padx=20, pady=10, sticky="ew")
 
-        path_icono_central = "icono_central.png"
+        path_icono_central = os.path.join("recursos", "icono_central.png")
         if os.path.exists(path_icono_central):
             try:
                 img_ic = Image.open(path_icono_central)
@@ -278,8 +389,21 @@ class MLOpsPanel(ctk.CTk):
                                           font=ctk.CTkFont(size=16, weight="bold"))
         self.console_label.grid(row=0, column=0, padx=0, pady=(0, 5), sticky="w")
 
+        # Botón de Historial (Reloj) al lado del engranaje
+        path_history_icon = os.path.join("recursos", "history_icon.png")
+        if os.path.exists(path_history_icon):
+            try:
+                img_hist = Image.open(path_history_icon)
+                img_hist_ctk = ctk.CTkImage(light_image=img_hist, dark_image=img_hist, size=(24, 24))
+                self.btn_history = ctk.CTkButton(self.main_frame, text="", image=img_hist_ctk, width=30, height=30,
+                                                 fg_color="transparent", hover_color=("#DBDBDB", "#2B2B2B"),
+                                                 command=self.open_history)
+                self.btn_history.grid(row=0, column=0, sticky="e", padx=(0, 40))
+            except Exception:
+                pass
+
         # Botón de Ajustes (Engranaje) en la parte superior derecha
-        path_config_icon = "config_icon.png"
+        path_config_icon = os.path.join("recursos", "config_icon.png")
         if os.path.exists(path_config_icon):
             try:
                 img_conf = Image.open(path_config_icon)
@@ -318,6 +442,10 @@ class MLOpsPanel(ctk.CTk):
 
     def open_settings(self):
         dialog = SettingsDialog(self)
+        self.wait_window(dialog)
+
+    def open_history(self):
+        dialog = HistoryDialog(self)
         self.wait_window(dialog)
 
     def toggle_appearance_mode(self):
@@ -503,32 +631,44 @@ class MLOpsPanel(ctk.CTk):
         ])
 
     def run_infer(self):
-        # Escanear agresivamente por cualquier cerebro de IA entrenado (.pt)
-        pt_files = []
-        for root_dir, dirs, files in os.walk(os.getcwd()):
-            if "venv" in root_dir or ".git" in root_dir:
-                continue
-            for file in files:
-                if file.endswith(".pt") and "yolo" not in file:
-                    pt_files.append(os.path.join(root_dir, file))
-
+        # 0. Intentar cargar el modelo activo desde config.json
         modelo_path = ""
-        if pt_files:
-            # Ordenar por el más reciente
-            pt_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-            latest = pt_files[0]
+        try:
+            with open("config.json", "r", encoding="utf-8") as f:
+                config = json.load(f)
+            active = config.get("active_model")
+            if active and os.path.exists(active):
+                modelo_path = active
+                self.log(f"\n[AUTO] Usando modelo ACTIVO del historial: {os.path.basename(active)}")
+        except Exception:
+            pass
 
-            # Auto-Detectado
-            respuesta = messagebox.askyesnocancel(
-                "Historial de inteligencia artificial",
-                f"El sistema ha localizado el último cerebro entrenado hace poco en:\n"
-                f"...{latest[-50:]}\n\n¿Querés encender la cámara con este modelo?\n\n"
-                f"- SÍ = Extraer historial automático\n- NO = Cargar un modelo viejo manualmente.",
-            )
-            if respuesta is None:
-                return
-            if respuesta:
-                modelo_path = latest
+        if not modelo_path:
+            # Escanear agresivamente por cualquier cerebro de IA entrenado (.pt)
+            pt_files = []
+            for root_dir, dirs, files in os.walk(os.getcwd()):
+                if "venv" in root_dir or ".git" in root_dir:
+                    continue
+                for file in files:
+                    if file.endswith(".pt") and "yolo" not in file:
+                        pt_files.append(os.path.join(root_dir, file))
+
+            if pt_files:
+                # Ordenar por el más reciente
+                pt_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+                latest = pt_files[0]
+
+                # Auto-Detectado
+                respuesta = messagebox.askyesnocancel(
+                    "Historial de inteligencia artificial",
+                    f"El sistema ha localizado el último cerebro entrenado hace poco en:\n"
+                    f"...{latest[-50:]}\n\n¿Querés encender la cámara con este modelo?\n\n"
+                    f"- SÍ = Extraer historial automático\n- NO = Cargar un modelo viejo manualmente.",
+                )
+                if respuesta is None:
+                    return
+                if respuesta:
+                    modelo_path = latest
 
         if not modelo_path:
             modelo_path = filedialog.askopenfilename(
@@ -544,29 +684,41 @@ class MLOpsPanel(ctk.CTk):
         self.run_subprocess([self.python_exe, "4_probar_modelo_pc.py", modelo_path])
 
     def run_optimize(self):
-        # Buscar modelo .pt
-        pt_files = []
-        for root_dir, dirs, files in os.walk(os.getcwd()):
-            if "venv" in root_dir or ".git" in root_dir:
-                continue
-            for file in files:
-                if file.endswith("best.pt"):
-                    pt_files.append(os.path.join(root_dir, file))
-
+        # 0. Intentar cargar el modelo activo desde config.json
         modelo_path = ""
-        if pt_files:
-            pt_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-            latest = pt_files[0]
+        try:
+            with open("config.json", "r", encoding="utf-8") as f:
+                config = json.load(f)
+            active = config.get("active_model")
+            if active and os.path.exists(active) and active.endswith(".pt"):
+                modelo_path = active
+                self.log(f"\n[AUTO] Usando modelo ACTIVO para optimizar: {os.path.basename(active)}")
+        except Exception:
+            pass
 
-            respuesta = messagebox.askyesnocancel(
-                "Optimizar Modelo",
-                f"Se detectó tu último modelo PyTorch:\n...{latest[-50:]}\n\n"
-                "¿Quieres usar este base?\n\n- SÍ = Autodetectado\n- NO = Seleccionar manualmente."
-            )
-            if respuesta is None:
-                return
-            if respuesta:
-                modelo_path = latest
+        if not modelo_path:
+            # Buscar modelo .pt
+            pt_files = []
+            for root_dir, dirs, files in os.walk(os.getcwd()):
+                if "venv" in root_dir or ".git" in root_dir:
+                    continue
+                for file in files:
+                    if file.endswith("best.pt"):
+                        pt_files.append(os.path.join(root_dir, file))
+
+            if pt_files:
+                pt_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+                latest = pt_files[0]
+
+                respuesta = messagebox.askyesnocancel(
+                    "Optimizar Modelo",
+                    f"Se detectó tu último modelo PyTorch:\n...{latest[-50:]}\n\n"
+                    "¿Quieres usar este base?\n\n- SÍ = Autodetectado\n- NO = Seleccionar manualmente."
+                )
+                if respuesta is None:
+                    return
+                if respuesta:
+                    modelo_path = latest
 
         if not modelo_path:
             modelo_path = filedialog.askopenfilename(
@@ -597,7 +749,7 @@ class MLOpsPanel(ctk.CTk):
         )
 
     def run_deploy(self):
-        # Auto-detectar agresivamente el último modelo optimizado (o carpeta ncnn) generado
+        # 0. Detectar candidatos (Priorizando el último optimizado)
         modelos_candidatos = []
         for root_dir, dirs, files in os.walk(os.getcwd()):
             if "venv" in root_dir or ".git" in root_dir:
@@ -610,7 +762,8 @@ class MLOpsPanel(ctk.CTk):
 
             # Buscar archivos TFLite, ONNX, o el best base
             for file in files:
-                if file.endswith(".tflite") or file.endswith("best.pt") or file.endswith(".onnx"):
+                if (file.endswith(".tflite") or file.endswith("best.pt") or
+                   file.endswith(".onnx") or (file.startswith("modelo_") and file.endswith(".pt"))):
                     modelos_candidatos.append(os.path.join(root_dir, file))
 
         if not modelos_candidatos:
@@ -622,7 +775,7 @@ class MLOpsPanel(ctk.CTk):
         modelo_path = modelos_candidatos[0]
 
         self.log(
-            f"\n >>> Auto-Detectado último modelo: {os.path.basename(modelo_path)}"
+            f"\n >>> Auto-Detectado último modelo/optimizado: {os.path.basename(modelo_path)}"
         )
         self.log(" >>> Iniciando envío directo al Edge (Raspberry Pi)...")
         self.run_subprocess(
