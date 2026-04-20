@@ -49,24 +49,12 @@ void Clasificador::actualizar() {
       break;
 
     case SALIENDO:
-      if (ahora - tiempoUltimoPaso >= PASO_MS) {
-        // Mover hacia el objetivo a pasos de 2 grados
-        if (anguloActual < anguloObjetivo) {
-          anguloActual += PASO_GRADOS;
-          if (anguloActual > anguloObjetivo) anguloActual = anguloObjetivo;
-        } else if (anguloActual > anguloObjetivo) {
-          anguloActual -= PASO_GRADOS;
-          if (anguloActual < anguloObjetivo) anguloActual = anguloObjetivo;
-        }
-        
-        servoActivo->write(anguloActual);
-        tiempoUltimoPaso = ahora;
-
-        if (anguloActual == anguloObjetivo) {
-           estadoActual = ESPERANDO_RETORNO;
-           tiempoInicioEstado = ahora;
-        }
-      }
+      // Golpe instantáneo para asegurar impacto firme y rápido contra el objeto
+      anguloActual = anguloObjetivo;
+      servoActivo->write(anguloActual);
+      
+      estadoActual = ESPERANDO_RETORNO;
+      tiempoInicioEstado = ahora;
       break;
 
     case ESPERANDO_RETORNO:
