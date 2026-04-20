@@ -1,8 +1,9 @@
-import json
 import os
 import shutil
+import time
 
 import torch
+import yaml
 from ultralytics import YOLO
 
 
@@ -99,11 +100,37 @@ def train():
     if os.path.exists(best_path):
         shutil.copy2(best_path, archive_path)
         print(f"📦 ¡Cerebro archivado automáticamente como: {versioned_name}!")
-        
-        # Opcional: Actualizar config.json para que sea el modelo activo por defecto
-        config["active_model"] = archive_path
-        with open("config.json", "w", encoding="utf-8") as f:
-            json.dump(config, f, indent=4)
+
+        # --- GENERAR METADATOS ENRIQUECIDOS ---
+        metadata = {
+            "version": versioned_name,
+            "fecha": time.strftime("%d/%m/%Y %H:%M"),
+            "objetos": []
+        }
+
+        # Leer clases y servos
+        mapping_path = os.path.join(base_dir, "dataset", "servo_mapping.json")
+        yaml_path = os.path.join(base_dir, "dataset", "data.yaml")
+
+        names = []
+        if os.path.exists(yaml_path):
+            with open(yaml_path, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+                names = data.get("names", [])
+
+        mapping = {}
+        if os.path.exists(mapping_path):
+            with open(mapping_path, "r", encoding="utf-8") as f:
+                mapping = json.load(f)
+
+        for i, name in enumerate(names):
+            servo = mapping.get(str(i), "N/A")
+            metadata["objetos"].append({"nombre": name, "servo": servo})
+
+        metadata_path = archive_path.replace(".pt", ".json")
+        with open(metadata_path, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=4)
+        print(f"📝 Metadatos guardados en: {os.path.basename(metadata_path)}")
     
     print(f"Olla MLOps completada. Tu modelo central ha sido guardado en: {best_path}")
 

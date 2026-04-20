@@ -113,6 +113,7 @@ class HistoryDialog(ctk.CTkToplevel):
             os.makedirs(self.archive_dir, exist_ok=True)
 
         files = [f for f in os.listdir(self.archive_dir) if f.endswith(".pt")]
+        # Ordenar por fecha de modificación (Más nuevo arriba)
         files.sort(key=lambda x: os.path.getmtime(os.path.join(self.archive_dir, x)), reverse=True)
 
         if not files:
@@ -121,17 +122,45 @@ class HistoryDialog(ctk.CTkToplevel):
 
         for f in files:
             f_path = os.path.join(self.archive_dir, f)
-            mtime = time.ctime(os.path.getmtime(f_path))
-            size = os.path.getsize(f_path) / (1024 * 1024)
+            metadata_path = f_path.replace(".pt", ".json")
+            
+            # Datos básicos por defecto
+            mtime = time.strftime("%d/%m/%Y %H:%M", time.localtime(os.path.getmtime(f_path)))
+            description = "Sin metadatos detallados"
+            
+            # Cargar metadatos si existen
+            if os.path.exists(metadata_path):
+                try:
+                    with open(metadata_path, "r", encoding="utf-8") as meta_f:
+                        meta_data = json.load(meta_f)
+                        mtime = meta_data.get("fecha", mtime)
+                        objetos = meta_data.get("objetos", [])
+                        if objetos:
+                            description = "📦 Objetos: " + ", ".join(
+                                [f"{o['nombre']} (S{o['servo']})" for o in objetos]
+                            )
+                except Exception:
+                    pass
 
             item_frame = ctk.CTkFrame(self.scroll_frame)
-            item_frame.pack(fill="x", pady=5, padx=5)
+            item_frame.pack(fill="x", pady=8, padx=5)
 
-            lbl_info = ctk.CTkLabel(item_frame, text=f"{f}\n{mtime} | {size:.1f} MB",
-                                    font=ctk.CTkFont(size=11), justify="left")
-            lbl_info.pack(side="left", padx=10, pady=5)
+            # Contenedor de texto
+            text_container = ctk.CTkFrame(item_frame, fg_color="transparent")
+            text_container.pack(side="left", padx=10, pady=5, fill="both", expand=True)
+
+            ctk.CTkLabel(text_container, text=f, font=ctk.CTkFont(size=13, weight="bold"),
+                        anchor="w").pack(fill="x")
+            ctk.CTkLabel(text_container, text=f"Fecha: {mtime}", font=ctk.CTkFont(size=11),
+                        text_color="#AAAAAA", anchor="w").pack(fill="x")
+            
+            # Color distintivo para la lista de objetos
+            lbl_desc = ctk.CTkLabel(text_container, text=description, font=ctk.CTkFont(size=11),
+                                    text_color="#4CAF50", anchor="w", wraplength=300, justify="left")
+            lbl_desc.pack(fill="x")
 
             btn_activate = ctk.CTkButton(item_frame, text="Activar", width=80,
+                                         fg_color="#1E88E5", hover_color="#1565C0",
                                          command=lambda p=f_path: self.activate_model(p))
             btn_activate.pack(side="right", padx=10)
 
