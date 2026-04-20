@@ -415,7 +415,11 @@ class MLOpsPanel(ctk.CTk):
         # ---------------- MENU LATERAL (SIDEBAR) ----------------
         self.sidebar_frame = ctk.CTkFrame(self, width=250, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(9, weight=1)  # Espacio flexible abajo
+
+        # Row configuration to allow buttons to spread out when maximized
+        for i in range(3, 8):
+            self.sidebar_frame.grid_rowconfigure(i, weight=1)
+        self.sidebar_frame.grid_rowconfigure(9, weight=2)  # Main spacer
 
         path_logo_texto = os.path.join("recursos", "logo_texto.png")
         if os.path.exists(path_logo_texto):
@@ -451,6 +455,9 @@ class MLOpsPanel(ctk.CTk):
         )
         self.btn_reset.grid(row=0, column=0, padx=(0, 5), sticky="ew")
 
+        # Spacer row above main buttons
+        self.sidebar_frame.grid_rowconfigure(2, weight=1)
+
         self.btn_setup = ctk.CTkButton(
             self.init_frame, text="1. Inicializar", command=self.run_setup,
             fg_color="#333333", hover_color="#555555", font=ctk.CTkFont(size=13)
@@ -459,31 +466,36 @@ class MLOpsPanel(ctk.CTk):
 
         self.btn_ingest = ctk.CTkButton(
             self.sidebar_frame, text="2. Nuevo entrenamiento", command=self.run_ingest,
-            fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold")
+            fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold"),
+            height=35
         )
         self.btn_ingest.grid(row=3, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_train = ctk.CTkButton(
             self.sidebar_frame, text="4. Entrenar Inteligencia", command=self.run_train,
-            fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold")
+            fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold"),
+            height=35
         )
         self.btn_train.grid(row=4, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_test = ctk.CTkButton(
             self.sidebar_frame, text="4. Probar modelo / visión", command=self.run_infer,
-            fg_color="#7B1FA2", hover_color="#4A148C", font=ctk.CTkFont(size=14, weight="bold")
+            fg_color="#7B1FA2", hover_color="#4A148C", font=ctk.CTkFont(size=14, weight="bold"),
+            height=35
         )
         self.btn_test.grid(row=5, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_optimize = ctk.CTkButton(
             self.sidebar_frame, text="5. Optimizar (NCNN/TF)", command=self.run_optimize,
-            fg_color="#E040FB", hover_color="#AA00FF", font=ctk.CTkFont(size=14, weight="bold")
+            fg_color="#E040FB", hover_color="#AA00FF", font=ctk.CTkFont(size=14, weight="bold"),
+            height=35
         )
         self.btn_optimize.grid(row=6, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_deploy = ctk.CTkButton(
             self.sidebar_frame, text="6. Enviar a Raspberry Pi", command=self.run_deploy,
-            fg_color="#00897B", hover_color="#00695C", font=ctk.CTkFont(size=14, weight="bold")
+            fg_color="#00897B", hover_color="#00695C", font=ctk.CTkFont(size=14, weight="bold"),
+            height=35
         )
         self.btn_deploy.grid(row=7, column=0, padx=20, pady=4, sticky="ew")
 
