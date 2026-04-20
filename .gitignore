@@ -1,4 +1,5 @@
 # Entornos Virtuales y Cache
+config.json
 venv/
 env/
 __pycache__/

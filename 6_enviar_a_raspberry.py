@@ -1,4 +1,5 @@
 import contextlib
+import json
 import os
 import sys
 import time
@@ -12,13 +13,26 @@ if sys.stdout.encoding.lower() != 'utf-8':
         sys.stdout.reconfigure(encoding='utf-8')
 
 
+def load_config():
+    config_path = "config.json"
+    if os.path.exists(config_path):
+        with open(config_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {
+        "ip_raspberry": "192.168.1.10",
+        "usuario": "pi",
+        "contrasena": "12345678"
+    }
+
+
 def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
     # =========================================================================
-    # ¡IMPORTANTE! EDITA ESTAS CREDENCIALES CON LOS DATOS DE TU RASPBERRY PI
+    # ¡IMPORTANTE! EDITA ESTAS CREDENCIALES EN EL PANEL DE AJUSTES (ENGRANAJE)
     # =========================================================================
-    ip_raspberry = '192.168.1.10'  # <-- Modifica esta IP
-    usuario = 'pi'                  # <-- Modifica si no usas 'pi'
-    contrasena = '12345678'        # <-- Modifica con tu contraseña real
+    config = load_config()
+    ip_raspberry = config.get("ip_raspberry", "192.168.1.10")
+    usuario = config.get("usuario", "pi")
+    contrasena = config.get("contrasena", "12345678")
     # =========================================================================
 
     print("\n[TRANSFERENCIA EDGE]")

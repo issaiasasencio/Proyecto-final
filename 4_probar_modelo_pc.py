@@ -1,7 +1,16 @@
+import json
 import os
 
 import cv2
 from ultralytics import YOLO
+
+
+def load_config():
+    config_path = "config.json"
+    if os.path.exists(config_path):
+        with open(config_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {"confidence": 0.60}
 
 
 def probar_en_pc():
@@ -39,8 +48,10 @@ def probar_en_pc():
 
         # 1. Aplicar la red neuronal en el frame actual
         # ('verbose=False' elimina el spam a consola)
-        # Modo Producción: Confianza subida al 60% para eliminar falsos positivos
-        results = model.predict(source=frame, conf=0.60, verbose=False)
+        # Modo Producción: Confianza cargada dinámicamente desde Ajustes
+        config = load_config()
+        conf_val = config.get("confidence", 0.60)
+        results = model.predict(source=frame, conf=conf_val, verbose=False)
         result = results[0]
 
         frame_anotado = frame.copy()

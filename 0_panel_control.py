@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import subprocess
@@ -67,6 +68,88 @@ class ServoSelectorDialog(ctk.CTkToplevel):
         btn4 = ctk.CTkButton(frame, text="4\n(Derecho lejos)", font=btn_font, corner_radius=15,
                              fg_color="#F57C00", hover_color="#E65100", command=lambda: select('4'))
         btn4.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
+
+
+class SettingsDialog(ctk.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Ajustes del Sistema FLEX-SORT")
+        self.geometry("450x550")
+        self.config_path = "config.json"
+
+        # Cargar configuración actual
+        self.config_data = self.load_config()
+
+        # Modal
+        self.attributes('-topmost', True)
+        self.resizable(False, False)
+        self.transient(parent)
+        self.grab_set()
+
+        # Layout
+        self.grid_columnconfigure(0, weight=1)
+
+        header = ctk.CTkLabel(self, text="⚙️ Configuración Maestra", font=ctk.CTkFont(size=20, weight="bold"))
+        header.pack(pady=(20, 10))
+
+        # --- SECCIÓN: RED ---
+        frame_red = ctk.CTkFrame(self)
+        frame_red.pack(pady=10, padx=20, fill="x")
+        ctk.CTkLabel(frame_red, text="CONEXIÓN RASPBERRY PI", font=ctk.CTkFont(size=12, weight="bold"),
+                     text_color="#1E88E5").pack(pady=5)
+
+        self.ip_entry = self.create_input(frame_red, "Dirección IP:", self.config_data.get("ip_raspberry", "192.168.1.10"))
+        self.user_entry = self.create_input(frame_red, "Usuario SSH:", self.config_data.get("usuario", "pi"))
+        self.pass_entry = self.create_input(
+            frame_red, "Contraseña SSH:", self.config_data.get("contrasena", "12345678"), show="*"
+        )
+
+        # --- SECCIÓN: IA ---
+        frame_ia = ctk.CTkFrame(self)
+        frame_ia.pack(pady=10, padx=20, fill="x")
+        ctk.CTkLabel(frame_ia, text="PARÁMETROS DE INTELIGENCIA", font=ctk.CTkFont(size=12, weight="bold"),
+                     text_color="#F57C00").pack(pady=5)
+
+        self.epochs_entry = self.create_input(frame_ia, "Épocas de Entrenamiento:", str(self.config_data.get("epochs", 300)))
+        self.conf_entry = self.create_input(
+            frame_ia, "Confianza Mínima (0.1 a 1.0):", str(self.config_data.get("confidence", 0.60))
+        )
+
+        # Botón Guardar
+        btn_save = ctk.CTkButton(self, text="Guardar Cambios", command=self.save_config,
+                                 fg_color="#2E7D32", hover_color="#1B5E20", font=ctk.CTkFont(weight="bold"))
+        btn_save.pack(pady=20, padx=20, fill="x")
+
+    def create_input(self, parent, label, default_val, show=None):
+        frame = ctk.CTkFrame(parent, fg_color="transparent")
+        frame.pack(fill="x", padx=10, pady=5)
+        ctk.CTkLabel(frame, text=label).pack(side="left")
+        entry = ctk.CTkEntry(frame, width=150, show=show)
+        entry.insert(0, default_val)
+        entry.pack(side="right")
+        return entry
+
+    def load_config(self):
+        if os.path.exists(self.config_path):
+            with open(self.config_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        return {}
+
+    def save_config(self):
+        try:
+            new_config = {
+                "ip_raspberry": self.ip_entry.get(),
+                "usuario": self.user_entry.get(),
+                "contrasena": self.pass_entry.get(),
+                "epochs": int(self.epochs_entry.get()),
+                "confidence": float(self.conf_entry.get())
+            }
+            with open(self.config_path, "w", encoding="utf-8") as f:
+                json.dump(new_config, f, indent=4)
+            messagebox.showinfo("Éxito", "Configuración guardada correctamente.")
+            self.destroy()
+        except ValueError:
+            messagebox.showerror("Error", "Por favor ingresá valores numéricos válidos en Épocas y Confianza.")
 
 
 class MLOpsPanel(ctk.CTk):
@@ -195,6 +278,25 @@ class MLOpsPanel(ctk.CTk):
                                           font=ctk.CTkFont(size=16, weight="bold"))
         self.console_label.grid(row=0, column=0, padx=0, pady=(0, 5), sticky="w")
 
+        # Botón de Ajustes (Engranaje) en la parte superior derecha
+        path_config_icon = "config_icon.png"
+        if os.path.exists(path_config_icon):
+            try:
+                img_conf = Image.open(path_config_icon)
+                img_conf_ctk = ctk.CTkImage(light_image=img_conf, dark_image=img_conf, size=(24, 24))
+                self.btn_settings = ctk.CTkButton(self.main_frame, text="", image=img_conf_ctk, width=30, height=30,
+                                                  fg_color="transparent", hover_color=("#DBDBDB", "#2B2B2B"),
+                                                  command=self.open_settings)
+                self.btn_settings.grid(row=0, column=0, sticky="e", padx=(0, 5))
+            except Exception:
+                self.btn_settings = ctk.CTkButton(self.main_frame, text="⚙️", width=30, height=30,
+                                                  fg_color="transparent", command=self.open_settings)
+                self.btn_settings.grid(row=0, column=0, sticky="e", padx=(0, 5))
+        else:
+            self.btn_settings = ctk.CTkButton(self.main_frame, text="⚙️", width=30, height=30,
+                                              fg_color="transparent", command=self.open_settings)
+            self.btn_settings.grid(row=0, column=0, sticky="e", padx=(0, 5))
+
         self.progressbar = ctk.CTkProgressBar(self.main_frame, mode="indeterminate",
                                               height=6, fg_color="#333333", progress_color="#1E88E5")
         self.progressbar.grid(row=1, column=0, sticky="ew", pady=(0, 10))
@@ -213,6 +315,10 @@ class MLOpsPanel(ctk.CTk):
             f"[SISTEMA INICIADO] Conectado al intérprete virtual: "
             f"{self.python_exe}\nEsperando instrucciones...\n{'-' * 60}"
         )
+
+    def open_settings(self):
+        dialog = SettingsDialog(self)
+        self.wait_window(dialog)
 
     def toggle_appearance_mode(self):
         if self.switch_var.get() == "on":

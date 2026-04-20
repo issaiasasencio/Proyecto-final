@@ -1,7 +1,16 @@
+import json
 import os
 
 import torch
 from ultralytics import YOLO
+
+
+def load_config():
+    config_path = "config.json"
+    if os.path.exists(config_path):
+        with open(config_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {"epochs": 300}
 
 
 def train():
@@ -47,11 +56,14 @@ def train():
         print("[NUEVO] Modo DESDE CERO activado: Iniciando modelo pre-entrenado general (yolo11n.pt)...")
         model = YOLO("yolo11n.pt")
 
+    config = load_config()
+    epochs = config.get("epochs", 300)
+
     print("\n[INICIANDO] ¡Iniciando el entrenamiento profundo!")
     # model.train ejecuta la estructura completa de PyTorch por debajo.
     model.train(
         data=yaml_path,
-        epochs=300,      # Industrial Level: 300 Iteraciones para máxima absorción matemática.
+        epochs=epochs,      # Industrial Level: Cargado dinámicamente.
         imgsz=640,       # Tamaño de red a 640x640 pixeles.
         batch=16,        # Tamaño de lote optimizado para exprimir al 100% tu Nvidia.
         device=device,   # Dispositivo seleccionado arriba.
