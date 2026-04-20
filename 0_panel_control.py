@@ -5,6 +5,8 @@ import subprocess
 import sys
 import threading
 import time
+import csv
+import psutil
 from tkinter import filedialog, messagebox, simpledialog
 
 import customtkinter as ctk
@@ -177,6 +179,91 @@ class HistoryDialog(ctk.CTkToplevel):
             self.destroy()
         except Exception as e:
             messagebox.showerror("Error", f"No se pudo activar el modelo: {e}")
+
+
+class ReportDialog(ctk.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Calidad de Inteligencia Artificial")
+        self.geometry("500x550")
+        
+        # Centrar
+        w, h = 500, 550
+        x = int((self.winfo_screenwidth() / 2) - (w / 2))
+        y = int((self.winfo_screenheight() / 2) - (h / 2))
+        self.geometry(f"{w}x{h}+{x}+{y}")
+        
+        self.attributes('-topmost', True)
+        self.transient(parent)
+        self.grab_set()
+
+        self.results_path = os.path.join("Proyecto_Cinta", "entrenamientos", "modelo_produccion", "results.csv")
+        self.image_path = os.path.join("Proyecto_Cinta", "entrenamientos", "modelo_produccion", "results.png")
+
+        self.grid_columnconfigure(0, weight=1)
+        
+        ctk.CTkLabel(self, text="📈 Reporte de Desempeño", font=ctk.CTkFont(size=22, weight="bold")).pack(pady=20)
+        
+        self.content_frame = ctk.CTkFrame(self)
+        self.content_frame.pack(pady=10, padx=20, fill="both", expand=True)
+
+        self.load_report()
+
+    def load_report(self):
+        map50 = 0.0
+        if os.path.exists(self.results_path):
+            try:
+                with open(self.results_path, mode='r', encoding='utf-8') as f:
+                    reader = list(csv.DictReader(f))
+                    if reader:
+                        last_row = reader[-1]
+                        # Buscar la columna mAP50 ajustando por posibles espacios en nombres
+                        keys = [k.strip() for k in last_row.keys()]
+                        val_key = next((k for k in last_row.keys() if "mAP50(B)" in k), None)
+                        if val_key:
+                            map50 = float(last_row[val_key])
+            except Exception as e:
+                print(f"Error al leer reporte: {e}")
+
+        # Lógica de Veredicto
+        score_pct = map50 * 100
+        if score_pct >= 90:
+            status, color, msg = "EXCELENTE ✅", "#4CAF50", "¡Súper Inteligente! El sistema está listo para la fábrica."
+        elif score_pct >= 70:
+            status, color, msg = "BUENO ⚠️", "#FBC02D", "Funciona bien, pero podría tener errores leves."
+        else:
+            status, color, msg = "INSUFICIENTE ❌", "#F44336", "Necesitás grabar más videos con mejor luz."
+
+        # UI del Score
+        ctk.CTkLabel(self.content_frame, text=status, font=ctk.CTkFont(size=24, weight="bold"),
+                     text_color=color).pack(pady=(20, 5))
+        
+        gauge = ctk.CTkProgressBar(self.content_frame, height=20, progress_color=color, fg_color="#333333")
+        gauge.set(map50)
+        gauge.pack(fill="x", padx=40, pady=10)
+        
+        ctk.CTkLabel(self.content_frame, text=f"Puntaje de Precisión: {score_pct:.1f}%",
+                     font=ctk.CTkFont(size=14)).pack()
+
+        # Recomendación
+        msg_frame = ctk.CTkFrame(self.content_frame, fg_color="#222222")
+        msg_frame.pack(pady=20, padx=20, fill="x")
+        ctk.CTkLabel(msg_frame, text="RECOMENDACIÓN:", font=ctk.CTkFont(weight="bold", size=12),
+                     text_color="#AAAAAA").pack(pady=(10, 0))
+        ctk.CTkLabel(msg_frame, text=msg, wraplength=350, font=ctk.CTkFont(size=13)).pack(pady=10)
+
+        # Imagen de resultados si existe
+        if os.path.exists(self.image_path):
+            try:
+                img = Image.open(self.image_path)
+                # Redimensionar para encajar
+                img.thumbnail((400, 200))
+                img_ctk = ctk.CTkImage(light_image=img, dark_image=img, size=img.size)
+                ctk.CTkLabel(self.content_frame, text="", image=img_ctk).pack(pady=10)
+            except Exception:
+                pass
+        
+        ctk.CTkButton(self, text="Entendido", command=self.destroy).pack(pady=20)
 
 
 class SettingsDialog(ctk.CTkToplevel):
@@ -406,9 +493,21 @@ class MLOpsPanel(ctk.CTk):
         )
         self.switch_theme.grid(row=9, column=0, padx=20, pady=(0, 10), sticky="s")
 
-        self.lbl_hardware = ctk.CTkLabel(self.sidebar_frame, text="Controlador NVIDIA activo",
-                                         font=ctk.CTkFont(size=11), text_color="#A5D6A7")
-        self.lbl_hardware.grid(row=10, column=0, padx=20, pady=(0, 20), sticky="s")
+        self.lbl_hardware = ctk.CTkButton(
+            self.sidebar_frame, text="📊 Ver Rendimiento", font=ctk.CTkFont(size=11),
+            fg_color="transparent", text_color="#A5D6A7", command=self.toggle_performance
+        )
+        self.lbl_hardware.grid(row=10, column=0, padx=20, pady=(0, 5), sticky="s")
+
+        # Frame de Rendimiento (Oculto por defecto)
+        self.perf_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#222222", corner_radius=5)
+        self.perf_frame.grid_remove() # Oculto al inicio
+        
+        self.cpu_bar = self.create_perf_bar(self.perf_frame, "CPU:", "#4CAF50")
+        self.ram_bar = self.create_perf_bar(self.perf_frame, "RAM:", "#1E88E5")
+        self.gpu_bar = self.create_perf_bar(self.perf_frame, "GPU (RTX):", "#F57C00")
+
+        self.update_performance_stats()
 
         # ---------------- PANEL PRINCIPAL (CONSOLA) ----------------
         self.main_frame = ctk.CTkFrame(self, corner_radius=10, fg_color="transparent")
@@ -447,6 +546,12 @@ class MLOpsPanel(ctk.CTk):
                 self.btn_settings = ctk.CTkButton(self.main_frame, text="⚙️", width=30, height=30,
                                                   fg_color="transparent", command=self.open_settings)
                 self.btn_settings.grid(row=0, column=0, sticky="e", padx=(0, 5))
+
+        # Botón de Reporte (Gráfico)
+        self.btn_report = ctk.CTkButton(self.main_frame, text="📊 Ver Calidad de IA", width=140, height=30,
+                                         fg_color="#333333", border_color="#1E88E5", border_width=1,
+                                         hover_color="#222222", command=self.open_report)
+        self.btn_report.grid(row=0, column=0, sticky="e", padx=(0, 80))
         else:
             self.btn_settings = ctk.CTkButton(self.main_frame, text="⚙️", width=30, height=30,
                                               fg_color="transparent", command=self.open_settings)
@@ -479,6 +584,10 @@ class MLOpsPanel(ctk.CTk):
         dialog = HistoryDialog(self)
         self.wait_window(dialog)
 
+    def open_report(self):
+        dialog = ReportDialog(self)
+        self.wait_window(dialog)
+
     def toggle_appearance_mode(self):
         if self.switch_var.get() == "on":
             ctk.set_appearance_mode("Dark")
@@ -497,7 +606,7 @@ class MLOpsPanel(ctk.CTk):
         self.console.insert(ctk.END, text + "\n")
         self.console.see(ctk.END)
 
-    def run_subprocess(self, cmd):
+    def run_subprocess(self, cmd, on_finish=None):
         def task():
             self.after(0, self.progressbar.start)
             self.log(f"> \n> EJECUTANDO: {' '.join(cmd)}\n")
@@ -527,9 +636,50 @@ class MLOpsPanel(ctk.CTk):
             self.after(0, self.progressbar.stop)
             self.after(0, self.progressbar.set, 0)
             self.after(0, self.log, f"\n[ CÓDIGO FINALIZADO ]\n{'-'*70}\n")
+            
+            if on_finish:
+                self.after(0, on_finish)
 
         # Ejecutar en segundo plano real
         threading.Thread(target=task, daemon=True).start()
+
+    def create_perf_bar(self, parent, label, color):
+        frame = ctk.CTkFrame(parent, fg_color="transparent")
+        frame.pack(fill="x", padx=10, pady=2)
+        ctk.CTkLabel(frame, text=label, font=ctk.CTkFont(size=10)).pack(side="left")
+        bar = ctk.CTkProgressBar(frame, height=8, progress_color=color, fg_color="#333333")
+        bar.set(0)
+        bar.pack(side="right", fill="x", expand=True, padx=(5, 0))
+        return bar
+
+    def toggle_performance(self):
+        if self.perf_frame.winfo_viewable():
+            self.perf_frame.grid_remove()
+            self.lbl_hardware.configure(text="📊 Ver Rendimiento")
+        else:
+            self.perf_frame.grid(row=11, column=0, padx=10, pady=(0, 20), sticky="ew")
+            self.lbl_hardware.configure(text="📊 Ocultar Rendimiento")
+
+    def update_performance_stats(self):
+        def get_gpu_usage():
+            try:
+                cmd = ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"]
+                result = subprocess.run(cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                if result.returncode == 0:
+                    return int(result.stdout.strip())
+            except Exception:
+                pass
+            return 0
+
+        cpu = psutil.cpu_percent() / 100
+        ram = psutil.virtual_memory().percent / 100
+        gpu = get_gpu_usage() / 100
+
+        self.cpu_bar.set(cpu)
+        self.ram_bar.set(ram)
+        self.gpu_bar.set(gpu)
+
+        self.after(2000, self.update_performance_stats)
 
     def run_reset_all(self):
         respuesta = messagebox.askyesnocancel(
@@ -657,9 +807,14 @@ class MLOpsPanel(ctk.CTk):
         if respuesta is None:
             return
         modo = "finetune" if respuesta else "scratch"
+        
+        def suggest_report():
+            if messagebox.askyesno("Entrenamiento Finalizado", "¿Deseás ver el Reporte de Calidad del nuevo modelo ahora?"):
+                self.open_report()
+
         self.run_subprocess([
             self.python_exe, "3_entrenar_modelo.py", modo
-        ])
+        ], on_finish=suggest_report)
 
     def run_infer(self):
         # 0. Intentar cargar el modelo activo desde config.json
