@@ -190,17 +190,17 @@ def procesar_video():
                 return
 
             # NO redimensionar forzosamente para no distorsionar la imagen nativa (aspect ratio)
-            cv2.imshow("CALIBRACIÓN (Presioná ESPACIO cuando se vea bien)", frame)
+            cv2.imshow("CALIBRACION (Presiona ESPACIO cuando se vea bien)", frame)
             if cv2.waitKey(1) & 0xFF == ord(' '):
                 break
-        cv2.destroyWindow("CALIBRACIÓN (Presioná ESPACIO cuando se vea bien)")
+        cv2.destroyWindow("CALIBRACION (Presiona ESPACIO cuando se vea bien)")
 
         print(">>>>> MUY IMPORTANTE: Usá el mouse para DIBUJAR un recuadro MUY AJUSTADO alrededor del objeto.")
         print(">>>>> Luego presioná 'ENTER' en tu teclado para disparar el Auto-Etiquetado Inteligente.")
 
-        bbox_roi = cv2.selectROI("Dibujá un recuadro ajustado y pulsá ENTER",
+        bbox_roi = cv2.selectROI("Dibuja un recuadro ajustado y pulsa ENTER",
                                  frame, fromCenter=False, showCrosshair=True)
-        cv2.destroyWindow("Dibujá un recuadro ajustado y pulsá ENTER")
+        cv2.destroyWindow("Dibuja un recuadro ajustado y pulsa ENTER")
 
         if bbox_roi[2] > 0 and bbox_roi[3] > 0:
             x_r, y_r, w_r, h_r = bbox_roi
@@ -274,14 +274,14 @@ def procesar_video():
                 cv2.putText(vis_frame, "LISTO (Q para parar)", (20, real_h - 15),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-            nombre_ventana = f"Grabando automáticamente - {categoria} (Presioná 'q' para salir)"
+            nombre_ventana = f"Grabando automaticamente - {categoria} (Presiona 'q' para salir)"
             cv2.imshow(nombre_ventana, vis_frame)
             tecla = cv2.waitKey(1) & 0xFF
             if tecla == ord('q'):
                 if tiempo_actual >= MIN_DURACION:
                     break
                 else:
-                    print(f"\n[ATENCIÓN] Grabación muy corta ({int(tiempo_actual)}s). Falta llegar a {MIN_DURACION}s.")
+                    print(f"\n[ATENCION] Grabacion muy corta ({int(tiempo_actual)}s). Falta llegar a {MIN_DURACION}s.")
 
             if frame_count == 0:
                 cv2.setWindowProperty(nombre_ventana, cv2.WND_PROP_TOPMOST, 1)

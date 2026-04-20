@@ -513,7 +513,7 @@ class MLOpsPanel(ctk.CTk):
         self.switch_var = ctk.StringVar(value="on")
         self.switch_theme = ctk.CTkSwitch(
             self.sidebar_frame, text="Modo Oscuro", command=self.toggle_appearance_mode,
-            variable=self.switch_var, onvalue="on", offvalue="of"
+            variable=self.switch_var, onvalue="on", offvalue="off"
         )
         self.switch_theme.grid(row=9, column=0, padx=20, pady=(0, 5))
 
