@@ -508,11 +508,6 @@ class MLOpsPanel(ctk.CTk):
         )
         self.lbl_performance.grid(row=10, column=0, padx=20, pady=(0, 5))
 
-        self.btn_calibrate_bg = ctk.CTkButton(
-            self.sidebar_frame, text="Calibrar Fondo de Maquina", font=ctk.CTkFont(size=12, weight="bold"),
-            fg_color="#455A64", hover_color="#37474F", command=self.run_bg_calibration
-        )
-        self.btn_calibrate_bg.grid(row=11, column=0, padx=20, pady=(10, 5), sticky="ew")
 
         # Frame de Rendimiento (Oculto por defecto)
         self.perf_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#222222", corner_radius=5)
@@ -731,7 +726,7 @@ class MLOpsPanel(ctk.CTk):
             self.perf_frame.grid_remove()
             self.lbl_performance.configure(text="📊 Ver Rendimiento")
         else:
-            self.perf_frame.grid(row=12, column=0, padx=10, pady=(0, 20), sticky="ew")
+            self.perf_frame.grid(row=11, column=0, padx=10, pady=(0, 20), sticky="ew")
             self.lbl_performance.configure(text="📊 Ocultar Rendimiento")
 
     def update_performance_stats(self):
@@ -873,9 +868,16 @@ class MLOpsPanel(ctk.CTk):
             "\n >>> Lanzando interfaz de mapeo... "
             "Mira la ventana emergente."
         )
+        def check_bg_calibration():
+            # Preguntar si desea calibrar el fondo ahora que terminó de procesar el objeto
+            msg = "¿Deseás calibrar el fondo maestro de la máquina ahora?\n(Recomendado si cambió la luz o la posición de la cámara)"
+            if messagebox.askyesno("Calibración de Fondo", msg, parent=self):
+                self.run_bg_calibration()
+
         self.run_subprocess(
             [self.python_exe, "2_procesar_video.py", video_path,
-             categoria, opcion, servo_id]
+             categoria, opcion, servo_id],
+            on_finish=check_bg_calibration
         )
 
     def run_train(self):
