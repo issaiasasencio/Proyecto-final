@@ -197,6 +197,10 @@ class RPiOperatorPanel(ctk.CTk):
         self.video_label = tk.Label(self.main_view, bg="black")
         self.video_label.pack(expand=True, fill="both")
 
+        # Portada Inactiva
+        self.portada_img = None
+        self.set_portada()
+
         # ---------------- FOOTER (SERVO HUB) ----------------
         self.footer = ctk.CTkFrame(self, height=140, fg_color="transparent")
         self.footer.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
@@ -265,6 +269,19 @@ class RPiOperatorPanel(ctk.CTk):
                 text="ENCENDER SCANNER", fg_color="#2E7D32", hover_color="#1B5E20"
             )
             self.status_indicator.configure(text="SISTEMA LISTO", text_color="#4CAF50")
+            self.set_portada()
+
+    def set_portada(self):
+        portada_path = os.path.join(self.recursos_dir, "portada.png")
+        if os.path.exists(portada_path):
+            try:
+                img = Image.open(portada_path)
+                img = img.resize((740, 480), Image.Resampling.LANCZOS)
+                self.portada_img = ImageTk.PhotoImage(img)
+                self.video_label.configure(image=self.portada_img)
+            except Exception: # noqa: BLE001
+                self.video_label.configure(image="")
+        else:
             self.video_label.configure(image="")
 
     def load_config(self):
