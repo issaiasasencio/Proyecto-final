@@ -7,6 +7,7 @@ import threading
 import time
 import csv
 import psutil
+import webbrowser
 from tkinter import filedialog, messagebox, simpledialog
 
 import customtkinter as ctk
@@ -580,6 +581,33 @@ class MLOpsPanel(ctk.CTk):
             border_color="#333333", border_width=2, font=("Consolas", 13)
         )
         self.console.grid(row=2, column=0, sticky="nsew")
+
+        # Footer de Créditos de Ingeniería
+        self.footer_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        self.footer_frame.grid(row=3, column=0, sticky="e", pady=(5, 0))
+
+        ctk.CTkLabel(
+            self.footer_frame, text="Creado por: Medina Albaro y Asencio Issaias | Contacto: ",
+            font=ctk.CTkFont(size=11, slant="italic"), text_color="#AAAAAA"
+        ).pack(side="left")
+
+        lbl_email1 = ctk.CTkLabel(
+            self.footer_frame, text="medinaferesalbaro@gmail.com", cursor="hand2",
+            font=ctk.CTkFont(size=11, slant="italic", underline=True), text_color="#1E88E5"
+        )
+        lbl_email1.pack(side="left")
+        lbl_email1.bind("<Button-1>", lambda e: webbrowser.open("mailto:medinaferesalbaro@gmail.com"))
+
+        ctk.CTkLabel(
+            self.footer_frame, text=" - ", font=ctk.CTkFont(size=11, slant="italic"), text_color="#AAAAAA"
+        ).pack(side="left")
+
+        lbl_email2 = ctk.CTkLabel(
+            self.footer_frame, text="issaiasasencio@gmail.com", cursor="hand2",
+            font=ctk.CTkFont(size=11, slant="italic", underline=True), text_color="#1E88E5"
+        )
+        lbl_email2.pack(side="left")
+        lbl_email2.bind("<Button-1>", lambda e: webbrowser.open("mailto:issaiasasencio@gmail.com"))
 
         # Forzar el uso estricto del ejecutable local
         self.python_exe = ".\\venv\\Scripts\\python.exe"
