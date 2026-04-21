@@ -49,10 +49,9 @@ void Clasificador::actualizar() {
       break;
 
     case SALIENDO:
-      // Golpe instantáneo para asegurar impacto firme y rápido contra el objeto
+      // Movimiento de golpe instantaneo
       anguloActual = anguloObjetivo;
       servoActivo->write(anguloActual);
-      
       estadoActual = ESPERANDO_RETORNO;
       tiempoInicioEstado = ahora;
       break;
