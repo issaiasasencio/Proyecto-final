@@ -7,6 +7,9 @@ import time
 
 import cv2
 import yaml
+import paramiko
+from scp import SCPClient
+
 
 
 def limpiar_historial(base_dir):
@@ -92,7 +95,7 @@ def procesar_video():
 
         servo_id = input("Ingresá el ID del servo (1, 2, 3 o 4): ").strip()
 
-    if video_path != "webcam" and not os.path.exists(video_path):
+    if video_path not in ["webcam", "raspberry"] and not os.path.exists(video_path):
         print(f"Error: No se encontró el archivo de video: {video_path}")
         return
 
@@ -139,16 +142,49 @@ def procesar_video():
 
     # 6. Procesar el video con OpenCV
     MIN_DURACION = 10  # Tiempo mínimo en segundos
-    es_webcam = (video_path == "webcam")
+    es_webcam = (video_path == "webcam" or video_path == "raspberry")
 
+    ssh = None
     if es_webcam:
-        print("Iniciando conexión con Cámara Web (Iriun Webcam)...")
-        cap = cv2.VideoCapture(0)
-        if not cap.isOpened():
-            cap = cv2.VideoCapture(1)  # Intentar fallback si el index 0 no es la Iriun
-        if not cap.isOpened():
-            cap = cv2.VideoCapture(2)
-        fps = 30.0
+        if video_path == "raspberry":
+            try:
+                with open("config.json", "r") as f:
+                    cfg = json.load(f)
+                rpi_ip = cfg.get("ip_raspberry", "192.168.1.10")
+                rpi_user = cfg.get("usuario", "pi")
+                rpi_pwd = cfg.get("contrasena", "12345678")
+            except:
+                rpi_ip, rpi_user, rpi_pwd = "192.168.1.10", "pi", "12345678"
+
+            print(f"\n[STREAMER] Iniciando transmision en el Edge ({rpi_ip})...")
+            try:
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                ssh.connect(rpi_ip, username=rpi_user, password=rpi_pwd, timeout=10)
+                
+                print("Sincronizando modulo inalambrico al Edge...")
+                ssh.exec_command("mkdir -p Desktop/Flex-Sort/RaspberryPi_Code")
+                with SCPClient(ssh.get_transport()) as scp:
+                    scp.put("RaspberryPi_Code/rpi_streamer.py", "Desktop/Flex-Sort/RaspberryPi_Code/rpi_streamer.py")
+                
+                ssh.exec_command("pkill -f rpi_streamer.py")
+                time.sleep(1)
+                ssh.exec_command("cd Desktop/Flex-Sort/RaspberryPi_Code && nohup python3 rpi_streamer.py > /dev/null 2>&1 &")
+                print("Conectando a la camara inalambrica...")
+                time.sleep(4) # Esperar que levante servidor
+                cap = cv2.VideoCapture(f"http://{rpi_ip}:5000/stream")
+                fps = 30.0
+            except Exception as e:
+                print(f"[ERROR] No se pudo iniciar camara remota: {e}")
+                return
+        else:
+            print("Iniciando conexión con Cámara Web (Iriun Webcam)...")
+            cap = cv2.VideoCapture(0)
+            if not cap.isOpened():
+                cap = cv2.VideoCapture(1)  # Intentar fallback si el index 0 no es la Iriun
+            if not cap.isOpened():
+                cap = cv2.VideoCapture(2)
+            fps = 30.0
     else:
         cap = cv2.VideoCapture(video_path)
         fps = cap.get(cv2.CAP_PROP_FPS)
@@ -315,6 +351,15 @@ def procesar_video():
 
     cap.release()
     print(f"¡Proceso finalizado con éxito! Se guardaron {guardados} fotogramas pre-etiquetados.")
+
+    # Apagar servidor de camara inalambrica si es raspberry
+    if video_path == "raspberry" and ssh:
+        print("[STREAMER] Apagando el servidor remoto de la camara...")
+        try:
+            ssh.exec_command("pkill -f rpi_streamer.py")
+            ssh.close()
+        except:
+            pass
 
     # --- INYECCIÓN AUTOMÁTICA DE MUESTRAS NEGATIVAS (FONDO MAESTRO) ---
     ruta_fondo = os.path.join(base_dir, "recursos", "fondo_maestro")

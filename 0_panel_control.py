@@ -81,6 +81,57 @@ class ServoSelectorDialog(ctk.CTkToplevel):
         btn4.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 
 
+class SourceSelectorDialog(ctk.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Fuente de Ingreso")
+        
+        w, h = 450, 400
+        x = int((self.winfo_screenwidth() / 2) - (w / 2))
+        y = int((self.winfo_screenheight() / 2) - (h / 2))
+        self.geometry(f"{w}x{h}+{x}+{y}")
+        
+        self.source_type = None
+        
+        self.attributes('-topmost', True)
+        self.resizable(False, False)
+        self.transient(parent)
+        self.grab_set()
+
+        lbl = ctk.CTkLabel(
+            self, text="Selecciona la camara o video a utilizar:\n(¿Desde donde ingresaremos el objeto?)",
+            font=ctk.CTkFont(size=14, weight="bold")
+        )
+        lbl.pack(pady=(20, 10))
+
+        frame = ctk.CTkFrame(self, fg_color="transparent")
+        frame.pack(pady=10, padx=20, fill="both", expand=True)
+        
+        def select(val):
+            self.source_type = val
+            self.destroy()
+
+        btn_pc = ctk.CTkButton(
+            frame, text="1. Camara Local (PC o Iriun)", font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#1E88E5", hover_color="#1565C0", height=50,
+            command=lambda: select("webcam")
+        )
+        btn_pc.pack(fill="x", pady=10)
+
+        btn_rpi = ctk.CTkButton(
+            frame, text="2. Camara Inalambrica (Raspberry Pi)", font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#00897B", hover_color="#00695C", height=50,
+            command=lambda: select("raspberry")
+        )
+        btn_rpi.pack(fill="x", pady=10)
+
+        btn_manual = ctk.CTkButton(
+            frame, text="3. Subir Video Manual (.mp4)", font=ctk.CTkFont(size=14),
+            fg_color="#555555", hover_color="#333333", height=50,
+            command=lambda: select("manual")
+        )
+        btn_manual.pack(fill="x", pady=10)
+
 class HistoryDialog(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
@@ -820,17 +871,17 @@ class MLOpsPanel(ctk.CTk):
         self.run_subprocess([self.python_exe, "1_setup_vacio.py"])
 
     def run_ingest(self):
-        usar_webcam = messagebox.askyesnocancel(
-            "Fuente de ingreso",
-            "¿Deseás habilitar la CÁMARA WEB para grabar el objeto en tiempo real?\n\n"
-            "- SÍ = Modo cámara en vivo\n- NO = Cargar archivo manual (.mp4)"
-        )
+        dialog = SourceSelectorDialog(self)
+        self.wait_window(dialog)
+        opcion_fuente = dialog.source_type
 
-        if usar_webcam is None:  # X o Cancel
+        if not opcion_fuente:  # X o Cancel
             return
 
-        if usar_webcam:
+        if opcion_fuente == "webcam":
             video_path = "webcam"
+        elif opcion_fuente == "raspberry":
+            video_path = "raspberry"
         else:
             video_path = filedialog.askopenfilename(
                 title="Seleccionar Video RAW",
@@ -839,10 +890,11 @@ class MLOpsPanel(ctk.CTk):
             if not video_path:
                 return
 
-        fuente_display = "Cámara en vivo" if usar_webcam else os.path.basename(video_path)
+        fuente_display = "Camara Raspberry Pi" if opcion_fuente == "raspberry" else ("Camara en vivo" if opcion_fuente == "webcam" else os.path.basename(video_path))
         categoria = simpledialog.askstring(
             "Etiqueta IA",
-            f"Modo de ingesta: {fuente_display}\n\nIngresá el tipo de objeto (ej: manzana, pieza_metal):"
+            f"Modo de ingesta: {fuente_display}\n\nIngresá el tipo de objeto (ej: manzana, pieza_metal):",
+            parent=self
         )
 
         if not categoria:
@@ -860,7 +912,8 @@ class MLOpsPanel(ctk.CTk):
             "Memoria IA",
             "El modelo tiene información anterior.\n\n"
             "¿Deseás REINICIAR LA MEMORIA VIRTUAL y comenzar la IA 100% desde cero?\n\n"
-            "- SÍ = Resetear base de datos\n- NO = Anexar conocimientos"
+            "- SÍ = Resetear base de datos\n- NO = Anexar conocimientos",
+            parent=self
         )
         if es_limpio is None:
             return
@@ -871,13 +924,32 @@ class MLOpsPanel(ctk.CTk):
             "Mira la ventana emergente."
         )
         def check_bg_calibration():
-            # Preguntar si desea calibrar el fondo ahora que terminó de procesar el objeto
-            msg = "¿Deseás calibrar el fondo maestro de la máquina ahora?\n(Recomendado si cambió la luz o la posición de la cámara)"
-            if messagebox.askyesno("Calibración de Fondo", msg, parent=self):
+            ruta_fondo = os.path.join("Proyecto_FlexSort", "recursos", "fondo_maestro")
+            fondo_detectado = False
+            if os.path.exists(ruta_fondo):
+                for f in os.listdir(ruta_fondo):
+                    if f.endswith(".jpg"):
+                        fondo_detectado = True
+                        break
+
+            if fondo_detectado:
+                msg = (
+                    "¡OBJETO GUARDADO! Además, se detectó tú último Fondo Maestro (cinta vacía) y se aplicó con éxito.\n\n"
+                    "¿Deseás grabar un fondo maestro NUEVO ahora?\n"
+                    "(Sólo es necesario si moviste la cámara o cambió drásticamente la iluminación local, sino podés omitir)."
+                )
+            else:
+                msg = (
+                    "¡OBJETO GUARDADO! Sin embargo...\n\n"
+                    "No se detectó un Fondo Maestro de tu cinta vacía.\n"
+                    "Esto es muy importante para que el robot aprenda a NO detectar falsos positivos.\n\n"
+                    "¿Deseás grabar el fondo vacío ahora?"
+                )
+
+            if messagebox.askyesno("Calibración del Fondo", msg, parent=self):
                 self.run_bg_calibration()
             else:
-                # Si no desea calibrar, igualmente avisar que ya puede seguir al paso 2
-                msg_listo = "TODO CONFIGURADO: El objeto fue registrado.\n\nYa podés proceder al PASO 2 (Entrenar Inteligencia)."
+                msg_listo = "TODO CONFIGURADO: Los datos de tu objeto han sido inyectados.\n\nYa podés proceder al PASO 2 (Entrenar Inteligencia)."
                 messagebox.showinfo("Proceso Finalizado", msg_listo, parent=self)
 
         self.run_subprocess(
@@ -893,6 +965,7 @@ class MLOpsPanel(ctk.CTk):
             "¿Deseas aplicar Transfer Learning sobre tu modelo viejo?\n\n"
             "- SÍ: Evolución Continua (Actualiza el modelo).\n"
             "- NO: Red Neuronal limpia.",
+            parent=self
         )
         if respuesta is None:
             return
@@ -941,6 +1014,7 @@ class MLOpsPanel(ctk.CTk):
                     f"El sistema ha localizado el último cerebro entrenado hace poco en:\n"
                     f"...{latest[-50:]}\n\n¿Querés encender la cámara con este modelo?\n\n"
                     f"- SÍ = Extraer historial automático\n- NO = Cargar un modelo viejo manualmente.",
+                    parent=self
                 )
                 if respuesta is None:
                     return
@@ -990,7 +1064,8 @@ class MLOpsPanel(ctk.CTk):
                 respuesta = messagebox.askyesnocancel(
                     "Optimizar Modelo",
                     f"Se detectó tu último modelo PyTorch:\n...{latest[-50:]}\n\n"
-                    "¿Quieres usar este base?\n\n- SÍ = Autodetectado\n- NO = Seleccionar manualmente."
+                    "¿Quieres usar este base?\n\n- SÍ = Autodetectado\n- NO = Seleccionar manualmente.",
+                    parent=self
                 )
                 if respuesta is None:
                     return
@@ -1011,7 +1086,8 @@ class MLOpsPanel(ctk.CTk):
             "- 'ncnn' (Máximo rendimiento en Rasp Pi, exporta como CARPETA)\n"
             "- 'tflite' (Muy bueno en Rasp Pi, exporta ARCHIVO)\n\n"
             "Escribe ncnn o tflite:",
-            initialvalue="ncnn"
+            initialvalue="ncnn",
+            parent=self
         )
         if not formato:
             return
