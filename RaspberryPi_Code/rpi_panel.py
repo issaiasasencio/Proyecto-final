@@ -276,12 +276,15 @@ class RPiOperatorPanel(ctk.CTk):
         if os.path.exists(portada_path):
             try:
                 img = Image.open(portada_path)
-                img = img.resize((740, 480), Image.Resampling.LANCZOS)
+                img = img.resize((740, 480))  # Quitamos LANCZOS para evitar errores de compatibilidad
                 self.portada_img = ImageTk.PhotoImage(img)
                 self.video_label.configure(image=self.portada_img)
-            except Exception: # noqa: BLE001
+            except Exception as e:
+                print("Error portada:", e)
+                self.portada_img = None
                 self.video_label.configure(image="")
         else:
+            self.portada_img = None
             self.video_label.configure(image="")
 
     def load_config(self):
@@ -527,17 +530,7 @@ class SettingsDialog(ctk.CTkToplevel):
         ctk.CTkButton(
             self, text="Cerrar Ajustes", fg_color="#2E7D32", command=self.apply
         ).pack(pady=30)
-        
-        # Forzar foco y captura de eventos de forma segura (con pequeño delay)
-        # Esto previene el TclError si la ventana aun no es "viewable"
-        self.after(200, self.safe_grab)
 
-    def safe_grab(self):
-        try:
-            self.grab_set()
-            self.focus_set()
-        except Exception: # noqa: BLE001
-            pass
 
     def update_speed(self, val):
         self.lbl_speed_val.configure(text=f"Velocidad Transportadora: {val:.2f}")
