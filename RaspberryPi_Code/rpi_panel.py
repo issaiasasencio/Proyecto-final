@@ -384,6 +384,10 @@ class RPiOperatorPanel(ctk.CTk):
             )
 
     def update_video_frame(self, frame):
+        # Abortar dibujado de frames retrasados en caso de apagado
+        if not self.engine.running:
+            return
+            
         # Convertir a imagen de Tkinter
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img)
@@ -496,7 +500,8 @@ class SettingsDialog(ctk.CTkToplevel):
         self.parent = parent
         self.title("Ajustes de Operación")
         self.geometry("400x450")
-        self.attributes("-topmost", True)
+        # Cambio fundamental: transient en vez de topmost evita bloqueos de clicks en Linux/Wayland
+        self.transient(parent)
         self.grid_columnconfigure(0, weight=1)
 
         ctk.CTkLabel(
