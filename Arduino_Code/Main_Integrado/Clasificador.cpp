@@ -50,10 +50,12 @@ void Clasificador::actualizar() {
           anguloObjetivo = 90;
           
           // RE-CONECTAR ELECTRICAMENTE EL SERVO ACTIVO JUSTO ANTES DE MOVERLO
-          if (servoActivo == &s1) s1.attach(_p1);
-          else if (servoActivo == &s2) s2.attach(_p2);
-          else if (servoActivo == &s3) s3.attach(_p3);
-          else if (servoActivo == &s4) s4.attach(_p4);
+          // Escribimos primero el angulo de reposo para que al activar la corriente
+          // no sufra un micro-salto por defecto de la libreria Servo.h
+          if (servoActivo == &s1) { s1.write(anguloActual); s1.attach(_p1); }
+          else if (servoActivo == &s2) { s2.write(anguloActual); s2.attach(_p2); }
+          else if (servoActivo == &s3) { s3.write(anguloActual); s3.attach(_p3); }
+          else if (servoActivo == &s4) { s4.write(anguloActual); s4.attach(_p4); }
           
           estadoActual = SALIENDO;
           tiempoUltimoPaso = ahora;
