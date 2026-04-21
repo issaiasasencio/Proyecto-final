@@ -77,6 +77,12 @@ def train():
         name="modelo_produccion",
         exist_ok=True,
         patience=50,
+        # --- DATA AUGMENTATION EXTREMO PARA CINTA TRANSPORTADORA ---
+        degrees=180.0,   # Rota los objetos en todos los angulos posibles internamente
+        flipud=0.5,      # Voltea imagenes de cabeza (50%)
+        fliplr=0.5,      # Voltea imagenes en espejo lateral
+        scale=0.3,       # +30% y -30% de tamano aleatorio al vuelo
+        hsv_v=0.2,       # Aplica hasta 20% de diferencia de iluminacion ambiental
     )
 
     best_path = os.path.join(project_abs, "modelo_produccion", "weights", "best.pt")
