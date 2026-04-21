@@ -269,7 +269,11 @@ class RPiOperatorPanel(ctk.CTk):
                 text="ENCENDER SCANNER", fg_color="#2E7D32", hover_color="#1B5E20"
             )
             self.status_indicator.configure(text="SISTEMA LISTO", text_color="#4CAF50")
+            
+            # Ejecucion redundante y retrasada para sobrevivir a hilos remanentes del modelo AI
             self.set_portada()
+            self.after(200, self.set_portada)
+            self.after(800, self.set_portada)
 
     def set_portada(self):
         portada_path = os.path.join(self.recursos_dir, "portada.png")
