@@ -12,7 +12,7 @@ from tkinter import filedialog, messagebox, simpledialog
 
 import customtkinter as ctk
 from PIL import Image
-from 4_capturar_maestro import capturar_y_procesar_fondo
+from capturar_maestro import capturar_y_procesar_fondo
 
 # Configuración global de entorno Moderno
 ctk.set_appearance_mode("Dark")  # Opciones: "Dark", "Light"
@@ -731,7 +731,7 @@ class MLOpsPanel(ctk.CTk):
             self.perf_frame.grid_remove()
             self.lbl_performance.configure(text="📊 Ver Rendimiento")
         else:
-            self.perf_frame.grid(row=11, column=0, padx=10, pady=(0, 20), sticky="ew")
+            self.perf_frame.grid(row=12, column=0, padx=10, pady=(0, 20), sticky="ew")
             self.lbl_performance.configure(text="📊 Ocultar Rendimiento")
 
     def update_performance_stats(self):
