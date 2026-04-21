@@ -37,8 +37,10 @@ class Clasificador {
     void actualizar();
     
   private:
-    void procesarComando(char c);
+    void procesarComando(String cmd);
     void moverTodosAReposo();
+    
+    int limMax[4] = {90, 90, 90, 90}; // Limites dinamicos editables
 };
 
 #endif

@@ -5,6 +5,7 @@ import subprocess
 import sys
 import threading
 import time
+import socket
 import csv
 import psutil
 import webbrowser
@@ -16,8 +17,7 @@ from capturar_maestro import capturar_y_procesar_fondo
 
 # Configuración global de entorno Moderno
 ctk.set_appearance_mode("Dark")  # Opciones: "Dark", "Light"
-ctk.set_default_color_theme("blue")  # Opciones: "blue", "green", "dark-blue"
-
+import paramiko
 
 class ServoSelectorDialog(ctk.CTkToplevel):
     def __init__(self, parent, categoria):
@@ -366,10 +366,17 @@ class SettingsDialog(ctk.CTkToplevel):
             frame_red, "Contraseña SSH:", self.config_data.get("contrasena", "12345678"), show="*"
         )
 
-        # Botón de Ping
-        self.btn_ping = ctk.CTkButton(frame_red, text="Probar Conexion (Ping)", command=self.run_ping_test,
-                                      fg_color="#333333", hover_color="#444444")
-        self.btn_ping.pack(pady=10, padx=10, fill="x")
+        # Botones de Red (Escanear y Ping)
+        btn_network_frame = ctk.CTkFrame(frame_red, fg_color="transparent")
+        btn_network_frame.pack(pady=10, padx=10, fill="x")
+        
+        self.btn_scan = ctk.CTkButton(btn_network_frame, text="Escanear Red", command=self.run_network_scan,
+                                      fg_color="#00897B", hover_color="#00695C", width=120)
+        self.btn_scan.pack(side="left", padx=5, expand=True)
+
+        self.btn_ping = ctk.CTkButton(btn_network_frame, text="Probar Ping", command=self.run_ping_test,
+                                      fg_color="#333333", hover_color="#444444", width=120)
+        self.btn_ping.pack(side="right", padx=5, expand=True)
 
         self.lbl_ping_status = ctk.CTkLabel(frame_red, text="Estado: Desconocido", font=ctk.CTkFont(size=11))
         self.lbl_ping_status.pack(pady=(0, 5))
@@ -422,6 +429,22 @@ class SettingsDialog(ctk.CTkToplevel):
             self.destroy()
         except ValueError:
             messagebox.showerror("Error", "Por favor ingresá valores numéricos válidos en Épocas y Confianza.")
+
+    def run_network_scan(self):
+        self.lbl_ping_status.configure(text="Estado: Buscando raspberrypi.local...", text_color="yellow")
+        self.update_idletasks()
+        
+        def sc_thread():
+            try:
+                # Intento 1: mDNS stándar
+                ip = socket.gethostbyname("raspberrypi.local")
+                self.ip_entry.delete(0, 'end')
+                self.ip_entry.insert(0, ip)
+                self.lbl_ping_status.configure(text=f"Estado: Encontrada! IP: {ip}", text_color="#4CAF50")
+            except socket.gaierror:
+                self.lbl_ping_status.configure(text="Estado: No encontrada en la red local. Ingrese IP Manual.", text_color="#F44336")
+        
+        threading.Thread(target=sc_thread, daemon=True).start()
 
     def run_ping_test(self):
         ip = self.ip_entry.get()
@@ -539,7 +562,7 @@ class MLOpsPanel(ctk.CTk):
         if os.path.exists(path_icono_central):
             try:
                 img_ic = Image.open(path_icono_central)
-                img_ic_ctk = ctk.CTkImage(light_image=img_ic, dark_image=img_ic, size=(80, 80))
+                img_ic_ctk = ctk.CTkImage(light_image=img_ic, dark_image=img_ic, size=(60, 60))
                 self.icono_label = ctk.CTkLabel(self.sidebar_frame, text="", image=img_ic_ctk)
                 self.icono_label.grid(row=8, column=0, padx=20, pady=(5, 5))
             except (IOError, AttributeError):
@@ -1128,6 +1151,7 @@ class MLOpsPanel(ctk.CTk):
         self.run_subprocess(
             [self.python_exe, "6_enviar_a_raspberry.py", modelo_path]
         )
+
 
 
 if __name__ == "__main__":

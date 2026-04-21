@@ -32,10 +32,10 @@ void Clasificador::moverTodosAReposo() {
 
 void Clasificador::actualizar() {
   if (estadoActual == IDLE && Serial.available() > 0) {
-    unsigned char act = Serial.read(); 
-    char c = (char)act; 
-    if (c != '\n' && c != '\r' && c != ' ') {
-      procesarComando(c);
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+    if (cmd.length() > 0) {
+      procesarComando(cmd);
     }
   }
 
@@ -47,7 +47,11 @@ void Clasificador::actualizar() {
         if (servoActivo != nullptr) {
           // Determinar ángulo inicial según el servo con padding de 5 grados para evitar temblores
           anguloActual = (servoActivo == &s1 || servoActivo == &s3) ? 175 : 5;
-          anguloObjetivo = 90;
+          
+          if (servoActivo == &s1) anguloObjetivo = limMax[0];
+          else if (servoActivo == &s2) anguloObjetivo = limMax[1];
+          else if (servoActivo == &s3) anguloObjetivo = limMax[2];
+          else if (servoActivo == &s4) anguloObjetivo = limMax[3];
           
           // RE-CONECTAR ELECTRICAMENTE EL SERVO ACTIVO JUSTO ANTES DE MOVERLO
           if (servoActivo == &s1) { s1.attach(_p1); s1.write(anguloActual); }
@@ -108,14 +112,33 @@ void Clasificador::actualizar() {
   }
 }
 
-void Clasificador::procesarComando(char tipo) {
-  switch (tipo) {
-    case '1': servoActivo = &s1; break;
-    case '2': servoActivo = &s2; break;
-    case '3': servoActivo = &s3; break;
-    case '4': servoActivo = &s4; break;
-    default: return;
+void Clasificador::procesarComando(String cmd) {
+  if (cmd.startsWith("M")) { // M1:90
+    if (cmd.length() >= 4 && cmd[2] == ':') {
+      int sID = cmd[1] - '0';
+      int angle = cmd.substring(3).toInt();
+      if (sID >= 1 && sID <= 4) {
+        limMax[sID - 1] = angle;
+        // Iniciar un golpe de prueba enseguida con el nuevo target
+        if (sID == 1) servoActivo = &s1;
+        else if (sID == 2) servoActivo = &s2;
+        else if (sID == 3) servoActivo = &s3;
+        else if (sID == 4) servoActivo = &s4;
+        estadoActual = ESPERANDO_GOLPE;
+        tiempoInicioEstado = millis();
+      }
+    }
+    return;
   }
+
+  // Retrocompatibilidad con solo enviar '1', '2'
+  if (cmd == "1") servoActivo = &s1;
+  else if (cmd == "2") servoActivo = &s2;
+  else if (cmd == "3") servoActivo = &s3;
+  else if (cmd == "4") servoActivo = &s4;
+  else return;
+  
   estadoActual = ESPERANDO_GOLPE;
   tiempoInicioEstado = millis();
 }
+

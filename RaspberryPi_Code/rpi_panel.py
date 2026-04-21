@@ -537,8 +537,19 @@ class SettingsDialog(ctk.CTkToplevel):
         self.speed_slider.pack(pady=5, padx=20, fill="x")
 
         ctk.CTkButton(
+            self, text="Calibrar Servos de Arduino", fg_color="#1E88E5", command=self.open_calibration
+        ).pack(pady=10)
+
+        ctk.CTkButton(
             self, text="Cerrar Ajustes", fg_color="#2E7D32", command=self.apply
-        ).pack(pady=30)
+        ).pack(pady=10)
+
+    def open_calibration(self):
+        # Asegurar que el arduino esta inicializado por la app
+        if not self.parent.engine.arduino_ready:
+            messagebox.showwarning("Error Hardware", "El Arduino no esta conectado. Verifique la conexion USB y encienda el Scanner al menos una vez para inicializar los puertos.")
+            return
+        HardwareCalibrationDialog(self.parent)
 
 
     def update_speed(self, val):
@@ -555,6 +566,43 @@ class SettingsDialog(ctk.CTkToplevel):
         self.parent.save_config()
         self.destroy()
 
+class HardwareCalibrationDialog(ctk.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.title("Calibrar Servos de Arduino")
+        self.geometry("450x300")
+        self.transient(parent)
+        self.attributes('-topmost', True)
+        
+        ctk.CTkLabel(self, text="Ajuste de Límites Maximos (Golpe)", font=ctk.CTkFont(size=16, weight="bold")).pack(pady=10)
+        ctk.CTkLabel(self, text="Mueve los sliders. Se enviará la instruccion directa por Serial.", font=ctk.CTkFont(size=11), text_color="#FF9800").pack(pady=(0,10))
+        
+        self.sliders = []
+        for i in range(1, 5):
+            f = ctk.CTkFrame(self, fg_color="transparent")
+            f.pack(fill="x", padx=20, pady=5)
+            
+            ctk.CTkLabel(f, text=f"Servo {i}", width=50).pack(side="left")
+            
+            val_lbl = ctk.CTkLabel(f, text="90°", width=40)
+            val_lbl.pack(side="right")
+            
+            sl = ctk.CTkSlider(f, from_=0, to=180, command=lambda val, idx=i, lbl=val_lbl: self.update_and_send(idx, val, lbl))
+            sl.set(90)
+            sl.pack(side="left", fill="x", expand=True, padx=10)
+            self.sliders.append(sl)
+
+    def update_and_send(self, servo_id, angle, label):
+        ang_int = int(angle)
+        label.configure(text=f"{ang_int}°")
+        # Enviar comando LOCALMENTE al puerto serial ya reservado por ScannerEngine
+        try:
+            # Mandamos la cadena M1:90\n
+            packet = f"M{servo_id}:{ang_int}\n".encode()
+            self.parent.engine.arduino.write(packet)
+        except Exception as e:
+            print(f"Error escribiendo al serial: {e}")
 
 class HistoryDialog(ctk.CTkToplevel):
     def __init__(self, parent):
