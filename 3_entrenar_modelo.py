@@ -56,7 +56,7 @@ def train():
                 "[INFO] No se encontro modelo previo para aprendizaje continuo. "
                 "Iniciando nuevo entrenamiento."
             )
-        print("[INFO] Modo desde cero: Iniciando modelo YOLOv8 Nano...")
+        print("[INFO] Modo desde cero: Iniciando modelo yolo26n...")
         model = YOLO("yolo26n.pt")
 
     config = load_config()
