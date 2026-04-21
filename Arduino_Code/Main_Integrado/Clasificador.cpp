@@ -14,12 +14,12 @@ void Clasificador::iniciar(int p1, int p2, int p3, int p4) {
 }
 
 void Clasificador::moverTodosAReposo() {
-  // LADO IZQUIERDO: Servos 1 y 3 (Invertidos)
-  // LADO DERECHO: Servos 2 y 4 (Normales)
-  s1.write(180);
-  s2.write(0);
-  s3.write(180);
-  s4.write(0);
+  // LADO IZQUIERDO: Servos 1 y 3 (Invertidos) -> Límite acolchado en 175
+  // LADO DERECHO: Servos 2 y 4 (Normales) -> Límite acolchado en 5
+  s1.write(175);
+  s2.write(5);
+  s3.write(175);
+  s4.write(5);
 }
 
 void Clasificador::actualizar() {
@@ -37,8 +37,8 @@ void Clasificador::actualizar() {
     case ESPERANDO_GOLPE:
       if (ahora - tiempoInicioEstado >= RETARDO_ANTES_ACTUAR) {
         if (servoActivo != nullptr) {
-          // Determinar ángulo inicial según el servo (1 y 3 inician en 180, 2 y 4 en 0)
-          anguloActual = (servoActivo == &s1 || servoActivo == &s3) ? 180 : 0;
+          // Determinar ángulo inicial según el servo con padding de 5 grados para evitar temblores
+          anguloActual = (servoActivo == &s1 || servoActivo == &s3) ? 175 : 5;
           anguloObjetivo = 90;
           estadoActual = SALIENDO;
           tiempoUltimoPaso = ahora;
@@ -58,8 +58,8 @@ void Clasificador::actualizar() {
 
     case ESPERANDO_RETORNO:
       if (ahora - tiempoInicioEstado >= DURACION_GOLPE) {
-         // Determinar el ángulo de reposo según el servo
-         anguloObjetivo = (servoActivo == &s1 || servoActivo == &s3) ? 180 : 0;
+         // Determinar el ángulo de reposo según el servo con margen de parada suave
+         anguloObjetivo = (servoActivo == &s1 || servoActivo == &s3) ? 175 : 5;
          estadoActual = RETORNANDO;
          tiempoUltimoPaso = ahora;
       }
