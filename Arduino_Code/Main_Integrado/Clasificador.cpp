@@ -6,6 +6,7 @@ Clasificador::Clasificador() {
 }
 
 void Clasificador::iniciar(int p1, int p2, int p3, int p4) {
+  _p1 = p1; _p2 = p2; _p3 = p3; _p4 = p4;
   s1.attach(p1);
   s2.attach(p2);
   s3.attach(p3);
@@ -20,6 +21,13 @@ void Clasificador::moverTodosAReposo() {
   s2.write(5);
   s3.write(175);
   s4.write(5);
+  
+  // Esperar a que lleguen físicamente en el arranque y luego cortar corriente
+  delay(600);
+  s1.detach();
+  s2.detach();
+  s3.detach();
+  s4.detach();
 }
 
 void Clasificador::actualizar() {
@@ -40,6 +48,13 @@ void Clasificador::actualizar() {
           // Determinar ángulo inicial según el servo con padding de 5 grados para evitar temblores
           anguloActual = (servoActivo == &s1 || servoActivo == &s3) ? 175 : 5;
           anguloObjetivo = 90;
+          
+          // RE-CONECTAR ELECTRICAMENTE EL SERVO ACTIVO JUSTO ANTES DE MOVERLO
+          if (servoActivo == &s1) s1.attach(_p1);
+          else if (servoActivo == &s2) s2.attach(_p2);
+          else if (servoActivo == &s3) s3.attach(_p3);
+          else if (servoActivo == &s4) s4.attach(_p4);
+          
           estadoActual = SALIENDO;
           tiempoUltimoPaso = ahora;
         } else {
@@ -80,6 +95,8 @@ void Clasificador::actualizar() {
         tiempoUltimoPaso = ahora;
 
         if (anguloActual == anguloObjetivo) {
+           // CORTAR ELECTRICIDAD AL LLEGAR AL LIMITE PARA MATAR EL ZARANDEO FANTASMA
+           servoActivo->detach();
            estadoActual = IDLE;
            servoActivo = nullptr;
         }

@@ -15,6 +15,7 @@ enum EstadoServo {
 class Clasificador {
   private:
     Servo s1, s2, s3, s4;
+    int _p1, _p2, _p3, _p4;
     Servo* servoActivo;
     
     EstadoServo estadoActual;
