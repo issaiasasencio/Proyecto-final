@@ -641,9 +641,11 @@ class MLOpsPanel(ctk.CTk):
                 success = capturar_y_procesar_fondo()
                 self.after(0, self.progressbar.stop)
                 if success:
-                    self.after(0, lambda: messagebox.showinfo(
-                        "Éxito", "Fondo maestro capturado y procesado correctamente.", parent=self
-                    ))
+                    msg_exito = (
+                        "Fondo maestro capturado y procesado correctamente.\n\n"
+                        "SISTEMA LISTO: Ya podés proceder al PASO 2 (Entrenar Inteligencia)."
+                    )
+                    self.after(0, lambda: messagebox.showinfo("Éxito", msg_exito, parent=self))
                     self.after(0, lambda: self.log("[CALIBRACION] Fondo maestro listo para futuros entrenamientos."))
                 else:
                     self.after(0, lambda: messagebox.showerror(
@@ -873,6 +875,10 @@ class MLOpsPanel(ctk.CTk):
             msg = "¿Deseás calibrar el fondo maestro de la máquina ahora?\n(Recomendado si cambió la luz o la posición de la cámara)"
             if messagebox.askyesno("Calibración de Fondo", msg, parent=self):
                 self.run_bg_calibration()
+            else:
+                # Si no desea calibrar, igualmente avisar que ya puede seguir al paso 2
+                msg_listo = "TODO CONFIGURADO: El objeto fue registrado.\n\nYa podés proceder al PASO 2 (Entrenar Inteligencia)."
+                messagebox.showinfo("Proceso Finalizado", msg_listo, parent=self)
 
         self.run_subprocess(
             [self.python_exe, "2_procesar_video.py", video_path,
