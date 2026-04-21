@@ -12,6 +12,7 @@ from tkinter import filedialog, messagebox, simpledialog
 
 import customtkinter as ctk
 from PIL import Image
+from 4_capturar_maestro import capturar_y_procesar_fondo
 
 # Configuración global de entorno Moderno
 ctk.set_appearance_mode("Dark")  # Opciones: "Dark", "Light"
@@ -507,6 +508,12 @@ class MLOpsPanel(ctk.CTk):
         )
         self.lbl_performance.grid(row=10, column=0, padx=20, pady=(0, 5))
 
+        self.btn_calibrate_bg = ctk.CTkButton(
+            self.sidebar_frame, text="Calibrar Fondo de Maquina", font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#455A64", hover_color="#37474F", command=self.run_bg_calibration
+        )
+        self.btn_calibrate_bg.grid(row=11, column=0, padx=20, pady=(10, 5), sticky="ew")
+
         # Frame de Rendimiento (Oculto por defecto)
         self.perf_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#222222", corner_radius=5)
         self.perf_frame.grid_remove()  # Oculto al inicio
@@ -623,6 +630,33 @@ class MLOpsPanel(ctk.CTk):
     def open_history(self):
         dialog = HistoryDialog(self)
         self.wait_window(dialog)
+
+    def run_bg_calibration(self):
+        confirm = messagebox.askyesno(
+            "Calibración de Fondo",
+            "Asegúrate de que la cinta esté ENCENDIDA y COMPLETAMENTE VACÍA.\n"
+            "¿Deseas iniciar la captura de 10 segundos?",
+            parent=self
+        )
+        if confirm:
+            self.log("\n[CALIBRACION] Iniciando captura remota de fondo maestro...")
+            self.progressbar.start()
+            
+            def task():
+                success = capturar_y_procesar_fondo()
+                self.after(0, self.progressbar.stop)
+                if success:
+                    self.after(0, lambda: messagebox.showinfo(
+                        "Éxito", "Fondo maestro capturado y procesado correctamente.", parent=self
+                    ))
+                    self.after(0, lambda: self.log("[CALIBRACION] Fondo maestro listo para futuros entrenamientos."))
+                else:
+                    self.after(0, lambda: messagebox.showerror(
+                        "Error", "No se pudo realizar la calibracion remota. Chequea los logs.", parent=self
+                    ))
+                    self.after(0, lambda: self.log("[ERROR] Falla en la calibracion de fondo."))
+            
+            threading.Thread(target=task, daemon=True).start()
 
     def open_report(self):
         dialog = ReportDialog(self)

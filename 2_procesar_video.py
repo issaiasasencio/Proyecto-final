@@ -314,7 +314,33 @@ def procesar_video():
         frame_count += 1
 
     cap.release()
-    print(f"¡Proceso finalizado con éxito! Se guardaron {guardados} fotogramas pre-etiquetados para la IA.")
+    print(f"¡Proceso finalizado con éxito! Se guardaron {guardados} fotogramas pre-etiquetados.")
+
+    # --- INYECCIÓN AUTOMÁTICA DE MUESTRAS NEGATIVAS (FONDO MAESTRO) ---
+    ruta_fondo = os.path.join(base_dir, "recursos", "fondo_maestro")
+    if os.path.exists(ruta_fondo):
+        print("\n[MLOPS] Inyectando muestras negativas del Fondo Maestro...")
+        negativos_detectados = [f for f in os.listdir(ruta_fondo) if f.endswith(".jpg")]
+        inyectados = 0
+        for neg_img in negativos_detectados:
+            # Dividir 80/20 como el resto del dataset
+            is_train = random.random() < 0.8
+            folder = "train" if is_train else "val"
+            
+            src_path = os.path.join(ruta_fondo, neg_img)
+            dst_img = os.path.join(base_dir, "dataset", "images", folder, f"master_bg_{neg_img}")
+            dst_txt = os.path.join(base_dir, "dataset", "labels", folder, f"master_bg_{neg_img.replace('.jpg', '.txt')}")
+            
+            # Copiar imagen
+            shutil.copy2(src_path, dst_img)
+            # Crear etiqueta vacia (Negativa)
+            with open(dst_txt, "w") as f:
+                pass 
+            
+            inyectados += 1
+        print(f"[MLOPS] Se inyectaron {inyectados} muestras negativas para blindar el modelo.")
+    else:
+        print("\n[AVISO] No se detectó Fondo Maestro en recursos/fondo_maestro. Se recomienda calibrar.")
 
 
 if __name__ == "__main__":
