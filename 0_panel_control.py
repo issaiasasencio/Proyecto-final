@@ -522,7 +522,7 @@ class MLOpsPanel(ctk.CTk):
         self.btn_test.grid(row=5, column=0, padx=20, pady=4, sticky="ew")
 
         self.btn_optimize = ctk.CTkButton(
-            self.sidebar_frame, text="4. Optimizar (NCNN/TF)", command=self.run_optimize,
+            self.sidebar_frame, text="4. Optimizar (NCNN)", command=self.run_optimize,
             fg_color="#E040FB", hover_color="#AA00FF", font=ctk.CTkFont(size=14, weight="bold"),
             height=35
         )
@@ -1080,18 +1080,8 @@ class MLOpsPanel(ctk.CTk):
             if not modelo_path:
                 return
 
-        formato = simpledialog.askstring(
-            "Formato de Exportación",
-            "¿A qué formato ligero deseas exportar?\n\nOpciones principales:\n"
-            "- 'ncnn' (Máximo rendimiento en Rasp Pi, exporta como CARPETA)\n"
-            "- 'tflite' (Muy bueno en Rasp Pi, exporta ARCHIVO)\n\n"
-            "Escribe ncnn o tflite:",
-            initialvalue="ncnn",
-            parent=self
-        )
-        if not formato:
-            return
-        formato = formato.lower().strip()
+        # Bypass Formato: Forzamos la exportación únicamente a NCNN para Flex-Sort
+        formato = "ncnn"
 
         self.log(
             f"\n >>> Iniciando Optimización de GPU a ARM [{formato.upper()}] "
