@@ -42,7 +42,8 @@ class ScannerEngine:
         self.X_CINTA_IZQ = 100
         self.X_CINTA_DER = 540
         self.DISTANCIAS = {"1": 0.20, "2": 0.20, "3": 0.45, "4": 0.45}
-        self.VELOCIDAD_CINTA = 0.07  # Valor por defecto
+        self.VELOCIDAD_CINTA_NEAR = 0.07  # Servos 1 y 2
+        self.VELOCIDAD_CINTA_FAR = 0.07   # Servos 3 y 4
         self.TIEMPO_ANTICIPACION = 2.5
         self.TIEMPO_COOLDOWN = 5.0
 
@@ -180,7 +181,8 @@ class ScannerEngine:
                             ultimo = self.ultimas_detecciones.get(nombre, 0)
                             if (current_time - ultimo) > self.TIEMPO_COOLDOWN:
                                 dist = self.DISTANCIAS.get(servo_id, 0.30)
-                                t_viaje = dist / self.VELOCIDAD_CINTA
+                                v_cinta = self.VELOCIDAD_CINTA_NEAR if servo_id in ["1", "2"] else self.VELOCIDAD_CINTA_FAR
+                                t_viaje = dist / v_cinta
                                 t_prog = (
                                     current_time + t_viaje - self.TIEMPO_ANTICIPACION
                                 )

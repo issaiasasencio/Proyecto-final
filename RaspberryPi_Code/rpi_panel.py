@@ -40,7 +40,8 @@ class RPiOperatorPanel(ctk.CTk):
         )
         self.engine = ScannerEngine(default_model)
         self.engine.conf_threshold = self.config_data.get("confidence", 0.40)
-        self.engine.VELOCIDAD_CINTA = self.config_data.get("belt_speed", 0.70 / 10.0)
+        self.engine.VELOCIDAD_CINTA_NEAR = self.config_data.get("belt_speed_near", 0.07)
+        self.engine.VELOCIDAD_CINTA_FAR = self.config_data.get("belt_speed_far", 0.07)
 
         self.servo_labels = []
         self.assignment_labels = []
@@ -298,7 +299,7 @@ class RPiOperatorPanel(ctk.CTk):
         if os.path.exists(self.config_path):
             with open(self.config_path) as f:
                 return json.load(f)
-        return {"confidence": 0.40, "belt_speed": 0.07}
+        return {"confidence": 0.40, "belt_speed_near": 0.07, "belt_speed_far": 0.07}
 
     def save_config(self):
         with open(self.config_path, "w") as f:
@@ -490,7 +491,7 @@ class RPiOperatorPanel(ctk.CTk):
         # Servo Status based on queue
         if self.engine.running:
             occupied = [False] * 4
-            for e in self.engine.cola_eventos:
+            for e in list(self.engine.cola_eventos):
                 idx = int(e["letra"]) - 1
                 if 0 <= idx < 4:
                     occupied[idx] = True
@@ -533,17 +534,29 @@ class SettingsDialog(ctk.CTkToplevel):
         self.conf_slider.set(self.parent.engine.conf_threshold)
         self.conf_slider.pack(pady=5, padx=20, fill="x")
         
-        # Velocidad de la Cinta (Dinámica)
-        self.lbl_speed_val = ctk.CTkLabel(
-            self, text=f"Velocidad Transportadora: {self.parent.engine.VELOCIDAD_CINTA:.2f}"
+        # Velocidad de la Cinta (Cerca: 1 y 2)
+        self.lbl_speed_near = ctk.CTkLabel(
+            self, text=f"Velocidad (1 y 2) - Cerca: {self.parent.engine.VELOCIDAD_CINTA_NEAR:.2f}"
         )
-        self.lbl_speed_val.pack(pady=(20, 0))
+        self.lbl_speed_near.pack(pady=(20, 0))
         
-        self.speed_slider = ctk.CTkSlider(
-            self, from_=0.01, to=0.30, command=self.update_speed
+        self.speed_near_slider = ctk.CTkSlider(
+            self, from_=0.01, to=0.30, command=self.update_speed_near
         )
-        self.speed_slider.set(self.parent.engine.VELOCIDAD_CINTA)
-        self.speed_slider.pack(pady=5, padx=20, fill="x")
+        self.speed_near_slider.set(self.parent.engine.VELOCIDAD_CINTA_NEAR)
+        self.speed_near_slider.pack(pady=5, padx=20, fill="x")
+
+        # Velocidad de la Cinta (Lejos: 3 y 4)
+        self.lbl_speed_far = ctk.CTkLabel(
+            self, text=f"Velocidad (3 y 4) - Lejos: {self.parent.engine.VELOCIDAD_CINTA_FAR:.2f}"
+        )
+        self.lbl_speed_far.pack(pady=(15, 0))
+        
+        self.speed_far_slider = ctk.CTkSlider(
+            self, from_=0.01, to=0.30, command=self.update_speed_far
+        )
+        self.speed_far_slider.set(self.parent.engine.VELOCIDAD_CINTA_FAR)
+        self.speed_far_slider.pack(pady=5, padx=20, fill="x")
 
         ctk.CTkButton(
             self, text="Calibrar Servos de Arduino", fg_color="#1E88E5", command=self.open_calibration
@@ -561,10 +574,15 @@ class SettingsDialog(ctk.CTkToplevel):
         HardwareCalibrationDialog(self.parent)
 
 
-    def update_speed(self, val):
-        self.lbl_speed_val.configure(text=f"Velocidad Transportadora: {val:.2f}")
-        self.parent.engine.VELOCIDAD_CINTA = val
-        self.parent.config_data["belt_speed"] = val
+    def update_speed_near(self, val):
+        self.lbl_speed_near.configure(text=f"Velocidad (1 y 2) - Cerca: {val:.2f}")
+        self.parent.engine.VELOCIDAD_CINTA_NEAR = val
+        self.parent.config_data["belt_speed_near"] = val
+
+    def update_speed_far(self, val):
+        self.lbl_speed_far.configure(text=f"Velocidad (3 y 4) - Lejos: {val:.2f}")
+        self.parent.engine.VELOCIDAD_CINTA_FAR = val
+        self.parent.config_data["belt_speed_far"] = val
 
     def update_conf(self, val):
         self.lbl_conf_val.configure(text=f"Umbral de Confianza: {val:.2f}")
