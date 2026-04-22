@@ -10,6 +10,7 @@ import csv
 import psutil
 import webbrowser
 from tkinter import filedialog, messagebox, simpledialog
+import tkinter as tk
 
 import customtkinter as ctk
 from PIL import Image
@@ -111,19 +112,19 @@ class SourceSelectorDialog(ctk.CTkToplevel):
             self.source_type = val
             self.destroy()
 
-        btn_pc = ctk.CTkButton(
-            frame, text="1. Camara Local (PC o Iriun)", font=ctk.CTkFont(size=14, weight="bold"),
-            fg_color="#1E88E5", hover_color="#1565C0", height=50,
-            command=lambda: select("webcam")
-        )
-        btn_pc.pack(fill="x", pady=10)
-
         btn_rpi = ctk.CTkButton(
-            frame, text="2. Camara Inalambrica (Raspberry Pi)", font=ctk.CTkFont(size=14, weight="bold"),
+            frame, text="1. Camara Inalambrica (Raspberry Pi)", font=ctk.CTkFont(size=14, weight="bold"),
             fg_color="#00897B", hover_color="#00695C", height=50,
             command=lambda: select("raspberry")
         )
         btn_rpi.pack(fill="x", pady=10)
+
+        btn_pc = ctk.CTkButton(
+            frame, text="2. Camara Local (PC o Iriun)", font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#1E88E5", hover_color="#1565C0", height=50,
+            command=lambda: select("webcam")
+        )
+        btn_pc.pack(fill="x", pady=10)
 
         btn_manual = ctk.CTkButton(
             frame, text="3. Subir Video Manual (.mp4)", font=ctk.CTkFont(size=14),
@@ -322,6 +323,133 @@ class ReportDialog(ctk.CTkToplevel):
         ctk.CTkButton(self, text="Entendido", command=self.destroy).pack(pady=20)
 
 
+class TrainingManagerDialog(ctk.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Estación de Control de Entrenamiento")
+        
+        # Dimensiones y centrado
+        w, h = 550, 600
+        x = int((self.winfo_screenwidth() / 2) - (w / 2))
+        y = int((self.winfo_screenheight() / 2) - (h / 2))
+        self.geometry(f"{w}x{h}+{x}+{y}")
+        
+        self.parent = parent
+        
+        self.config_path = "config.json"
+        self.base_dir = "Proyecto_FlexSort"
+        self.yaml_path = os.path.join(self.base_dir, "dataset", "data.yaml")
+        self.mapping_path = os.path.join(self.base_dir, "dataset", "servo_mapping.json")
+        
+        # Cargar datos actuales
+        self.categorias = self.get_available_categories()
+        self.mapping = self.load_mapping()
+        
+        # Variables de control
+        self.selected_categories = {cat: tk.BooleanVar(value=True) for cat in self.categorias}
+        self.servo_vars = {cat: tk.StringVar(value=self.mapping.get(str(i), "1")) for i, cat in enumerate(self.categorias)}
+        self.train_mode = tk.StringVar(value="finetune")
+        self.result = None # Almacenará el modo si se confirma
+
+        # Modal
+        self.attributes('-topmost', True)
+        self.resizable(False, False)
+        self.transient(parent)
+        self.grab_set()
+        
+        self.setup_ui()
+
+    def get_available_categories(self):
+        if os.path.exists(self.yaml_path):
+            import yaml
+            try:
+                with open(self.yaml_path, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f)
+                    return data.get('names', [])
+            except Exception: pass
+        return []
+
+    def load_mapping(self):
+        if os.path.exists(self.mapping_path):
+            try:
+                with open(self.mapping_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception: pass
+        return {}
+
+    def setup_ui(self):
+        self.grid_columnconfigure(0, weight=1)
+        
+        header = ctk.CTkLabel(self, text="MODIFICAR ENTRENAMIENTO", font=ctk.CTkFont(size=22, weight="bold"))
+        header.pack(pady=(25, 10))
+        
+        desc = ctk.CTkLabel(self, text="Seleccioná qué objetos incluir y asignales su brazo robótico:", 
+                            font=ctk.CTkFont(size=13), text_color="#AAAAAA")
+        desc.pack(pady=(0, 15))
+
+        # Contenedor con scroll
+        self.scroll = ctk.CTkScrollableFrame(self, label_text="Objetos en Base de Datos", height=280)
+        self.scroll.pack(fill="both", expand=True, padx=30, pady=10)
+
+        if not self.categorias:
+            ctk.CTkLabel(self.scroll, text="No hay objetos registrados.\nAgregá uno en el Paso 1.", 
+                         text_color="#F44336", font=ctk.CTkFont(weight="bold")).pack(pady=40)
+        
+        for i, cat in enumerate(self.categorias):
+            f = ctk.CTkFrame(self.scroll, fg_color="transparent")
+            f.pack(fill="x", pady=8, padx=5)
+            
+            # Checkbox de inclusion
+            cb = ctk.CTkCheckBox(f, text=cat.upper(), variable=self.selected_categories[cat], 
+                                 font=ctk.CTkFont(size=14, weight="bold"), width=150)
+            cb.pack(side="left", padx=10)
+            
+            # Servo Selector
+            ctk.CTkLabel(f, text="Brazo:", font=ctk.CTkFont(size=12)).pack(side="left", padx=(10, 5))
+            om = ctk.CTkOptionMenu(f, values=["1", "2", "3", "4"], variable=self.servo_vars[cat], width=80,
+                                   fg_color="#333333", button_color="#444444")
+            om.pack(side="left", padx=5)
+
+        # SECCIÓN INFERIOR: Modo de Red
+        mode_frame = ctk.CTkFrame(self, fg_color="#222222", corner_radius=10)
+        mode_frame.pack(fill="x", padx=30, pady=15)
+        
+        ctk.CTkLabel(mode_frame, text="Protocolo de Red Neuronal:", font=ctk.CTkFont(weight="bold")).pack(pady=(10, 5))
+        
+        r1 = ctk.CTkRadioButton(mode_frame, text="Evolución Continua (Usa experiencia previa)", 
+                                variable=self.train_mode, value="finetune", text_color="#4CAF50")
+        r1.pack(pady=5, padx=20, anchor="w")
+        
+        r2 = ctk.CTkRadioButton(mode_frame, text="Red Limpia (Olvida todo y aprende de cero)", 
+                                variable=self.train_mode, value="scratch", text_color="#FF9800")
+        r2.pack(pady=5, padx=20, anchor="w")
+
+        # Botón de Inicio
+        self.btn_start = ctk.CTkButton(self, text="INICIAR PROCESAMIENTO IA", 
+                                       font=ctk.CTkFont(size=16, weight="bold"),
+                                       fg_color="#1E88E5", hover_color="#1565C0", height=55,
+                                       command=self.confirm)
+        self.btn_start.pack(pady=(10, 30), padx=30, fill="x")
+
+    def confirm(self):
+        # Guardar cambios de servos y seleccion
+        new_mapping = {}
+        for i, cat in enumerate(self.categorias):
+            if self.selected_categories[cat].get():
+                new_mapping[str(i)] = self.servo_vars[cat].get()
+        
+        if not new_mapping:
+            messagebox.showwarning("Atención", "Debés seleccionar al menos un objeto para entrenar.")
+            return
+
+        # Guardar en JSON
+        with open(self.mapping_path, 'w', encoding='utf-8') as f:
+            json.dump(new_mapping, f, indent=4)
+            
+        self.result = self.train_mode.get()
+        self.destroy()
+
+
 class SettingsDialog(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
@@ -390,9 +518,22 @@ class SettingsDialog(ctk.CTkToplevel):
         self.epochs_entry = self.create_input(
             frame_ia, "Épocas de Entrenamiento:", str(self.config_data.get("epochs", 300))
         )
-        self.conf_entry = self.create_input(
-            frame_ia, "Confianza Mínima (0.1 a 1.0):", str(self.config_data.get("confidence", 0.60))
+        
+        # SLIDER DE CONFIANZA
+        self.conf_frame = ctk.CTkFrame(frame_ia, fg_color="transparent")
+        self.conf_frame.pack(fill="x", padx=10, pady=(10, 5))
+        
+        # Label dinámico
+        conf_inicial = float(self.config_data.get("confidence", 0.70))
+        self.lbl_conf_val = ctk.CTkLabel(self.conf_frame, text=f"Confianza Mínima: {conf_inicial:.2f}")
+        self.lbl_conf_val.pack(anchor="w")
+        
+        self.conf_slider = ctk.CTkSlider(
+            self.conf_frame, from_=0.1, to=1.0, 
+            command=lambda val: self.lbl_conf_val.configure(text=f"Confianza Mínima: {val:.2f}")
         )
+        self.conf_slider.set(conf_inicial)
+        self.conf_slider.pack(fill="x", expand=True, pady=(5, 5))
 
         # Botón Guardar
         btn_save = ctk.CTkButton(self, text="Guardar Cambios", command=self.save_config,
@@ -421,7 +562,7 @@ class SettingsDialog(ctk.CTkToplevel):
                 "usuario": self.user_entry.get(),
                 "contrasena": self.pass_entry.get(),
                 "epochs": int(self.epochs_entry.get()),
-                "confidence": float(self.conf_entry.get())
+                "confidence": float(self.conf_slider.get())
             }
             with open(self.config_path, "w", encoding="utf-8") as f:
                 json.dump(new_config, f, indent=4)
@@ -982,17 +1123,14 @@ class MLOpsPanel(ctk.CTk):
         )
 
     def run_train(self):
-        respuesta = messagebox.askyesnocancel(
-            "Protocolo de Entrenamiento",
-            "Atención: Se transferirá todo el procesamiento lógico a tu GPU NVIDIA RTX 2060.\n\n"
-            "¿Deseas aplicar Transfer Learning sobre tu modelo viejo?\n\n"
-            "- SÍ: Evolución Continua (Actualiza el modelo).\n"
-            "- NO: Red Neuronal limpia.",
-            parent=self
-        )
-        if respuesta is None:
+        # Nuevo flujo: Diálogo avanzado de gestión
+        dialog = TrainingManagerDialog(self)
+        self.wait_window(dialog)
+        
+        if not dialog.result:
             return
-        modo = "finetune" if respuesta else "scratch"
+            
+        modo = dialog.result
 
         def suggest_report():
             txt = "¿Deseás ver el Reporte de Calidad del nuevo modelo ahora?"
@@ -1035,123 +1173,49 @@ class MLOpsPanel(ctk.CTk):
                 respuesta = messagebox.askyesnocancel(
                     "Historial de inteligencia artificial",
                     f"El sistema ha localizado el último cerebro entrenado hace poco en:\n"
-                    f"...{latest[-50:]}\n\n¿Querés encender la cámara con este modelo?\n\n"
-                    f"- SÍ = Extraer historial automático\n- NO = Cargar un modelo viejo manualmente.",
+                    f"{os.path.basename(latest)}\n\n"
+                    "¿Deseás activarlo ahora?\n"
+                    "- SÍ: Lo usamos como modelo activo.\n"
+                    "- NO: Seleccionar otro archivo .pt manualmente.",
                     parent=self
                 )
-                if respuesta is None:
-                    return
                 if respuesta:
                     modelo_path = latest
-
-        if not modelo_path:
-            modelo_path = filedialog.askopenfilename(
-                title="Cargar Historial (Archivo .pt)",
-                filetypes=[("Modelos Neuronales", "*.pt")]
-            )
-            if not modelo_path:
-                self.log("\n[ABORTADO] No se seleccionó ningún modelo base para la prueba.")
-                return
-
-        self.log(f"\n >>> Inyectando cerebro en memoria: {os.path.basename(modelo_path)}")
-        self.log(" >>> Activando sensores de Inferencia Local... Posiciona el objeto frente a la cámara.")
-        self.run_subprocess([self.python_exe, "4_probar_modelo_pc.py", modelo_path])
-
-    def run_optimize(self):
-        # 0. Intentar cargar el modelo activo desde config.json
-        modelo_path = ""
-        try:
-            with open("config.json", "r", encoding="utf-8") as f:
-                config = json.load(f)
-            active = config.get("active_model")
-            if active and os.path.exists(active) and active.endswith(".pt"):
-                modelo_path = active
-                self.log(f"\n[AUTO] Usando modelo ACTIVO para optimizar: {os.path.basename(active)}")
-        except (json.JSONDecodeError, FileNotFoundError, KeyError):
-            pass
-
-        if not modelo_path:
-            # Buscar modelo .pt
-            pt_files = []
-            for root_dir, dirs, files in os.walk(os.getcwd()):
-                if "venv" in root_dir or ".git" in root_dir:
-                    continue
-                for file in files:
-                    if file.endswith("best.pt"):
-                        pt_files.append(os.path.join(root_dir, file))
-
-            if pt_files:
-                pt_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-                latest = pt_files[0]
-
-                respuesta = messagebox.askyesnocancel(
-                    "Optimizar Modelo",
-                    f"Se detectó tu último modelo PyTorch:\n...{latest[-50:]}\n\n"
-                    "¿Quieres usar este base?\n\n- SÍ = Autodetectado\n- NO = Seleccionar manualmente.",
-                    parent=self
+                elif respuesta is False:
+                    modelo_path = filedialog.askopenfilename(
+                        title="Seleccionar Cerebro YOLO (.pt)",
+                        filetypes=[("Modelos YOLO", "*.pt")]
+                    )
+            else:
+                modelo_path = filedialog.askopenfilename(
+                    title="Seleccionar Cerebro YOLO (.pt)",
+                    filetypes=[("Modelos YOLO", "*.pt")]
                 )
-                if respuesta is None:
-                    return
-                if respuesta:
-                    modelo_path = latest
 
         if not modelo_path:
-            modelo_path = filedialog.askopenfilename(
-                title="Seleccionar Modelo (.pt) a Optimizar",
-                filetypes=[("Modelos PyTorch", "*.pt")]
-            )
-            if not modelo_path:
-                return
-
-        # Bypass Formato: Forzamos la exportación únicamente a NCNN para Flex-Sort
-        formato = "ncnn"
-
-        self.log(
-            f"\n >>> Iniciando Optimización de GPU a ARM [{formato.upper()}] "
-            f"para: {os.path.basename(modelo_path)}"
-        )
-        self.run_subprocess(
-            [self.python_exe, "5_optimizar_modelo.py", modelo_path, formato]
-        )
-
-    def run_deploy(self):
-        # 0. Detectar candidatos (Priorizando el último optimizado)
-        modelos_candidatos = []
-        for root_dir, dirs, files in os.walk(os.getcwd()):
-            if "venv" in root_dir or ".git" in root_dir:
-                continue
-
-            # Buscar carpetas de modelo NCNN
-            for dir_name in dirs:
-                if dir_name.endswith("_ncnn_model"):
-                    modelos_candidatos.append(os.path.join(root_dir, dir_name))
-
-            # Buscar archivos TFLite, ONNX, o el best base
-            for file in files:
-                is_model = (
-                    file.endswith(".tflite") or file.endswith("best.pt") or
-                    file.endswith(".onnx") or
-                    (file.startswith("modelo_") and file.endswith(".pt"))
-                )
-                if (is_model):
-                    modelos_candidatos.append(os.path.join(root_dir, file))
-
-        if not modelos_candidatos:
-            self.log("\n[ERROR] No se encontró ningún modelo (NCNN, TFLite, o PT) para enviar.")
             return
 
-        # Seleccionar el archivo o carpeta que fue creado/modificado MÁS recientemente
-        modelos_candidatos.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-        modelo_path = modelos_candidatos[0]
+        self.run_subprocess([self.python_exe, "4_probar_modelo.py", modelo_path])
 
-        self.log(
-            f"\n >>> Auto-Detectado último modelo/optimizado: {os.path.basename(modelo_path)}"
-        )
-        self.log(" >>> Iniciando envío directo al Edge (Raspberry Pi)...")
-        self.run_subprocess(
-            [self.python_exe, "6_enviar_a_raspberry.py", modelo_path]
-        )
+    def run_optimize(self):
+        self.run_subprocess([self.python_exe, "5_exportar_ncnn.py"])
 
+    def run_deploy(self):
+        # Escanear por modelos NCNN (carpetas que terminen en _ncnn_model)
+        modelos_ncnn = []
+        for d in os.listdir(os.getcwd()):
+            if os.path.isdir(d) and d.endswith("_ncnn_model"):
+                modelos_ncnn.append(d)
+
+        if not modelos_ncnn:
+            messagebox.showerror("Error", "No se encontró ningún modelo optimizado para Raspberry Pi.\nEjecutá el PASO 4 primero.")
+            return
+
+        # El más reciente
+        modelos_ncnn.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+        modelo_a_enviar = modelos_ncnn[0]
+
+        self.run_subprocess([self.python_exe, "6_enviar_a_raspberry.py", modelo_a_enviar])
 
 
 if __name__ == "__main__":

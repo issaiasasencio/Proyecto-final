@@ -190,6 +190,9 @@ class RPiOperatorPanel(ctk.CTk):
         self.lbl_ram = ctk.CTkLabel(self.sidebar, text="RAM: --%", text_color="#AAAAAA")
         self.lbl_ram.pack(anchor="center")
 
+        self.lbl_fps = ctk.CTkLabel(self.sidebar, text="FPS: --", font=ctk.CTkFont(weight="bold"), text_color="#1E88E5")
+        self.lbl_fps.pack(anchor="center", pady=(5, 0))
+
         # ---------------- MAIN (VISIÓN) ----------------
         self.main_view = ctk.CTkFrame(self, corner_radius=10, fg_color="#000000")
         self.main_view.grid(row=1, column=1, sticky="nsew", padx=10, pady=10)
@@ -467,6 +470,12 @@ class RPiOperatorPanel(ctk.CTk):
             self.lbl_ram.configure(text=f"RAM: {ram_pct:.1f}%")
         except Exception:  # noqa: BLE001
             pass
+
+        # FPS
+        if hasattr(self.engine, "current_fps") and self.engine.running:
+            self.lbl_fps.configure(text=f"FPS: {self.engine.current_fps:.1f}")
+        else:
+            self.lbl_fps.configure(text="FPS: --")
 
         # Arduino Status
         if self.engine.is_arduino_connected():

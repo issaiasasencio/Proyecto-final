@@ -62,6 +62,7 @@ class ScannerEngine:
         self.mapa_categorias = {}
         self.conf_threshold = 0.40
         self.arduino_ready = False
+        self.current_fps = 0.0
 
     def is_arduino_connected(self):
         """Verifica el estado real del puerto serial."""
@@ -85,7 +86,8 @@ class ScannerEngine:
             time.sleep(2)
             self.status_msg = "Arduino conectado."
             self.arduino_ready = True
-        except Exception:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
+            print(f"\n[!] ERROR DE CONEXIÓN CON ARDUINO: {e}\n")
             self.status_msg = "Arduino No detectado (Simulando)."
             self.arduino_ready = False
 
@@ -128,6 +130,7 @@ class ScannerEngine:
     def _loop(self, frame_callback):
         # Esperar a que el primer frame este listo
         time.sleep(1)
+        ultimo_tiempo = time.time()
 
         while self.running:
             if not self.video_getter.grabbed:
@@ -199,6 +202,14 @@ class ScannerEngine:
                             self.arduino.write(f"{evento['letra']}\n".encode())
                 else:
                     break
+
+            # Calcular FPS (Suavizado exponencial)
+            tiempo_actual_fps = time.time()
+            dt = tiempo_actual_fps - ultimo_tiempo
+            if dt > 0:
+                fps = 1.0 / dt
+                self.current_fps = (self.current_fps * 0.9) + (fps * 0.1)
+            ultimo_tiempo = tiempo_actual_fps
 
             if frame_callback:
                 frame_callback(frame)
