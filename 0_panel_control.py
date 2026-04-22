@@ -15,10 +15,11 @@ import tkinter as tk
 import customtkinter as ctk
 from PIL import Image
 from capturar_maestro import capturar_y_procesar_fondo
+import paramiko
+import yaml
 
 # Configuración global de entorno Moderno
 ctk.set_appearance_mode("Dark")  # Opciones: "Dark", "Light"
-import paramiko
 
 class ServoSelectorDialog(ctk.CTkToplevel):
     def __init__(self, parent, categoria):
@@ -335,7 +336,6 @@ class TrainingManagerDialog(ctk.CTkToplevel):
         self.geometry(f"{w}x{h}+{x}+{y}")
         
         self.parent = parent
-        
         self.config_path = "config.json"
         self.base_dir = "Proyecto_FlexSort"
         self.yaml_path = os.path.join(self.base_dir, "dataset", "data.yaml")
@@ -349,24 +349,28 @@ class TrainingManagerDialog(ctk.CTkToplevel):
         self.selected_categories = {cat: tk.BooleanVar(value=True) for cat in self.categorias}
         self.servo_vars = {cat: tk.StringVar(value=self.mapping.get(str(i), "1")) for i, cat in enumerate(self.categorias)}
         self.train_mode = tk.StringVar(value="finetune")
-        self.result = None # Almacenará el modo si se confirma
+        self.result = None 
 
-        # Modal
-        self.attributes('-topmost', True)
-        self.resizable(False, False)
-        self.transient(parent)
-        self.grab_set()
-        
         self.setup_ui()
+
+        # Modal y Propiedades de Ventana
+        try:
+            self.attributes('-topmost', True)
+            self.resizable(False, False)
+            if parent is not None:
+                self.transient(parent)
+                self.grab_set()
+        except Exception as e:
+            print(f"Aviso: No se pudieron aplicar todas las propiedades modales: {e}")
 
     def get_available_categories(self):
         if os.path.exists(self.yaml_path):
-            import yaml
             try:
                 with open(self.yaml_path, 'r', encoding='utf-8') as f:
                     data = yaml.safe_load(f)
                     return data.get('names', [])
-            except Exception: pass
+            except Exception as e:
+                print(f"Error al leer data.yaml: {e}")
         return []
 
     def load_mapping(self):
@@ -625,19 +629,17 @@ class MLOpsPanel(ctk.CTk):
         y_cordinate = int((screen_height / 2) - (window_height / 2))
         self.geometry(f"{window_width}x{window_height}+{x_cordinate}+{y_cordinate}")
 
-        # Grid Layout Base: Dividimos la pantalla en 2 columnas
-        # Columna 0: Panel lateral (menú) | Columna 1: Consola principal
+        # Grid Layout Base
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
-        # ---------------- MENU LATERAL (SIDEBAR) ----------------
+        # MENU LATERAL
         self.sidebar_frame = ctk.CTkFrame(self, width=250, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
 
-        # Row configuration to allow buttons to spread out when maximized
         for i in range(3, 8):
             self.sidebar_frame.grid_rowconfigure(i, weight=1)
-        self.sidebar_frame.grid_rowconfigure(9, weight=2)  # Main spacer
+        self.sidebar_frame.grid_rowconfigure(9, weight=2)
 
         path_logo_texto = os.path.join("recursos", "logo_texto.png")
         if os.path.exists(path_logo_texto):
@@ -646,57 +648,29 @@ class MLOpsPanel(ctk.CTk):
                 img_ctk = ctk.CTkImage(light_image=img_pil, dark_image=img_pil, size=(200, 50))
                 self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="", image=img_ctk)
             except (IOError, AttributeError):
-                self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="FLEX-SORT",
-                                               font=ctk.CTkFont(size=28, weight="bold"))
+                self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="FLEX-SORT", font=ctk.CTkFont(size=28, weight="bold"))
         else:
-            self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="FLEX-SORT",
-                                           font=ctk.CTkFont(size=28, weight="bold"))
-
+            self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="FLEX-SORT", font=ctk.CTkFont(size=28, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 0))
 
-        self.lbl_subtitle = ctk.CTkLabel(
-            self.sidebar_frame,
-            text="Sistema de IA Adaptativa\nv2.0.0 (Nucleo FLEX)",
-            font=ctk.CTkFont(size=12, slant="italic")
-        )
+        self.lbl_subtitle = ctk.CTkLabel(self.sidebar_frame, text="Sistema de IA Adaptativa\nv2.0.0 (Nucleo FLEX)", font=ctk.CTkFont(size=12, slant="italic"))
         self.lbl_subtitle.grid(row=1, column=0, padx=20, pady=(2, 20))
 
-        # Spacer row above main buttons
         self.sidebar_frame.grid_rowconfigure(2, weight=1)
 
-        self.btn_ingest = ctk.CTkButton(
-            self.sidebar_frame, text="1. Nuevo entrenamiento", command=self.run_ingest,
-            fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold"),
-            height=35
-        )
+        self.btn_ingest = ctk.CTkButton(self.sidebar_frame, text="1. Nuevo entrenamiento", command=self.run_ingest, fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold"), height=35)
         self.btn_ingest.grid(row=3, column=0, padx=20, pady=4, sticky="ew")
 
-        self.btn_train = ctk.CTkButton(
-            self.sidebar_frame, text="2. Entrenar Inteligencia", command=self.run_train,
-            fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold"),
-            height=35
-        )
+        self.btn_train = ctk.CTkButton(self.sidebar_frame, text="2. Entrenar Inteligencia", command=self.run_train, fg_color="#1E88E5", hover_color="#1565C0", font=ctk.CTkFont(size=14, weight="bold"), height=35)
         self.btn_train.grid(row=4, column=0, padx=20, pady=4, sticky="ew")
 
-        self.btn_test = ctk.CTkButton(
-            self.sidebar_frame, text="3. Probar modelo / visión", command=self.run_infer,
-            fg_color="#7B1FA2", hover_color="#4A148C", font=ctk.CTkFont(size=14, weight="bold"),
-            height=35
-        )
+        self.btn_test = ctk.CTkButton(self.sidebar_frame, text="3. Probar modelo / visión", command=self.run_infer, fg_color="#7B1FA2", hover_color="#4A148C", font=ctk.CTkFont(size=14, weight="bold"), height=35)
         self.btn_test.grid(row=5, column=0, padx=20, pady=4, sticky="ew")
 
-        self.btn_optimize = ctk.CTkButton(
-            self.sidebar_frame, text="4. Optimizar (NCNN)", command=self.run_optimize,
-            fg_color="#E040FB", hover_color="#AA00FF", font=ctk.CTkFont(size=14, weight="bold"),
-            height=35
-        )
+        self.btn_optimize = ctk.CTkButton(self.sidebar_frame, text="4. Optimizar (NCNN)", command=self.run_optimize, fg_color="#E040FB", hover_color="#AA00FF", font=ctk.CTkFont(size=14, weight="bold"), height=35)
         self.btn_optimize.grid(row=6, column=0, padx=20, pady=4, sticky="ew")
 
-        self.btn_deploy = ctk.CTkButton(
-            self.sidebar_frame, text="5. Enviar a Raspberry Pi", command=self.run_deploy,
-            fg_color="#00897B", hover_color="#00695C", font=ctk.CTkFont(size=14, weight="bold"),
-            height=35
-        )
+        self.btn_deploy = ctk.CTkButton(self.sidebar_frame, text="5. Enviar a Raspberry Pi", command=self.run_deploy, fg_color="#00897B", hover_color="#00695C", font=ctk.CTkFont(size=14, weight="bold"), height=35)
         self.btn_deploy.grid(row=7, column=0, padx=20, pady=4, sticky="ew")
 
         path_icono_central = os.path.join("recursos", "icono_central.png")
@@ -706,27 +680,17 @@ class MLOpsPanel(ctk.CTk):
                 img_ic_ctk = ctk.CTkImage(light_image=img_ic, dark_image=img_ic, size=(60, 60))
                 self.icono_label = ctk.CTkLabel(self.sidebar_frame, text="", image=img_ic_ctk)
                 self.icono_label.grid(row=8, column=0, padx=20, pady=(5, 5))
-            except (IOError, AttributeError):
-                pass
+            except (IOError, AttributeError): pass
 
-        # Configuración inferior
         self.switch_var = ctk.StringVar(value="on")
-        self.switch_theme = ctk.CTkSwitch(
-            self.sidebar_frame, text="Modo Oscuro", command=self.toggle_appearance_mode,
-            variable=self.switch_var, onvalue="on", offvalue="off"
-        )
+        self.switch_theme = ctk.CTkSwitch(self.sidebar_frame, text="Modo Oscuro", command=self.toggle_appearance_mode, variable=self.switch_var, onvalue="on", offvalue="off")
         self.switch_theme.grid(row=9, column=0, padx=20, pady=(0, 5))
 
-        self.lbl_performance = ctk.CTkButton(
-            self.sidebar_frame, text="Ver Rendimiento", font=ctk.CTkFont(size=11),
-            fg_color="transparent", text_color="#A5D6A7", command=self.toggle_performance
-        )
+        self.lbl_performance = ctk.CTkButton(self.sidebar_frame, text="Ver Rendimiento", font=ctk.CTkFont(size=11), fg_color="transparent", text_color="#A5D6A7", command=self.toggle_performance)
         self.lbl_performance.grid(row=10, column=0, padx=20, pady=(0, 5))
 
-
-        # Frame de Rendimiento (Oculto por defecto)
         self.perf_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#222222", corner_radius=5)
-        self.perf_frame.grid_remove()  # Oculto al inicio
+        self.perf_frame.grid_remove()
 
         self.cpu_bar = self.create_perf_bar(self.perf_frame, "CPU:", "#4CAF50")
         self.ram_bar = self.create_perf_bar(self.perf_frame, "RAM:", "#1E88E5")
@@ -734,104 +698,60 @@ class MLOpsPanel(ctk.CTk):
 
         self.update_performance_stats()
 
-        # ---------------- PANEL PRINCIPAL (CONSOLA) ----------------
+        # CONSOLA PRINCIPAL
         self.main_frame = ctk.CTkFrame(self, corner_radius=10, fg_color="transparent")
         self.main_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
         self.main_frame.grid_rowconfigure(2, weight=1)
         self.main_frame.grid_columnconfigure(0, weight=1)
 
-        self.console_label = ctk.CTkLabel(self.main_frame, text="Monitor de eventos MLOps",
-                                          font=ctk.CTkFont(size=16, weight="bold"))
+        self.console_label = ctk.CTkLabel(self.main_frame, text="Monitor de eventos MLOps", font=ctk.CTkFont(size=16, weight="bold"))
         self.console_label.grid(row=0, column=0, padx=0, pady=(0, 5), sticky="w")
 
-        # Botón Factory Reset (A la par del reloj de historial)
-        self.btn_factory = ctk.CTkButton(
-            self.main_frame, text="Resetear de Fabrica", command=self.run_reset_all,
-            fg_color="#D32F2F", hover_color="#C62828", font=ctk.CTkFont(size=12, weight="bold"),
-            width=130, height=30
-        )
+        self.btn_factory = ctk.CTkButton(self.main_frame, text="Resetear de Fabrica", command=self.run_reset_all, fg_color="#D32F2F", hover_color="#C62828", font=ctk.CTkFont(size=12, weight="bold"), width=130, height=30)
         self.btn_factory.grid(row=0, column=0, sticky="e", padx=(0, 80))
 
-        # Botón de Historial (Reloj) al lado del engranaje
         path_history_icon = os.path.join("recursos", "history_icon.png")
         if os.path.exists(path_history_icon):
             try:
                 img_hist = Image.open(path_history_icon)
-                img_hist_ctk = ctk.CTkImage(
-                    light_image=img_hist, dark_image=img_hist, size=(24, 24)
-                )
-                self.btn_history = ctk.CTkButton(self.main_frame, text="", image=img_hist_ctk,
-                                                 width=30, height=30, fg_color="transparent",
-                                                 hover_color=("#DBDBDB", "#2B2B2B"),
-                                                 command=self.open_history)
+                img_hist_ctk = ctk.CTkImage(light_image=img_hist, dark_image=img_hist, size=(24, 24))
+                self.btn_history = ctk.CTkButton(self.main_frame, text="", image=img_hist_ctk, width=30, height=30, fg_color="transparent", hover_color=("#DBDBDB", "#2B2B2B"), command=self.open_history)
                 self.btn_history.grid(row=0, column=0, sticky="e", padx=(0, 40))
-            except (IOError, AttributeError):
-                pass
+            except (IOError, AttributeError): pass
 
-        # Botón de Ajustes (Engranaje) en la parte superior derecha
         path_config_icon = os.path.join("recursos", "config_icon.png")
         if os.path.exists(path_config_icon):
             try:
                 img_conf = Image.open(path_config_icon)
-                img_conf_ctk = ctk.CTkImage(
-                    light_image=img_conf, dark_image=img_conf, size=(24, 24)
-                )
-                self.btn_settings = ctk.CTkButton(self.main_frame, text="", image=img_conf_ctk, width=30, height=30,
-                                                  fg_color="transparent", hover_color=("#DBDBDB", "#2B2B2B"),
-                                                  command=self.open_settings)
+                img_conf_ctk = ctk.CTkImage(light_image=img_conf, dark_image=img_conf, size=(24, 24))
+                self.btn_settings = ctk.CTkButton(self.main_frame, text="", image=img_conf_ctk, width=30, height=30, fg_color="transparent", hover_color=("#DBDBDB", "#2B2B2B"), command=self.open_settings)
                 self.btn_settings.grid(row=0, column=0, sticky="e", padx=(0, 5))
-            except (IOError, AttributeError):
-                pass
+            except (IOError, AttributeError): pass
         else:
-            self.btn_settings = ctk.CTkButton(self.main_frame, text="Config", width=30, height=30,
-                                              fg_color="transparent", command=self.open_settings)
+            self.btn_settings = ctk.CTkButton(self.main_frame, text="Config", width=30, height=30, fg_color="transparent", command=self.open_settings)
             self.btn_settings.grid(row=0, column=0, sticky="e", padx=(0, 5))
 
-        self.progressbar = ctk.CTkProgressBar(self.main_frame, mode="indeterminate",
-                                              height=6, fg_color="#333333", progress_color="#1E88E5")
+        self.progressbar = ctk.CTkProgressBar(self.main_frame, mode="indeterminate", height=6, fg_color="#333333", progress_color="#1E88E5")
         self.progressbar.grid(row=1, column=0, sticky="ew", pady=(0, 10))
         self.progressbar.set(0)
 
-        # Textbox para los Logs estilo Terminal Avanzada
-        self.console = ctk.CTkTextbox(
-            self.main_frame, fg_color="#1A1A1A", text_color="#4CAF50",
-            border_color="#333333", border_width=2, font=("Consolas", 13)
-        )
+        self.console = ctk.CTkTextbox(self.main_frame, fg_color="#1A1A1A", text_color="#4CAF50", border_color="#333333", border_width=2, font=("Consolas", 13))
         self.console.grid(row=2, column=0, sticky="nsew")
 
-        # Footer de Créditos de Ingeniería
         self.footer_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.footer_frame.grid(row=3, column=0, sticky="e", pady=(5, 0))
 
-        ctk.CTkLabel(
-            self.footer_frame, text="Creado por: Medina Albaro y Asencio Issaias | Contacto: ",
-            font=ctk.CTkFont(size=11, slant="italic"), text_color="#AAAAAA"
-        ).pack(side="left")
-
-        lbl_email1 = ctk.CTkLabel(
-            self.footer_frame, text="medinaferesalbaro@gmail.com", cursor="hand2",
-            font=ctk.CTkFont(size=11, slant="italic", underline=True), text_color="#1E88E5"
-        )
+        ctk.CTkLabel(self.footer_frame, text="Creado por: Medina Albaro y Asencio Issaias | Contacto: ", font=ctk.CTkFont(size=11, slant="italic"), text_color="#AAAAAA").pack(side="left")
+        lbl_email1 = ctk.CTkLabel(self.footer_frame, text="medinaferesalbaro@gmail.com", cursor="hand2", font=ctk.CTkFont(size=11, slant="italic", underline=True), text_color="#1E88E5")
         lbl_email1.pack(side="left")
         lbl_email1.bind("<Button-1>", lambda e: webbrowser.open("mailto:medinaferesalbaro@gmail.com"))
-
-        ctk.CTkLabel(
-            self.footer_frame, text=" - ", font=ctk.CTkFont(size=11, slant="italic"), text_color="#AAAAAA"
-        ).pack(side="left")
-
-        lbl_email2 = ctk.CTkLabel(
-            self.footer_frame, text="issaiasasencio@gmail.com", cursor="hand2",
-            font=ctk.CTkFont(size=11, slant="italic", underline=True), text_color="#1E88E5"
-        )
+        ctk.CTkLabel(self.footer_frame, text=" - ", font=ctk.CTkFont(size=11, slant="italic"), text_color="#AAAAAA").pack(side="left")
+        lbl_email2 = ctk.CTkLabel(self.footer_frame, text="issaiasasencio@gmail.com", cursor="hand2", font=ctk.CTkFont(size=11, slant="italic", underline=True), text_color="#1E88E5")
         lbl_email2.pack(side="left")
         lbl_email2.bind("<Button-1>", lambda e: webbrowser.open("mailto:issaiasasencio@gmail.com"))
 
-        # Forzar el uso estricto del ejecutable local
         self.python_exe = ".\\venv\\Scripts\\python.exe"
-        self.log(
-            f"[SISTEMA INICIADO] Conectado al intérprete virtual: "
-            f"{self.python_exe}\nEsperando instrucciones...\n{'-' * 60}"
-        )
+        self.log(f"[SISTEMA INICIADO] Conectado al intérprete virtual: {self.python_exe}\nEsperando instrucciones...\n{'-' * 60}")
 
     def open_settings(self):
         dialog = SettingsDialog(self)
@@ -842,32 +762,20 @@ class MLOpsPanel(ctk.CTk):
         self.wait_window(dialog)
 
     def run_bg_calibration(self):
-        confirm = messagebox.askyesno(
-            "Calibración de Fondo",
-            "Asegúrate de que la cinta esté ENCENDIDA y COMPLETAMENTE VACÍA.\n"
-            "¿Deseas iniciar la captura de 10 segundos?",
-            parent=self
-        )
+        confirm = messagebox.askyesno("Calibración de Fondo", "Asegúrate de que la cinta esté ENCENDIDA y COMPLETAMENTE VACÍA.\n¿Deseas iniciar la captura de 10 segundos?", parent=self)
         if confirm:
             self.log("\n[CALIBRACION] Iniciando captura remota de fondo maestro...")
             self.progressbar.start()
-            
             def task():
                 success = capturar_y_procesar_fondo()
                 self.after(0, self.progressbar.stop)
                 if success:
-                    msg_exito = (
-                        "Fondo maestro capturado y procesado correctamente.\n\n"
-                        "SISTEMA LISTO: Ya podés proceder al PASO 2 (Entrenar Inteligencia)."
-                    )
+                    msg_exito = "Fondo maestro capturado y procesado correctamente.\n\nSISTEMA LISTO: Ya podés proceder al PASO 2 (Entrenar Inteligencia)."
                     self.after(0, lambda: messagebox.showinfo("Éxito", msg_exito, parent=self))
                     self.after(0, lambda: self.log("[CALIBRACION] Fondo maestro listo para futuros entrenamientos."))
                 else:
-                    self.after(0, lambda: messagebox.showerror(
-                        "Error", "No se pudo realizar la calibracion remota. Chequea los logs.", parent=self
-                    ))
+                    self.after(0, lambda: messagebox.showerror("Error", "No se pudo realizar la calibracion remota. Chequea los logs.", parent=self))
                     self.after(0, lambda: self.log("[ERROR] Falla en la calibracion de fondo."))
-            
             threading.Thread(target=task, daemon=True).start()
 
     def open_report(self):
@@ -877,15 +785,11 @@ class MLOpsPanel(ctk.CTk):
     def toggle_appearance_mode(self):
         if self.switch_var.get() == "on":
             ctk.set_appearance_mode("Dark")
-            self.console.configure(
-                fg_color="#1A1A1A", text_color="#4CAF50", border_color="#333333"
-            )
+            self.console.configure(fg_color="#1A1A1A", text_color="#4CAF50", border_color="#333333")
             self.switch_theme.configure(text="Modo Oscuro")
         else:
             ctk.set_appearance_mode("Light")
-            self.console.configure(
-                fg_color="#FFFFFF", text_color="#006400", border_color="#CCCCCC"
-            )
+            self.console.configure(fg_color="#FFFFFF", text_color="#006400", border_color="#CCCCCC")
             self.switch_theme.configure(text="Modo Claro  ")
 
     def log(self, text):
@@ -899,34 +803,17 @@ class MLOpsPanel(ctk.CTk):
             kwargs = {}
             if sys.platform == "win32":
                 kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
-
-            # Forzar entorno a UTF-8 para evitar errores de decodificación en Windows
             custom_env = os.environ.copy()
             custom_env["PYTHONIOENCODING"] = "utf-8"
             kwargs["env"] = custom_env
-
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-                universal_newlines=True,
-                encoding='utf-8',
-                errors='replace',
-                **kwargs,
-            )
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, universal_newlines=True, encoding='utf-8', errors='replace', **kwargs)
             for line in process.stdout:
-                self.after(0, self.log, line.strip())  # Evitar congelamiento usando after loop de CTK
+                self.after(0, self.log, line.strip())
             process.wait()
             self.after(0, self.progressbar.stop)
             self.after(0, self.progressbar.set, 0)
             self.after(0, self.log, f"\n[ CÓDIGO FINALIZADO ]\n{'-'*70}\n")
-
-            if on_finish:
-                self.after(0, on_finish)
-
-        # Ejecutar en segundo plano real
+            if on_finish: self.after(0, on_finish)
         threading.Thread(target=task, daemon=True).start()
 
     def create_perf_bar(self, parent, label, color):
@@ -950,85 +837,32 @@ class MLOpsPanel(ctk.CTk):
         def get_gpu_usage():
             try:
                 cmd = ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"]
-                result = subprocess.run(cmd, capture_output=True, text=True,   # No window creation
-                                        creationflags=subprocess.CREATE_NO_WINDOW)
-                if result.returncode == 0:
-                    return int(result.stdout.strip())
-            except (subprocess.SubprocessError, ValueError, OSError):
-                pass
+                result = subprocess.run(cmd, capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                if result.returncode == 0: return int(result.stdout.strip())
+            except: pass
             return 0
-
         cpu = psutil.cpu_percent() / 100
         ram = psutil.virtual_memory().percent / 100
         gpu = get_gpu_usage() / 100
-
         self.cpu_bar.set(cpu)
         self.ram_bar.set(ram)
         self.gpu_bar.set(gpu)
-
         self.after(2000, self.update_performance_stats)
 
     def run_reset_all(self):
-        respuesta = messagebox.askyesnocancel(
-            "PELIGRO: BORRADO MASIVO",
-            "Estás a punto de ELIMINAR permanentemente:\n"
-            "- Todas las fotos y videos capturados\n"
-            "- Todas los modelos de IA entrenados en la historia\n"
-            "- El archivo de configuración de servos\n\n"
-            "¿Deseás REINICIAR LA MEMORIA VIRTUAL para un proyecto nuevo?",
-        )
-        if not respuesta or respuesta is None:
-            return
-
+        respuesta = messagebox.askyesnocancel("PELIGRO: BORRADO MASIVO", "Estás a punto de ELIMINAR permanentemente:\n- Todas las fotos y videos capturados\n- Todas los modelos de IA entrenados en la historia\n- El archivo de configuración de servos\n\n¿Deseás REINICIAR LA MEMORIA VIRTUAL para un proyecto nuevo?")
+        if not respuesta: return
         self.log("\n[FORMATEO] Eliminando archivos antiguos de la IA...")
-
-        # Eliminar carpetas problemáticas enteras
-        folders_to_delete = [
-            "Proyecto_FlexSort/dataset/images",
-            "Proyecto_FlexSort/dataset/labels",
-            "Proyecto_FlexSort/entrenamientos",
-            "Proyecto_FlexSort/modelos_archivados",
-            "runs"
-        ]
+        folders_to_delete = ["Proyecto_FlexSort/dataset/images", "Proyecto_FlexSort/dataset/labels", "Proyecto_FlexSort/entrenamientos", "Proyecto_FlexSort/modelos_archivados", "runs"]
         files_to_delete = ["Proyecto_FlexSort/dataset/data.yaml", "Proyecto_FlexSort/dataset/servo_mapping.json"]
-
         for folder in folders_to_delete:
             if os.path.exists(folder):
-                try:
-                    shutil.rmtree(folder)
-                    self.log(f"  [-] Carpeta purgada: {folder}")
-                except OSError as e:
-                    self.log(f"  [x] Error al borrar {folder}: {e}")
-
+                try: shutil.rmtree(folder)
+                except: pass
         for f in files_to_delete:
             if os.path.exists(f):
-                try:
-                    os.remove(f)
-                    self.log(f"  [-] Archivo reseteado: {f}")
-                except OSError:
-                    pass
-
-        # Barrer todos los modelos basura optimizados
-        for r, ds, fs in os.walk(os.getcwd()):
-            if "venv" in r or ".git" in r:
-                continue
-
-            # Borrar carpetas de exportacion como _ncnn_model
-            for d in list(ds):
-                if d.endswith("_ncnn_model"):
-                    try:
-                        shutil.rmtree(os.path.join(r, d))
-                    except OSError:
-                        pass
-
-            for file in fs:
-                if file.endswith(".tflite") or file.endswith(".onnx") or (file.endswith(".pt") and "yolo" not in file):
-                    try:
-                        os.remove(os.path.join(r, file))
-                    except OSError:
-                        pass
-
-        self.log("\n[SISTEMA LIMPIO] Memoria totalmente purgada.\n[AUTO-INIT] Creando directorios y configuraciones de fábrica automáticamente...")
+                try: os.remove(f)
+                except: pass
         self.run_setup()
 
     def run_setup(self):
@@ -1038,55 +872,22 @@ class MLOpsPanel(ctk.CTk):
         dialog = SourceSelectorDialog(self)
         self.wait_window(dialog)
         opcion_fuente = dialog.source_type
-
-        if not opcion_fuente:  # X o Cancel
-            return
-
-        if opcion_fuente == "webcam":
-            video_path = "webcam"
-        elif opcion_fuente == "raspberry":
-            video_path = "raspberry"
+        if not opcion_fuente: return
+        if opcion_fuente == "webcam": video_path = "webcam"
+        elif opcion_fuente == "raspberry": video_path = "raspberry"
         else:
-            video_path = filedialog.askopenfilename(
-                title="Seleccionar Video RAW",
-                filetypes=[("Archivos MP4", "*.mp4"), ("Todos", "*.*")]
-            )
-            if not video_path:
-                return
-
+            video_path = filedialog.askopenfilename(title="Seleccionar Video RAW", filetypes=[("Archivos MP4", "*.mp4"), ("Todos", "*.*")])
+            if not video_path: return
         fuente_display = "Camara Raspberry Pi" if opcion_fuente == "raspberry" else ("Camara en vivo" if opcion_fuente == "webcam" else os.path.basename(video_path))
-        categoria = simpledialog.askstring(
-            "Etiqueta IA",
-            f"Modo de ingesta: {fuente_display}\n\nIngresá el tipo de objeto (ej: manzana, pieza_metal):",
-            parent=self
-        )
-
-        if not categoria:
-            return
-
+        categoria = simpledialog.askstring("Etiqueta IA", f"Modo de ingesta: {fuente_display}\n\nIngresá el tipo de objeto (ej: manzana, pieza_metal):", parent=self)
+        if not categoria: return
         dialog = ServoSelectorDialog(self, categoria)
         self.wait_window(dialog)
         servo_id = dialog.servo_id
-
-        if not servo_id:
-            self.log("\n[ABORTADO] No se asignó un servo al objeto.")
-            return
-
-        es_limpio = messagebox.askyesnocancel(
-            "Memoria IA",
-            "El modelo tiene información anterior.\n\n"
-            "¿Deseás REINICIAR LA MEMORIA VIRTUAL y comenzar la IA 100% desde cero?\n\n"
-            "- SÍ = Resetear base de datos\n- NO = Anexar conocimientos",
-            parent=self
-        )
-        if es_limpio is None:
-            return
+        if not servo_id: return
+        es_limpio = messagebox.askyesnocancel("Memoria IA", "El modelo tiene información anterior.\n\n¿Deseás REINICIAR LA MEMORIA VIRTUAL y comenzar la IA 100% desde cero?\n\n- SÍ = Resetear base de datos\n- NO = Anexar conocimientos", parent=self)
+        if es_limpio is None: return
         opcion = "b" if es_limpio else "a"
-
-        self.log(
-            "\n >>> Lanzando interfaz de mapeo... "
-            "Mira la ventana emergente."
-        )
         def check_bg_calibration():
             ruta_fondo = os.path.join("Proyecto_FlexSort", "recursos", "fondo_maestro")
             fondo_detectado = False
@@ -1095,128 +896,50 @@ class MLOpsPanel(ctk.CTk):
                     if f.endswith(".jpg"):
                         fondo_detectado = True
                         break
-
-            if fondo_detectado:
-                msg = (
-                    "¡OBJETO GUARDADO! Además, se detectó tú último Fondo Maestro (cinta vacía) y se aplicó con éxito.\n\n"
-                    "¿Deseás grabar un fondo maestro NUEVO ahora?\n"
-                    "(Sólo es necesario si moviste la cámara o cambió drásticamente la iluminación local, sino podés omitir)."
-                )
-            else:
-                msg = (
-                    "¡OBJETO GUARDADO! Sin embargo...\n\n"
-                    "No se detectó un Fondo Maestro de tu cinta vacía.\n"
-                    "Esto es muy importante para que el robot aprenda a NO detectar falsos positivos.\n\n"
-                    "¿Deseás grabar el fondo vacío ahora?"
-                )
-
-            if messagebox.askyesno("Calibración del Fondo", msg, parent=self):
-                self.run_bg_calibration()
-            else:
-                msg_listo = "TODO CONFIGURADO: Los datos de tu objeto han sido inyectados.\n\nYa podés proceder al PASO 2 (Entrenar Inteligencia)."
-                messagebox.showinfo("Proceso Finalizado", msg_listo, parent=self)
-
-        self.run_subprocess(
-            [self.python_exe, "2_procesar_video.py", video_path,
-             categoria, opcion, servo_id],
-            on_finish=check_bg_calibration
-        )
+            if fondo_detectado: msg = "¡OBJETO GUARDADO! Además, se detectó tú último Fondo Maestro (cinta vacía) y se aplicó con éxito.\n\n¿Deseás grabar un fondo maestro NUEVO ahora?"
+            else: msg = "¡OBJETO GUARDADO! Sin embargo...\n\nNo se detectó un Fondo Maestro de tu cinta vacía.\n¿Deseás grabar el fondo vacío ahora?"
+            if messagebox.askyesno("Calibración del Fondo", msg, parent=self): self.run_bg_calibration()
+        self.run_subprocess([self.python_exe, "2_procesar_video.py", video_path, categoria, opcion, servo_id], on_finish=check_bg_calibration)
 
     def run_train(self):
-        # Nuevo flujo: Diálogo avanzado de gestión
         dialog = TrainingManagerDialog(self)
         self.wait_window(dialog)
-        
-        if not dialog.result:
-            return
-            
-        modo = dialog.result
-
+        if not dialog.result: return
         def suggest_report():
-            txt = "¿Deseás ver el Reporte de Calidad del nuevo modelo ahora?"
-            if messagebox.askyesno("Entrenamiento Finalizado", txt):
-                self.open_report()
-
-        self.run_subprocess([
-            self.python_exe, "3_entrenar_modelo.py", modo
-        ], on_finish=suggest_report)
+            if messagebox.askyesno("Entrenamiento Finalizado", "¿Deseás ver el Reporte de Calidad del nuevo modelo ahora?"): self.open_report()
+        self.run_subprocess([self.python_exe, "3_entrenar_modelo.py", dialog.result], on_finish=suggest_report)
 
     def run_infer(self):
-        # 0. Intentar cargar el modelo activo desde config.json
         modelo_path = ""
         try:
             with open("config.json", "r", encoding="utf-8") as f:
                 config = json.load(f)
             active = config.get("active_model")
-            if active and os.path.exists(active):
-                modelo_path = active
-                self.log(f"\n[AUTO] Usando modelo ACTIVO del historial: {os.path.basename(active)}")
-        except (json.JSONDecodeError, FileNotFoundError, KeyError):
-            pass
-
+            if active and os.path.exists(active): modelo_path = active
+        except: pass
         if not modelo_path:
-            # Escanear agresivamente por cualquier cerebro de IA entrenado (.pt)
             pt_files = []
             for root_dir, dirs, files in os.walk(os.getcwd()):
-                if "venv" in root_dir or ".git" in root_dir:
-                    continue
+                if "venv" in root_dir or ".git" in root_dir: continue
                 for file in files:
-                    if file.endswith(".pt") and "yolo" not in file:
-                        pt_files.append(os.path.join(root_dir, file))
-
+                    if file.endswith(".pt") and "yolo" not in file: pt_files.append(os.path.join(root_dir, file))
             if pt_files:
-                # Ordenar por el más reciente
                 pt_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
                 latest = pt_files[0]
-
-                # Auto-Detectado
-                respuesta = messagebox.askyesnocancel(
-                    "Historial de inteligencia artificial",
-                    f"El sistema ha localizado el último cerebro entrenado hace poco en:\n"
-                    f"{os.path.basename(latest)}\n\n"
-                    "¿Deseás activarlo ahora?\n"
-                    "- SÍ: Lo usamos como modelo activo.\n"
-                    "- NO: Seleccionar otro archivo .pt manualmente.",
-                    parent=self
-                )
-                if respuesta:
-                    modelo_path = latest
-                elif respuesta is False:
-                    modelo_path = filedialog.askopenfilename(
-                        title="Seleccionar Cerebro YOLO (.pt)",
-                        filetypes=[("Modelos YOLO", "*.pt")]
-                    )
-            else:
-                modelo_path = filedialog.askopenfilename(
-                    title="Seleccionar Cerebro YOLO (.pt)",
-                    filetypes=[("Modelos YOLO", "*.pt")]
-                )
-
-        if not modelo_path:
-            return
-
-        self.run_subprocess([self.python_exe, "4_probar_modelo.py", modelo_path])
+                if messagebox.askyesno("Historial", f"¿Activar último modelo entrenado?\n{os.path.basename(latest)}"): modelo_path = latest
+        if not modelo_path: modelo_path = filedialog.askopenfilename(title="Seleccionar Cerebro YOLO (.pt)", filetypes=[("Modelos YOLO", "*.pt")])
+        if modelo_path: self.run_subprocess([self.python_exe, "4_probar_modelo.py", modelo_path])
 
     def run_optimize(self):
         self.run_subprocess([self.python_exe, "5_exportar_ncnn.py"])
 
     def run_deploy(self):
-        # Escanear por modelos NCNN (carpetas que terminen en _ncnn_model)
-        modelos_ncnn = []
-        for d in os.listdir(os.getcwd()):
-            if os.path.isdir(d) and d.endswith("_ncnn_model"):
-                modelos_ncnn.append(d)
-
+        modelos_ncnn = [d for d in os.listdir(os.getcwd()) if os.path.isdir(d) and d.endswith("_ncnn_model")]
         if not modelos_ncnn:
-            messagebox.showerror("Error", "No se encontró ningún modelo optimizado para Raspberry Pi.\nEjecutá el PASO 4 primero.")
+            messagebox.showerror("Error", "No se encontró ningún modelo optimizado para Raspberry Pi.")
             return
-
-        # El más reciente
         modelos_ncnn.sort(key=lambda x: os.path.getmtime(x), reverse=True)
-        modelo_a_enviar = modelos_ncnn[0]
-
-        self.run_subprocess([self.python_exe, "6_enviar_a_raspberry.py", modelo_a_enviar])
-
+        self.run_subprocess([self.python_exe, "6_enviar_a_raspberry.py", modelos_ncnn[0]])
 
 if __name__ == "__main__":
     app = MLOpsPanel()
