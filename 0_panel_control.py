@@ -330,7 +330,7 @@ class TrainingManagerDialog(ctk.CTkToplevel):
         self.title("Estación de Control de Entrenamiento")
         
         # Dimensiones y centrado
-        w, h = 550, 600
+        w, h = 550, 700
         x = int((self.winfo_screenwidth() / 2) - (w / 2))
         y = int((self.winfo_screenheight() / 2) - (h / 2))
         self.geometry(f"{w}x{h}+{x}+{y}")
@@ -351,11 +351,15 @@ class TrainingManagerDialog(ctk.CTkToplevel):
         self.train_mode = tk.StringVar(value="finetune")
         self.result = None 
 
+        # Referencias de widgets para validacion
+        self.checkboxes = {}
+        self.option_menus = {}
+
         self.setup_ui()
+        self.update_validation()
 
         # Modal y Propiedades de Ventana
         try:
-            self.attributes('-topmost', True)
             self.resizable(False, False)
             if parent is not None:
                 self.transient(parent)
@@ -403,16 +407,24 @@ class TrainingManagerDialog(ctk.CTkToplevel):
             f = ctk.CTkFrame(self.scroll, fg_color="transparent")
             f.pack(fill="x", pady=8, padx=5)
             
+            # Botón de Borrar (Tacho)
+            btn_del = ctk.CTkButton(f, text="🗑", width=30, height=30, fg_color="#D32F2F", 
+                                     hover_color="#B71C1C", command=lambda c=cat: self.delete_category(c))
+            btn_del.pack(side="left", padx=(0, 5))
+
             # Checkbox de inclusion
             cb = ctk.CTkCheckBox(f, text=cat.upper(), variable=self.selected_categories[cat], 
-                                 font=ctk.CTkFont(size=14, weight="bold"), width=150)
+                                 font=ctk.CTkFont(size=14, weight="bold"), width=150,
+                                 command=self.update_validation)
             cb.pack(side="left", padx=10)
+            self.checkboxes[cat] = cb
             
             # Servo Selector
             ctk.CTkLabel(f, text="Brazo:", font=ctk.CTkFont(size=12)).pack(side="left", padx=(10, 5))
             om = ctk.CTkOptionMenu(f, values=["1", "2", "3", "4"], variable=self.servo_vars[cat], width=80,
-                                   fg_color="#333333", button_color="#444444")
+                                   fg_color="#333333", button_color="#444444", command=lambda _: self.update_validation())
             om.pack(side="left", padx=5)
+            self.option_menus[cat] = om
 
         # SECCIÓN INFERIOR: Modo de Red
         mode_frame = ctk.CTkFrame(self, fg_color="#222222", corner_radius=10)
@@ -429,11 +441,88 @@ class TrainingManagerDialog(ctk.CTkToplevel):
         r2.pack(pady=5, padx=20, anchor="w")
 
         # Botón de Inicio
-        self.btn_start = ctk.CTkButton(self, text="INICIAR PROCESAMIENTO IA", 
+        self.btn_start = ctk.CTkButton(self, text="CONTINUAR ENTRENAMIENTO", 
                                        font=ctk.CTkFont(size=16, weight="bold"),
                                        fg_color="#1E88E5", hover_color="#1565C0", height=55,
                                        command=self.confirm)
         self.btn_start.pack(pady=(10, 30), padx=30, fill="x")
+
+    def update_validation(self):
+        selected_cats = [cat for cat in self.categorias if self.selected_categories[cat].get()]
+        count = len(selected_cats)
+        
+        # 1. Limite de 4 objetos
+        if count >= 4:
+            for cat, cb in self.checkboxes.items():
+                if not self.selected_categories[cat].get():
+                    cb.configure(state="disabled")
+        else:
+            for cb in self.checkboxes.values():
+                cb.configure(state="normal")
+        
+        # 2. Validacion de Servos Unicos
+        servos_usados = [self.servo_vars[cat].get() for cat in selected_cats]
+        duplicados = len(servos_usados) != len(set(servos_usados))
+        
+        # 3. Estado del Boton
+        if count == 4 and not duplicados:
+            self.btn_start.configure(state="normal", fg_color="#1E88E5", text="CONTINUAR ENTRENAMIENTO")
+        elif duplicados:
+            self.btn_start.configure(state="disabled", fg_color="#555555", text="ERROR: BRAZOS DUPLICADOS")
+        else:
+            self.btn_start.configure(state="disabled", fg_color="#555555", text=f"SELECCIONÁ 4 OBJETOS ({count}/4)")
+
+    def delete_category(self, category):
+        if not messagebox.askyesno("Confirmar Borrado", f"¿Estás seguro de eliminar '{category.upper()}' de la base de datos?\n\nEsta acción es irreversible y borrará todas sus fotos.", parent=self):
+            return
+            
+        try:
+            idx_to_remove = self.categorias.index(category)
+            
+            # 1. Actualizar data.yaml
+            self.categorias.remove(category)
+            with open(self.yaml_path, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f)
+            data['names'] = self.categorias
+            data['nc'] = len(self.categorias)
+            with open(self.yaml_path, 'w', encoding='utf-8') as f:
+                yaml.dump(data, f)
+            
+            # 2. Re-indexar archivos de etiquetas (labels)
+            labels_path = os.path.join(self.base_dir, "dataset", "labels")
+            for root, dirs, files in os.walk(labels_path):
+                for file in files:
+                    if file.endswith(".txt"):
+                        f_path = os.path.join(root, file)
+                        lines_to_keep = []
+                        with open(f_path, 'r') as f:
+                            lines = f.readlines()
+                        
+                        for line in lines:
+                            parts = line.split()
+                            if not parts: continue
+                            cls_id = int(parts[0])
+                            if cls_id == idx_to_remove:
+                                continue # Eliminar linea de la clase borrada
+                            elif cls_id > idx_to_remove:
+                                parts[0] = str(cls_id - 1)
+                            lines_to_keep.append(" ".join(parts) + "\n")
+                        
+                        if lines_to_keep:
+                            with open(f_path, 'w') as f:
+                                f.writelines(lines_to_keep)
+                        else:
+                            os.remove(f_path)
+                            # Intentar borrar imagen correspondiente
+                            img_path = f_path.replace("labels", "images").replace(".txt", ".jpg")
+                            if os.path.exists(img_path): os.remove(img_path)
+
+            messagebox.showinfo("Éxito", f"Objeto '{category}' eliminado correctamente.", parent=self)
+            self.destroy() # Recargar ventana
+            self.parent.run_train() # Reabrir
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo eliminar: {e}", parent=self)
 
     def confirm(self):
         # Guardar cambios de servos y seleccion
@@ -443,7 +532,7 @@ class TrainingManagerDialog(ctk.CTkToplevel):
                 new_mapping[str(i)] = self.servo_vars[cat].get()
         
         if not new_mapping:
-            messagebox.showwarning("Atención", "Debés seleccionar al menos un objeto para entrenar.")
+            messagebox.showwarning("Atención", "Debés seleccionar al menos un objeto para entrenar.", parent=self)
             return
 
         # Guardar en JSON
@@ -753,6 +842,29 @@ class MLOpsPanel(ctk.CTk):
         self.python_exe = ".\\venv\\Scripts\\python.exe"
         self.log(f"[SISTEMA INICIADO] Conectado al intérprete virtual: {self.python_exe}\nEsperando instrucciones...\n{'-' * 60}")
 
+    def controlar_escaneo_remoto(self, accion):
+        """Detiene o reinicia el escáner en la Raspberry Pi para liberar la cámara."""
+        def task():
+            try:
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                ssh.connect(
+                    self.config_data.get("ip_raspberry", "192.168.1.10"), 
+                    username=self.config_data.get("usuario", "pi"), 
+                    password=self.config_data.get("contrasena", "12345678"),
+                    timeout=5
+                )
+                if accion == "detener":
+                    self.after(0, lambda: self.log("[REMOTO] Solicitando liberación de cámara en Raspberry Pi..."))
+                    ssh.exec_command("pkill -f main.py")
+                elif accion == "iniciar":
+                    self.after(0, lambda: self.log("[REMOTO] Reanudando servicios de escaneo en Raspberry Pi..."))
+                    ssh.exec_command("nohup /home/pi/Desktop/Flex-Sort/venv/bin/python3 /home/pi/Desktop/Flex-Sort/rpi_panel.py > /dev/null 2>&1 &")
+                ssh.close()
+            except Exception as e:
+                self.after(0, lambda: self.log(f"[REMOTO] Aviso: No se pudo {accion} el escaneo remoto (¿Pi desconectada?)"))
+        threading.Thread(target=task, daemon=True).start()
+
     def open_settings(self):
         dialog = SettingsDialog(self)
         self.wait_window(dialog)
@@ -765,6 +877,7 @@ class MLOpsPanel(ctk.CTk):
         confirm = messagebox.askyesno("Calibración de Fondo", "Asegúrate de que la cinta esté ENCENDIDA y COMPLETAMENTE VACÍA.\n¿Deseas iniciar la captura de 10 segundos?", parent=self)
         if confirm:
             self.log("\n[CALIBRACION] Iniciando captura remota de fondo maestro...")
+            self.controlar_escaneo_remoto("detener")
             self.progressbar.start()
             def task():
                 success = capturar_y_procesar_fondo()
@@ -776,6 +889,7 @@ class MLOpsPanel(ctk.CTk):
                 else:
                     self.after(0, lambda: messagebox.showerror("Error", "No se pudo realizar la calibracion remota. Chequea los logs.", parent=self))
                     self.after(0, lambda: self.log("[ERROR] Falla en la calibracion de fondo."))
+                self.controlar_escaneo_remoto("iniciar")
             threading.Thread(target=task, daemon=True).start()
 
     def open_report(self):
@@ -888,18 +1002,25 @@ class MLOpsPanel(ctk.CTk):
         es_limpio = messagebox.askyesnocancel("Memoria IA", "El modelo tiene información anterior.\n\n¿Deseás REINICIAR LA MEMORIA VIRTUAL y comenzar la IA 100% desde cero?\n\n- SÍ = Resetear base de datos\n- NO = Anexar conocimientos", parent=self)
         if es_limpio is None: return
         opcion = "b" if es_limpio else "a"
-        def check_bg_calibration():
-            ruta_fondo = os.path.join("Proyecto_FlexSort", "recursos", "fondo_maestro")
-            fondo_detectado = False
-            if os.path.exists(ruta_fondo):
-                for f in os.listdir(ruta_fondo):
-                    if f.endswith(".jpg"):
-                        fondo_detectado = True
-                        break
-            if fondo_detectado: msg = "¡OBJETO GUARDADO! Además, se detectó tú último Fondo Maestro (cinta vacía) y se aplicó con éxito.\n\n¿Deseás grabar un fondo maestro NUEVO ahora?"
-            else: msg = "¡OBJETO GUARDADO! Sin embargo...\n\nNo se detectó un Fondo Maestro de tu cinta vacía.\n¿Deseás grabar el fondo vacío ahora?"
-            if messagebox.askyesno("Calibración del Fondo", msg, parent=self): self.run_bg_calibration()
-        self.run_subprocess([self.python_exe, "2_procesar_video.py", video_path, categoria, opcion, servo_id], on_finish=check_bg_calibration)
+        if opcion_fuente == "raspberry": self.controlar_escaneo_remoto("detener")
+
+        def on_finish_ingest():
+            def check_bg_calibration():
+                ruta_fondo = os.path.join("Proyecto_FlexSort", "recursos", "fondo_maestro")
+                fondo_detectado = False
+                if os.path.exists(ruta_fondo):
+                    for f in os.listdir(ruta_fondo):
+                        if f.endswith(".jpg"):
+                            fondo_detectado = True
+                            break
+                if fondo_detectado: msg = "¡OBJETO GUARDADO! Además, se detectó tú último Fondo Maestro (cinta vacía) y se aplicó con éxito.\n\n¿Deseás grabar un fondo maestro NUEVO ahora?"
+                else: msg = "¡OBJETO GUARDADO! Sin embargo...\n\nNo se detectó un Fondo Maestro de tu cinta vacía.\n¿Deseás grabar el fondo vacío ahora?"
+                if messagebox.askyesno("Calibración del Fondo", msg, parent=self): self.run_bg_calibration()
+            
+            check_bg_calibration()
+            if opcion_fuente == "raspberry": self.controlar_escaneo_remoto("iniciar")
+            
+        self.run_subprocess([self.python_exe, "2_procesar_video.py", video_path, categoria, opcion, servo_id], on_finish=on_finish_ingest)
 
     def run_train(self):
         dialog = TrainingManagerDialog(self)
@@ -928,17 +1049,52 @@ class MLOpsPanel(ctk.CTk):
                 latest = pt_files[0]
                 if messagebox.askyesno("Historial", f"¿Activar último modelo entrenado?\n{os.path.basename(latest)}"): modelo_path = latest
         if not modelo_path: modelo_path = filedialog.askopenfilename(title="Seleccionar Cerebro YOLO (.pt)", filetypes=[("Modelos YOLO", "*.pt")])
-        if modelo_path: self.run_subprocess([self.python_exe, "4_probar_modelo.py", modelo_path])
+        if modelo_path: self.run_subprocess([self.python_exe, "4_probar_modelo_pc.py", modelo_path])
 
     def run_optimize(self):
-        self.run_subprocess([self.python_exe, "5_exportar_ncnn.py"])
+        modelo_path = ""
+        try:
+            with open("config.json", "r", encoding="utf-8") as f:
+                config = json.load(f)
+            active = config.get("active_model")
+            if active and os.path.exists(active): modelo_path = active
+        except: pass
+
+        if not modelo_path:
+            pt_files = []
+            for root_dir, dirs, files in os.walk(os.getcwd()):
+                if "venv" in root_dir or ".git" in root_dir: continue
+                for file in files:
+                    if file.endswith(".pt") and "yolo" not in file: pt_files.append(os.path.join(root_dir, file))
+            if pt_files:
+                pt_files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+                latest = pt_files[0]
+                if messagebox.askyesno("Optimización", f"¿Optimizar último modelo entrenado?\n{os.path.basename(latest)}"): 
+                    modelo_path = latest
+
+        if not modelo_path: 
+            modelo_path = filedialog.askopenfilename(title="Seleccionar Modelo para Optimizar", filetypes=[("Modelos YOLO", "*.pt")])
+        
+        if modelo_path:
+            self.run_subprocess([self.python_exe, "5_optimizar_modelo.py", modelo_path, "ncnn"])
 
     def run_deploy(self):
-        modelos_ncnn = [d for d in os.listdir(os.getcwd()) if os.path.isdir(d) and d.endswith("_ncnn_model")]
+        modelos_ncnn = []
+        for root, dirs, files in os.walk(os.getcwd()):
+            # Evitar carpetas pesadas o irrelevantes
+            if "venv" in root or ".git" in root: continue
+            for d in dirs:
+                if d.endswith("_ncnn_model"):
+                    modelos_ncnn.append(os.path.join(root, d))
+        
         if not modelos_ncnn:
-            messagebox.showerror("Error", "No se encontró ningún modelo optimizado para Raspberry Pi.")
+            messagebox.showerror("Error", "No se encontró ningún modelo optimizado para Raspberry Pi.\n\nAseguráte de haber completado el Paso 4 (Optimizar NCNN) primero.")
             return
+        
+        # Ordenar por fecha de modificación (el más reciente primero)
         modelos_ncnn.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+        
+        # Enviar el modelo más reciente encontrado
         self.run_subprocess([self.python_exe, "6_enviar_a_raspberry.py", modelos_ncnn[0]])
 
 if __name__ == "__main__":
