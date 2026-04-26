@@ -20,8 +20,8 @@ class RPiOperatorPanel(ctk.CTk):
         super().__init__()
         self.title("FLEX-SORT | Industrial Dashboard")
 
-        # Dimensiones para Raspberry Pi (Optimizado para 1024x600 o 1024x720)
-        self.geometry("1024x720")
+        # Dimensiones para Raspberry Pi (Optimizado para visualización amplia)
+        self.geometry("1200x850")
         self.configure(fg_color="#0A0A0A")
 
         # Rutas de Archivos en la Pi
@@ -87,20 +87,26 @@ class RPiOperatorPanel(ctk.CTk):
 
         # Botones Derecha
         self.btn_power_off = ctk.CTkButton(
-            self.header, text="⏻", width=40, height=40, fg_color="#1A1A1A", 
-            hover_color="#333333", font=ctk.CTkFont(size=18), command=self.confirm_shutdown
+            self.header, text="⏻", width=45, height=45, fg_color="#1A1A1A", 
+            hover_color="#333333", font=ctk.CTkFont(size=20), command=self.confirm_shutdown
         )
         self.btn_power_off.pack(side="right", padx=10)
 
         self.btn_conf = ctk.CTkButton(
-            self.header, text="⚙", width=40, height=40, fg_color="#1A1A1A", 
-            hover_color="#333333", font=ctk.CTkFont(size=18), command=self.open_settings
+            self.header, text="⚙", width=45, height=45, fg_color="#1A1A1A", 
+            hover_color="#333333", font=ctk.CTkFont(size=20), command=self.open_settings
         )
         self.btn_conf.pack(side="right", padx=5)
 
+        self.btn_hist = ctk.CTkButton(
+            self.header, text="🕒", width=45, height=45, fg_color="#1A1A1A", 
+            hover_color="#333333", font=ctk.CTkFont(size=20), command=self.open_history
+        )
+        self.btn_hist.pack(side="right", padx=5)
+
         self.btn_reset = ctk.CTkButton(
-            self.header, text="RESET", width=70, height=32, fg_color="#b71c1c", 
-            hover_color="#d32f2f", font=ctk.CTkFont(size=11, weight="bold"), command=self.confirm_reset
+            self.header, text="RESET", width=80, height=35, fg_color="#b71c1c", 
+            hover_color="#d32f2f", font=ctk.CTkFont(size=12, weight="bold"), command=self.confirm_reset
         )
         self.btn_reset.pack(side="right", padx=15)
 
@@ -113,7 +119,7 @@ class RPiOperatorPanel(ctk.CTk):
         self.status_indicator.pack(side="right", padx=10)
 
         # ---------------- SIDEBAR (CONTROLES) ----------------
-        self.sidebar = ctk.CTkFrame(self, width=260, corner_radius=0, fg_color="#0F0F0F")
+        self.sidebar = ctk.CTkFrame(self, width=280, corner_radius=0, fg_color="#0F0F0F")
         self.sidebar.grid(row=1, column=0, rowspan=2, sticky="nsew", padx=0, pady=0)
         self.sidebar.grid_propagate(False)
 
@@ -233,12 +239,16 @@ class RPiOperatorPanel(ctk.CTk):
         self.lbl_fps = ctk.CTkLabel(self.sidebar, text="-- FPS", font=ctk.CTkFont(size=14, weight="bold"), text_color="#333333")
         self.lbl_fps.pack(pady=5)
 
-        # Consola (Placeholder visual)
+        # Consola (Mejorada para lectura)
         ctk.CTkLabel(
-            self.sidebar, text="CONSOLA", font=ctk.CTkFont(size=11, weight="bold"), text_color="#333333"
+            self.sidebar, text="CONSOLA DE EVENTOS", font=ctk.CTkFont(size=11, weight="bold"), text_color="#333333"
         ).pack(anchor="w", padx=20, pady=(10, 0))
-        self.console_frame = ctk.CTkFrame(self.sidebar, fg_color="#080808", height=100)
-        self.console_frame.pack(fill="x", padx=20, pady=5)
+        self.console = ctk.CTkTextbox(
+            self.sidebar, fg_color="#080808", text_color="#4CAF50", 
+            font=("Consolas", 11), height=180, border_width=1, border_color="#1A1A1A"
+        )
+        self.console.pack(fill="x", padx=15, pady=5)
+        self.console.insert("0.0", "> Sistema iniciado...\n> Esperando instrucciones.")
 
         # ---------------- MAIN (VISIÓN) ----------------
         self.main_view = ctk.CTkFrame(self, corner_radius=10, fg_color="#000000")
