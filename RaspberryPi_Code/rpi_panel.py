@@ -169,9 +169,12 @@ class RPiOperatorPanel(ctk.CTk):
         self.lbl_vel_val = ctk.CTkLabel(val_row, text="1200 p/s", font=ctk.CTkFont(size=11, weight="bold"), text_color="white")
         self.lbl_vel_val.pack(side="right")
 
+        # Cargar velocidad guardada
+        saved_speed = self.config_data.get("belt_speed_steps", 1200)
         self.cinta_slider = ctk.CTkSlider(self.cinta_frame, from_=200, to=3000, height=15, button_length=15, command=self.update_cinta_vel)
-        self.cinta_slider.set(1200)
+        self.cinta_slider.set(saved_speed)
         self.cinta_slider.pack(padx=10, pady=(5, 5), fill="x")
+        self.lbl_vel_val.configure(text=f"{saved_speed} p/s")
 
         limits_row = ctk.CTkFrame(self.cinta_frame, fg_color="transparent")
         limits_row.pack(fill="x", padx=10, pady=(0, 5))
@@ -274,8 +277,17 @@ class RPiOperatorPanel(ctk.CTk):
         self.main_view = ctk.CTkFrame(self.main_area, corner_radius=10, fg_color="#000000")
         self.main_view.pack(fill="both", expand=True, padx=10, pady=10)
 
-        self.video_label = tk.Label(self.main_view, bg="black")
-        self.video_label.pack(expand=True, fill="both")
+        # Canvas fijo para el video - NO usa fill/expand para no invadir el sidebar
+        self.video_canvas = tk.Canvas(
+            self.main_view, bg="black",
+            highlightthickness=0,
+            cursor="none"  # Sin cursor encima del video
+        )
+        self.video_canvas.pack(fill="both", expand=True)
+        # Bloquear propagación de clics al contenedor padre
+        self.video_canvas.bind("<Button-1>", lambda e: "break")
+        self.video_canvas.bind("<Button-3>", lambda e: "break")
+        self._canvas_img_id = None
 
         # Portada Inactiva
         self.portada_img = None
@@ -396,8 +408,17 @@ class RPiOperatorPanel(ctk.CTk):
         draw.text((cx, cy + 35), txt_sub, fill="#333333", anchor="mm", font=font_sub)
         
         self.portada_img = ImageTk.PhotoImage(img)
-        self.video_label.configure(image=self.portada_img)
-        self.video_label.image = self.portada_img
+        # Dibujar portada en el canvas
+        cw = self.video_canvas.winfo_width() or w
+        ch = self.video_canvas.winfo_height() or h
+        if self._canvas_img_id is None:
+            self._canvas_img_id = self.video_canvas.create_image(
+                cw // 2, ch // 2, image=self.portada_img, anchor="center"
+            )
+        else:
+            self.video_canvas.coords(self._canvas_img_id, cw // 2, ch // 2)
+            self.video_canvas.itemconfig(self._canvas_img_id, image=self.portada_img)
+        self.video_canvas.image = self.portada_img
 
     def load_config(self):
         if os.path.exists(self.config_path):
@@ -503,10 +524,20 @@ class RPiOperatorPanel(ctk.CTk):
         # Convertir a imagen de Tkinter
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img)
-        # Redimensionar para encajar perfectamente si es necesario
         img_tk = ImageTk.PhotoImage(image=img)
-        self.video_label.configure(image=img_tk)
-        self.video_label.image = img_tk
+        
+        # Dibujar en el canvas en lugar de usar .configure(image=...)
+        w = self.video_canvas.winfo_width()
+        h = self.video_canvas.winfo_height()
+        if w > 1 and h > 1:
+            if self._canvas_img_id is None:
+                self._canvas_img_id = self.video_canvas.create_image(
+                    w // 2, h // 2, image=img_tk, anchor="center"
+                )
+            else:
+                self.video_canvas.coords(self._canvas_img_id, w // 2, h // 2)
+                self.video_canvas.itemconfig(self._canvas_img_id, image=img_tk)
+        self.video_canvas.image = img_tk
 
     def update_servo_assignments(self):
         # Reset labels
@@ -628,9 +659,13 @@ class RPiOperatorPanel(ctk.CTk):
             os.system("sudo shutdown -h now")
 
     def update_cinta_vel(self, val):
-        self.lbl_vel_val.configure(text=f"{int(val)} p/s")
+        speed = int(val)
+        self.lbl_vel_val.configure(text=f"{speed} p/s")
         if self.cinta_on:
-            self.engine.set_belt_speed(int(val))
+            self.engine.set_belt_speed(speed)
+        # Persistir la velocidad
+        self.config_data["belt_speed_steps"] = speed
+        self.save_config()
 
     def toggle_cinta(self):
         self.cinta_on = not self.cinta_on
