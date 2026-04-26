@@ -562,6 +562,21 @@ class RPiOperatorPanel(ctk.CTk):
 
         self.after(500, self.update_stats_loop)
 
+    def confirm_shutdown(self):
+        res = messagebox.askyesno(
+            "Apagar Sistema",
+            "¿Desea cerrar la aplicación y apagar la Raspberry Pi?",
+            parent=self
+        )
+        if res:
+            if self.engine.running:
+                self.engine.stop()
+            self.destroy()
+            os.system("sudo shutdown -h now")
+
+    def update_cinta_vel(self, val):
+        self.lbl_vel_val.configure(text=f"{int(val)} p/s")
+
 
 class SettingsDialog(ctk.CTkToplevel):
     def __init__(self, parent):
@@ -853,22 +868,6 @@ class HistoryDialog(ctk.CTkToplevel):
             self.parent.toggle_scanner()  # Reiniciar
         self.destroy()
         messagebox.showinfo("Modelo Cambiado", f"Se ha activado: {model_name}")
-
-    def update_cinta_vel(self, val):
-        self.lbl_vel_val.configure(text=f"{int(val)} p/s")
-
-
-    def confirm_shutdown(self):
-        res = messagebox.askyesno(
-            "Apagar Sistema",
-            "¿Desea cerrar la aplicación y apagar la Raspberry Pi?",
-            parent=self
-        )
-        if res:
-            if self.engine.running:
-                self.engine.stop()
-            self.destroy()
-            os.system("sudo shutdown -h now")
 
 if __name__ == "__main__":
     app = RPiOperatorPanel()
