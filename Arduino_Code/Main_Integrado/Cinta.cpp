@@ -11,15 +11,21 @@ void Cinta::iniciar() {
 }
 
 void Cinta::actualizar() {
-  int potValue = analogRead(pinPotenciometro);
+  float velocidad = 0;
 
-  if (potValue < 50) {
-    motor->setSpeed(0);
+  if (velocidadExterna >= 0) {
+    velocidad = velocidadExterna;
   } else {
-    // Mapeo de velocidad: de 200 a 3000 pasos/segundo
-    float velocidad = map(potValue, 50, 1023, 200, 3000);
-    motor->setSpeed(velocidad);
+    int potValue = analogRead(pinPotenciometro);
+    if (potValue >= 50) {
+      velocidad = map(potValue, 50, 1023, 200, 3000);
+    }
   }
 
+  motor->setSpeed(velocidad);
   motor->runSpeed();
+}
+
+void Cinta::setVelocidad(float v) {
+  velocidadExterna = v;
 }

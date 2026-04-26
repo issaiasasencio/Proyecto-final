@@ -30,15 +30,7 @@ void Clasificador::moverTodosAReposo() {
   s4.detach();
 }
 
-void Clasificador::actualizar() {
-  if (estadoActual == IDLE && Serial.available() > 0) {
-    String cmd = Serial.readStringUntil('\n');
-    cmd.trim();
-    if (cmd.length() > 0) {
-      procesarComando(cmd);
-    }
-  }
-
+void Clasificador::actualizar_sin_serial() {
   unsigned long ahora = millis();
 
   switch (estadoActual) {

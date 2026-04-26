@@ -13,6 +13,9 @@ class Cinta {
     Cinta(int stepPin, int dirPin, int potPin);
     void iniciar();
     void actualizar();
+    void setVelocidad(float v);
+  private:
+    float velocidadExterna = -1; 
 };
 
 #endif  // ? esto faltaba

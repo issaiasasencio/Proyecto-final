@@ -148,11 +148,14 @@ class RPiOperatorPanel(ctk.CTk):
         cinta_header.pack(fill="x", padx=10, pady=(10, 0))
         
         ctk.CTkLabel(cinta_header, text="CINTA", font=ctk.CTkFont(size=11, weight="bold"), text_color="#555555").pack(side="left")
-        self.lbl_cinta_status_badge = ctk.CTkLabel(
+        self.btn_cinta_toggle = ctk.CTkButton(
             cinta_header, text="ON", fg_color="#2E7D32", text_color="white", 
-            font=ctk.CTkFont(size=9, weight="bold"), corner_radius=4, width=30
+            font=ctk.CTkFont(size=9, weight="bold"), corner_radius=4, width=40, height=20,
+            command=self.toggle_cinta
         )
-        self.lbl_cinta_status_badge.pack(side="right")
+        self.btn_cinta_toggle.pack(side="right")
+
+        self.cinta_on = True
 
         val_row = ctk.CTkFrame(self.cinta_frame, fg_color="transparent")
         val_row.pack(fill="x", padx=10, pady=(5, 0))
@@ -324,7 +327,9 @@ class RPiOperatorPanel(ctk.CTk):
                 )
                 self.engine.start(self.update_video_frame)
                 self.status_indicator.configure(text="● ESCANEANDO", text_color="#1E88E5")
-                self.lbl_cinta_status_badge.configure(fg_color="#2E7D32", text="ON")
+                # Al iniciar el scanner, forzar la velocidad actual de la cinta si está ON
+                if self.cinta_on:
+                    self.engine.set_belt_speed(int(self.cinta_slider.get()))
             else:
                 messagebox.showerror("Error", self.engine.status_msg)
         else:
@@ -333,7 +338,7 @@ class RPiOperatorPanel(ctk.CTk):
                 text="▶ ENCENDER SCANNER", fg_color="#2E7D32", hover_color="#1B5E20"
             )
             self.status_indicator.configure(text="● SISTEMA LISTO", text_color="#4CAF50")
-            self.lbl_cinta_status_badge.configure(fg_color="#333333", text="OFF")
+            # No forzamos el badge de cinta aquí, ya tiene su propio botón
             
             # Ejecucion redundante y retrasada para sobrevivir a hilos remanentes del modelo AI
             self.set_portada()
@@ -607,6 +612,19 @@ class RPiOperatorPanel(ctk.CTk):
 
     def update_cinta_vel(self, val):
         self.lbl_vel_val.configure(text=f"{int(val)} p/s")
+        if self.cinta_on:
+            self.engine.set_belt_speed(int(val))
+
+    def toggle_cinta(self):
+        self.cinta_on = not self.cinta_on
+        if self.cinta_on:
+            self.btn_cinta_toggle.configure(text="ON", fg_color="#2E7D32")
+            self.lbl_cinta_activa.configure(text="● ACTIVA", text_color="#4CAF50")
+            self.engine.set_belt_speed(int(self.cinta_slider.get()))
+        else:
+            self.btn_cinta_toggle.configure(text="OFF", fg_color="#333333")
+            self.lbl_cinta_activa.configure(text="○ APAGADA", text_color="#555555")
+            self.engine.set_belt_speed(0)
 
 
 class SettingsDialog(ctk.CTkToplevel):

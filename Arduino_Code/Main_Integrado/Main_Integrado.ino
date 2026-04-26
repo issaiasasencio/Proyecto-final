@@ -26,6 +26,19 @@ void setup() {
 }
 
 void loop() {
+  if (Serial.available() > 0) {
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+    if (cmd.length() > 0) {
+      if (cmd.startsWith("C:")) { // Comando Cinta C:1200
+        float vel = cmd.substring(2).toFloat();
+        cinta.setVelocidad(vel);
+      } else {
+        clasificador.procesarComando(cmd);
+      }
+    }
+  }
+
   cinta.actualizar();  
-  clasificador.actualizar();
+  clasificador.actualizar_sin_serial(); // Necesitaremos renombrar o modificar este método
 }

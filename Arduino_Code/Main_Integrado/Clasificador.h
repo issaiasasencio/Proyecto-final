@@ -34,12 +34,12 @@ class Clasificador {
   public:
     Clasificador();
     void iniciar(int p1, int p2, int p3, int p4);
-    void actualizar();
+    void actualizar_sin_serial();
     
-  private:
     void procesarComando(String cmd);
     void moverTodosAReposo();
     
+  private:
     int limMax[4] = {90, 90, 90, 90}; // Limites dinamicos editables
 };
 
