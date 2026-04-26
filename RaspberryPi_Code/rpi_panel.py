@@ -87,40 +87,36 @@ class RPiOperatorPanel(ctk.CTk):
         )
         self.lbl_subtitle.pack(side="left", padx=(10, 0), pady=(5, 0))
 
-        # Botones Derecha
-        self.btn_conf = ctk.CTkButton(
-            self.header, text="AJUSTES", width=80, height=35, fg_color="#1A1A1A", 
-            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
-            command=lambda: [print("Click Ajustes"), self.open_settings()]
+        # Botones Derecha (Grid para control total)
+        self.btn_reset = ctk.CTkButton(
+            self.header, text="RESET", width=80, height=35, fg_color="#b71c1c", 
+            hover_color="#d32f2f", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
+            command=lambda: [print("Reset"), self.confirm_reset()]
         )
-        self.btn_conf.pack(side="right", padx=10)
+        self.btn_reset.pack(side="right", padx=15)
 
         self.btn_hist = ctk.CTkButton(
-            self.header, text="HISTORIAL", width=80, height=35, fg_color="#1A1A1A", 
+            self.header, text="HISTORIAL", width=90, height=35, fg_color="#1A1A1A", 
             hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
-            command=lambda: [print("Click Historial"), self.open_history()]
+            command=lambda: [print("Historial"), self.open_history()]
         )
         self.btn_hist.pack(side="right", padx=5)
 
-        self.btn_reset = ctk.CTkButton(
-            self.header, text="RESET", width=70, height=35, fg_color="#b71c1c", 
-            hover_color="#d32f2f", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
-            command=lambda: [print("Click Reset"), self.confirm_reset()]
+        self.btn_conf = ctk.CTkButton(
+            self.header, text="AJUSTES", width=90, height=35, fg_color="#1A1A1A", 
+            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
+            command=lambda: [print("Ajustes"), self.open_settings()]
         )
-        self.btn_reset.pack(side="right", padx=15)
-        
-        # Elevar botones para asegurar clics
-        self.btn_conf.lift()
-        self.btn_hist.lift()
-        self.btn_reset.lift()
+        self.btn_conf.pack(side="right", padx=5)
 
         self.status_indicator = ctk.CTkLabel(
             self.header,
             text="● SISTEMA LISTO",
             text_color="#4CAF50",
             font=ctk.CTkFont(size=13, weight="bold"),
+            cursor="arrow"
         )
-        self.status_indicator.pack(side="right", padx=(20, 10))
+        self.status_indicator.pack(side="right", padx=20)
 
         # ---------------- SIDEBAR (CONTROLES) ----------------
         self.sidebar = ctk.CTkFrame(self, width=280, corner_radius=0, fg_color="#0F0F0F")
@@ -250,16 +246,20 @@ class RPiOperatorPanel(ctk.CTk):
         self.lbl_fps = ctk.CTkLabel(self.sidebar, text="-- FPS", font=ctk.CTkFont(size=14, weight="bold"), text_color="#333333")
         self.lbl_fps.pack(pady=5)
 
-        # Consola (Mejorada para lectura)
+        # Consola (Simplificada para evitar problemas de eventos)
         ctk.CTkLabel(
             self.sidebar, text="CONSOLA DE EVENTOS", font=ctk.CTkFont(size=11, weight="bold"), text_color="#333333"
         ).pack(anchor="w", padx=20, pady=(10, 0))
-        self.console = ctk.CTkTextbox(
-            self.sidebar, fg_color="#080808", text_color="#4CAF50", 
-            font=("Consolas", 11), height=180, border_width=1, border_color="#1A1A1A"
+        self.console_frame = ctk.CTkFrame(self.sidebar, fg_color="#080808", height=150)
+        self.console_frame.pack(fill="x", padx=15, pady=5)
+        self.console_frame.pack_propagate(False)
+        
+        self.lbl_console = ctk.CTkLabel(
+            self.console_frame, text="> Sistema iniciado...\n> Esperando instrucciones.",
+            font=("Consolas", 10), text_color="#4CAF50", justify="left", anchor="nw",
+            padx=10, pady=10
         )
-        self.console.pack(fill="x", padx=15, pady=5)
-        self.console.insert("0.0", "> Sistema iniciado...\n> Esperando instrucciones.")
+        self.lbl_console.pack(fill="both", expand=True)
 
         # ---------------- MAIN (VISIÓN) ----------------
         self.main_view = ctk.CTkFrame(self, corner_radius=10, fg_color="#000000")
