@@ -5,7 +5,7 @@ import threading
 import tkinter as tk
 from tkinter import messagebox
 import customtkinter as ctk
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageDraw, ImageFont
 import cv2
 from main import ScannerEngine
 import contextlib
@@ -341,20 +341,41 @@ class RPiOperatorPanel(ctk.CTk):
             self.after(800, self.set_portada)
 
     def set_portada(self):
-        portada_path = os.path.join(self.recursos_dir, "portada.png")
-        if os.path.exists(portada_path):
-            try:
-                img = Image.open(portada_path)
-                img = img.resize((740, 480))  # Quitamos LANCZOS para evitar errores de compatibilidad
-                self.portada_img = ImageTk.PhotoImage(img)
-                self.video_label.configure(image=self.portada_img)
-            except Exception as e:
-                print("Error portada:", e)
-                self.portada_img = None
-                self.video_label.configure(image="")
-        else:
-            self.portada_img = None
-            self.video_label.configure(image="")
+        # Crear una imagen negra dinámica de 740x480 (o tamaño del video_label)
+        w, h = 800, 520 # Ajustado al nuevo tamaño de ventana
+        img = Image.new("RGB", (w, h), color="#0F0F0F")
+        draw = ImageDraw.Draw(img)
+        
+        # Dibujar guías verdes (Escaladas de 640x480 a 800x520)
+        y_sup = int(90 * (h / 480))
+        y_inf = int(400 * (h / 480))
+        draw.line([(0, y_sup), (w, y_sup)], fill="#2E7D32", width=2)
+        draw.line([(0, y_inf), (w, y_inf)], fill="#2E7D32", width=1)
+        
+        # Icono Pausa (Dos rectángulos)
+        cx, cy = w // 2, h // 2
+        draw.rectangle([cx - 10, cy - 60, cx - 4, cy - 30], fill="#333333")
+        draw.rectangle([cx + 4, cy - 60, cx + 10, cy - 30], fill="#333333")
+        
+        # Texto Principal
+        txt_main = "SCANNER INACTIVO"
+        txt_sub = "Presiona ENCENDER SCANNER para iniciar"
+        
+        # Intentar cargar fuente, si falla usar default
+        try:
+            font_main = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 24)
+            font_sub = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
+        except:
+            font_main = ImageFont.load_default()
+            font_sub = ImageFont.load_default()
+            
+        # Centrar texto
+        draw.text((cx, cy), txt_main, fill="#555555", anchor="mm", font=font_main)
+        draw.text((cx, cy + 35), txt_sub, fill="#333333", anchor="mm", font=font_sub)
+        
+        self.portada_img = ImageTk.PhotoImage(img)
+        self.video_label.configure(image=self.portada_img)
+        self.video_label.image = self.portada_img
 
     def load_config(self):
         if os.path.exists(self.config_path):
