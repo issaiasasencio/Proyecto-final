@@ -57,16 +57,12 @@ class RPiOperatorPanel(ctk.CTk):
         self.check_sync_loop()
 
     def setup_ui(self):
-        # Contenedor Raíz para organizar todo con PACK
-        self.root_container = ctk.CTkFrame(self, fg_color="transparent")
-        self.root_container.pack(fill="both", expand=True)
-
         # ---------------- HEADER ----------------
-        self.header = ctk.CTkFrame(self.root_container, height=70, corner_radius=0, fg_color="#111111")
+        self.header = ctk.CTkFrame(self, height=70, corner_radius=0, fg_color="#111111")
         self.header.pack(side="top", fill="x")
 
         # Contenedor Título
-        self.title_frame = ctk.CTkFrame(self.header, fg_color="transparent")
+        self.title_frame = ctk.CTkFrame(self.header, fg_color="#111111")
         self.title_frame.pack(side="left", padx=20, pady=10)
 
         self.lbl_brand = ctk.CTkLabel(
@@ -86,8 +82,6 @@ class RPiOperatorPanel(ctk.CTk):
         self.lbl_subtitle.pack(side="left", padx=(10, 0), pady=(5, 0))
 
         # Botones Derecha (Orden: RESET | HISTORIAL | AJUSTES)
-        # Empacamos de derecha a izquierda: AJUSTES -> HISTORIAL -> RESET
-        
         self.btn_conf = ctk.CTkButton(
             self.header, text="⚙ AJUSTES", width=100, height=35, fg_color="#1A1A1A", 
             hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
@@ -117,11 +111,10 @@ class RPiOperatorPanel(ctk.CTk):
         )
         self.status_indicator.pack(side="right", padx=20)
         
-        # Asegurar que el encabezado esté siempre al frente
         self.header.lift()
 
         # ---------------- BODY (Sidebar + Main) ----------------
-        self.body_container = ctk.CTkFrame(self.root_container, fg_color="transparent")
+        self.body_container = ctk.CTkFrame(self, fg_color="#0A0A0A")
         self.body_container.pack(side="top", fill="both", expand=True)
 
         # SIDEBAR
@@ -130,7 +123,7 @@ class RPiOperatorPanel(ctk.CTk):
         self.sidebar.pack_propagate(False)
 
         # MAIN AREA (Vision + Footer)
-        self.main_area = ctk.CTkFrame(self.body_container, fg_color="transparent")
+        self.main_area = ctk.CTkFrame(self.body_container, fg_color="#0A0A0A")
         self.main_area.pack(side="right", fill="both", expand=True)
 
         # Sección OPERACIÓN
@@ -289,7 +282,7 @@ class RPiOperatorPanel(ctk.CTk):
         self.set_portada()
 
         # ---------------- FOOTER (SERVO HUB) ----------------
-        self.footer = ctk.CTkFrame(self.main_area, height=150, fg_color="transparent")
+        self.footer = ctk.CTkFrame(self.main_area, height=150, fg_color="#0A0A0A")
         self.footer.pack(fill="x", side="bottom", padx=10, pady=10)
 
         self.assignment_labels = []
