@@ -83,10 +83,11 @@ class ScannerEngine:
             return False
 
         try:
-            self.arduino = serial.Serial(self.arduino_port, self.baudrate, timeout=1)
-            time.sleep(2)
+            if self.arduino is None or not self.arduino.is_open:
+                self.arduino = serial.Serial(self.arduino_port, self.baudrate, timeout=1)
+                time.sleep(2)
+                self.arduino_ready = True
             self.status_msg = "Arduino conectado."
-            self.arduino_ready = True
         except Exception as e:  # noqa: BLE001
             print(f"\n[!] ERROR DE CONEXIÓN CON ARDUINO: {e}\n")
             self.status_msg = "Arduino No detectado (Simulando)."
@@ -113,9 +114,6 @@ class ScannerEngine:
             self.video_getter.stop()
         if hasattr(self, "thread"):
             self.thread.join(timeout=2)
-        if self.arduino:
-            self.arduino.close()
-            self.arduino_ready = False
 
     def send_manual_cmd(self, servo_id):
         """Envía un pulso manual a un servo específico para prueba."""
