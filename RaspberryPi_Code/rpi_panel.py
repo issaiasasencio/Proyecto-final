@@ -171,7 +171,7 @@ class RPiOperatorPanel(ctk.CTk):
 
         # Cargar velocidad guardada
         saved_speed = self.config_data.get("belt_speed_steps", 1200)
-        self.cinta_slider = ctk.CTkSlider(self.cinta_frame, from_=200, to=3000, height=15, button_length=15, command=self.update_cinta_vel)
+        self.cinta_slider = ctk.CTkSlider(self.cinta_frame, from_=200, to=1600, height=15, button_length=15, command=self.update_cinta_vel)
         self.cinta_slider.set(saved_speed)
         self.cinta_slider.pack(padx=10, pady=(5, 5), fill="x")
         self.lbl_vel_val.configure(text=f"{saved_speed} p/s")
@@ -179,7 +179,7 @@ class RPiOperatorPanel(ctk.CTk):
         limits_row = ctk.CTkFrame(self.cinta_frame, fg_color="transparent")
         limits_row.pack(fill="x", padx=10, pady=(0, 5))
         ctk.CTkLabel(limits_row, text="200", font=ctk.CTkFont(size=9), text_color="#333333").pack(side="left")
-        ctk.CTkLabel(limits_row, text="3000 p/s", font=ctk.CTkFont(size=9), text_color="#333333").pack(side="right")
+        ctk.CTkLabel(limits_row, text="1600 p/s", font=ctk.CTkFont(size=9), text_color="#333333").pack(side="right")
 
         self.lbl_cinta_activa = ctk.CTkLabel(
             self.cinta_frame, text="○ APAGADA", font=ctk.CTkFont(size=10, weight="bold"), text_color="#555555"
