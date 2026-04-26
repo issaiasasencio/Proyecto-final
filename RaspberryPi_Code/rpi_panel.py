@@ -48,9 +48,11 @@ class RPiOperatorPanel(ctk.CTk):
         self.assignment_labels = []
 
         # Layout principal
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=3)
+        self.grid_rowconfigure(0, weight=0) # Header
+        self.grid_rowconfigure(1, weight=1) # Visión/Sidebar
+        self.grid_rowconfigure(2, weight=0) # Footer
+        self.grid_columnconfigure(0, weight=0) # Sidebar (ancho fijo)
+        self.grid_columnconfigure(1, weight=1) # Contenido principal
 
         self.setup_ui()
 
@@ -87,26 +89,30 @@ class RPiOperatorPanel(ctk.CTk):
 
         # Botones Derecha
         self.btn_power_off = ctk.CTkButton(
-            self.header, text="⏻", width=45, height=45, fg_color="#1A1A1A", 
-            hover_color="#333333", font=ctk.CTkFont(size=20), command=self.confirm_shutdown
+            self.header, text="APAGAR", width=70, height=35, fg_color="#1A1A1A", 
+            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), 
+            command=lambda: [print("Click Apagar"), self.confirm_shutdown()]
         )
         self.btn_power_off.pack(side="right", padx=10)
 
         self.btn_conf = ctk.CTkButton(
-            self.header, text="⚙", width=45, height=45, fg_color="#1A1A1A", 
-            hover_color="#333333", font=ctk.CTkFont(size=20), command=self.open_settings
+            self.header, text="AJUSTES", width=70, height=35, fg_color="#1A1A1A", 
+            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), 
+            command=lambda: [print("Click Ajustes"), self.open_settings()]
         )
         self.btn_conf.pack(side="right", padx=5)
 
         self.btn_hist = ctk.CTkButton(
-            self.header, text="🕒", width=45, height=45, fg_color="#1A1A1A", 
-            hover_color="#333333", font=ctk.CTkFont(size=20), command=self.open_history
+            self.header, text="HISTORIAL", width=70, height=35, fg_color="#1A1A1A", 
+            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), 
+            command=lambda: [print("Click Historial"), self.open_history()]
         )
         self.btn_hist.pack(side="right", padx=5)
 
         self.btn_reset = ctk.CTkButton(
-            self.header, text="RESET", width=80, height=35, fg_color="#b71c1c", 
-            hover_color="#d32f2f", font=ctk.CTkFont(size=12, weight="bold"), command=self.confirm_reset
+            self.header, text="RESET", width=70, height=35, fg_color="#b71c1c", 
+            hover_color="#d32f2f", font=ctk.CTkFont(size=11, weight="bold"), 
+            command=lambda: [print("Click Reset"), self.confirm_reset()]
         )
         self.btn_reset.pack(side="right", padx=15)
 
@@ -116,7 +122,7 @@ class RPiOperatorPanel(ctk.CTk):
             text_color="#4CAF50",
             font=ctk.CTkFont(size=13, weight="bold"),
         )
-        self.status_indicator.pack(side="right", padx=10)
+        self.status_indicator.pack(side="right", padx=(20, 10))
 
         # ---------------- SIDEBAR (CONTROLES) ----------------
         self.sidebar = ctk.CTkFrame(self, width=280, corner_radius=0, fg_color="#0F0F0F")
@@ -136,7 +142,7 @@ class RPiOperatorPanel(ctk.CTk):
             font=ctk.CTkFont(size=14, weight="bold"),
             height=45,
             corner_radius=8,
-            command=self.toggle_scanner,
+            command=lambda: [print("Click Power Scanner"), self.toggle_scanner()],
         )
         self.btn_power.pack(pady=10, padx=20, fill="x")
 
