@@ -47,12 +47,6 @@ class RPiOperatorPanel(ctk.CTk):
         self.servo_labels = []
         self.assignment_labels = []
 
-        # Layout principal
-        self.grid_rowconfigure(0, weight=0) # Header
-        self.grid_rowconfigure(1, weight=1) # Visión/Sidebar
-        self.grid_rowconfigure(2, weight=0) # Footer
-        self.grid_columnconfigure(0, weight=0) # Sidebar (ancho fijo)
-        self.grid_columnconfigure(1, weight=1) # Contenido principal
 
         self.setup_ui()
 
@@ -63,9 +57,13 @@ class RPiOperatorPanel(ctk.CTk):
         self.check_sync_loop()
 
     def setup_ui(self):
+        # Contenedor Raíz para organizar todo con PACK
+        self.root_container = ctk.CTkFrame(self, fg_color="transparent")
+        self.root_container.pack(fill="both", expand=True)
+
         # ---------------- HEADER ----------------
-        self.header = ctk.CTkFrame(self, height=70, corner_radius=0, fg_color="#111111")
-        self.header.grid(row=0, column=0, columnspan=2, sticky="ew")
+        self.header = ctk.CTkFrame(self.root_container, height=70, corner_radius=0, fg_color="#111111")
+        self.header.pack(side="top", fill="x")
 
         # Contenedor Título
         self.title_frame = ctk.CTkFrame(self.header, fg_color="transparent")
@@ -87,7 +85,7 @@ class RPiOperatorPanel(ctk.CTk):
         )
         self.lbl_subtitle.pack(side="left", padx=(10, 0), pady=(5, 0))
 
-        # Botones Derecha (Grid para control total)
+        # Botones Derecha
         self.btn_reset = ctk.CTkButton(
             self.header, text="RESET", width=80, height=35, fg_color="#b71c1c", 
             hover_color="#d32f2f", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
@@ -114,14 +112,21 @@ class RPiOperatorPanel(ctk.CTk):
             text="● SISTEMA LISTO",
             text_color="#4CAF50",
             font=ctk.CTkFont(size=13, weight="bold"),
-            cursor="arrow"
         )
         self.status_indicator.pack(side="right", padx=20)
 
-        # ---------------- SIDEBAR (CONTROLES) ----------------
-        self.sidebar = ctk.CTkFrame(self, width=280, corner_radius=0, fg_color="#0F0F0F")
-        self.sidebar.grid(row=1, column=0, rowspan=2, sticky="nsew", padx=0, pady=0)
-        self.sidebar.grid_propagate(False)
+        # ---------------- BODY (Sidebar + Main) ----------------
+        self.body_container = ctk.CTkFrame(self.root_container, fg_color="transparent")
+        self.body_container.pack(side="top", fill="both", expand=True)
+
+        # SIDEBAR
+        self.sidebar = ctk.CTkFrame(self.body_container, width=280, corner_radius=0, fg_color="#0F0F0F")
+        self.sidebar.pack(side="left", fill="y")
+        self.sidebar.pack_propagate(False)
+
+        # MAIN AREA (Vision + Footer)
+        self.main_area = ctk.CTkFrame(self.body_container, fg_color="transparent")
+        self.main_area.pack(side="right", fill="both", expand=True)
 
         # Sección OPERACIÓN
         ctk.CTkLabel(
@@ -140,7 +145,6 @@ class RPiOperatorPanel(ctk.CTk):
             command=lambda: [print("Click Power Scanner"), self.toggle_scanner()],
         )
         self.btn_power.pack(pady=10, padx=20, fill="x")
-        self.btn_power.lift()
 
         # Sección CINTA
         self.cinta_frame = ctk.CTkFrame(self.sidebar, fg_color="#161616", corner_radius=10)
@@ -157,7 +161,6 @@ class RPiOperatorPanel(ctk.CTk):
             command=self.toggle_cinta
         )
         self.btn_cinta_toggle.pack(side="right")
-        self.btn_cinta_toggle.lift()
 
         self.cinta_on = True
 
@@ -262,8 +265,8 @@ class RPiOperatorPanel(ctk.CTk):
         self.lbl_console.pack(fill="both", expand=True)
 
         # ---------------- MAIN (VISIÓN) ----------------
-        self.main_view = ctk.CTkFrame(self, corner_radius=10, fg_color="#000000")
-        self.main_view.grid(row=1, column=1, sticky="nsew", padx=10, pady=10)
+        self.main_view = ctk.CTkFrame(self.main_area, corner_radius=10, fg_color="#000000")
+        self.main_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         self.video_label = tk.Label(self.main_view, bg="black")
         self.video_label.pack(expand=True, fill="both")
@@ -273,8 +276,8 @@ class RPiOperatorPanel(ctk.CTk):
         self.set_portada()
 
         # ---------------- FOOTER (SERVO HUB) ----------------
-        self.footer = ctk.CTkFrame(self, height=150, fg_color="transparent")
-        self.footer.grid(row=2, column=1, sticky="ew", padx=10, pady=10)
+        self.footer = ctk.CTkFrame(self.main_area, height=150, fg_color="transparent")
+        self.footer.pack(fill="x", side="bottom", padx=10, pady=10)
 
         self.assignment_labels = []
         self.servo_labels = []
