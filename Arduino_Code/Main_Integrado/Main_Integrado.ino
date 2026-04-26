@@ -25,20 +25,28 @@ void setup() {
   clasificador.iniciar(PIN_SERVO_1, PIN_SERVO_2, PIN_SERVO_3, PIN_SERVO_4);
 }
 
+String inputBuffer = "";
+
 void loop() {
-  if (Serial.available() > 0) {
-    String cmd = Serial.readStringUntil('\n');
-    cmd.trim();
-    if (cmd.length() > 0) {
-      if (cmd.startsWith("C:")) { // Comando Cinta C:1200
-        float vel = cmd.substring(2).toFloat();
-        cinta.setVelocidad(vel);
-      } else {
-        clasificador.procesarComando(cmd);
+  // Lectura Serial No Bloqueante
+  while (Serial.available() > 0) {
+    char c = Serial.read();
+    if (c == '\n') {
+      inputBuffer.trim();
+      if (inputBuffer.length() > 0) {
+        if (inputBuffer.startsWith("C:")) { 
+          float vel = inputBuffer.substring(2).toFloat();
+          cinta.setVelocidad(vel);
+        } else {
+          clasificador.procesarComando(inputBuffer);
+        }
       }
+      inputBuffer = "";
+    } else {
+      inputBuffer += c;
     }
   }
 
   cinta.actualizar();  
-  clasificador.actualizar_sin_serial(); // Necesitaremos renombrar o modificar este método
+  clasificador.actualizar_sin_serial();
 }
