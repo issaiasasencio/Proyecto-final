@@ -859,10 +859,11 @@ class MLOpsPanel(ctk.CTk):
                     ssh.exec_command("pkill -f main.py")
                 elif accion == "iniciar":
                     self.after(0, lambda: self.log("[REMOTO] Reanudando servicios de escaneo en Raspberry Pi..."))
-                    ssh.exec_command("nohup /home/pi/Desktop/Flex-Sort/venv/bin/python3 /home/pi/Desktop/Flex-Sort/rpi_panel.py > /dev/null 2>&1 &")
+                    # Corregido a .venv según se ve en tu terminal
+                    ssh.exec_command("nohup /home/pi/Desktop/Flex-Sort/.venv/bin/python /home/pi/Desktop/Flex-Sort/rpi_panel.py > /dev/null 2>&1 &")
                 ssh.close()
             except Exception as e:
-                self.after(0, lambda: self.log(f"[REMOTO] Aviso: No se pudo {accion} el escaneo remoto (¿Pi desconectada?)"))
+                self.after(0, lambda: self.log(f"[REMOTO] Aviso: No se pudo {accion} el escaneo. Error: {str(e)}"))
         threading.Thread(target=task, daemon=True).start()
 
     def open_settings(self):

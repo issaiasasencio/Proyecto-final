@@ -18,10 +18,11 @@ ctk.set_default_color_theme("blue")
 class RPiOperatorPanel(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("FLEX-SORT | Panel de Operacion (Raspberry Pi 5)")
+        self.title("FLEX-SORT | Industrial Dashboard")
 
-        # Dimensiones para Raspberry Pi (VNC u Monitor HDMI)
+        # Dimensiones para Raspberry Pi (Optimizado para 1024x600 o 1024x720)
         self.geometry("1024x720")
+        self.configure(fg_color="#0A0A0A")
 
         # Rutas de Archivos en la Pi
         self.base_path = "/home/pi/Desktop/Flex-Sort/"
@@ -61,138 +62,183 @@ class RPiOperatorPanel(ctk.CTk):
 
     def setup_ui(self):
         # ---------------- HEADER ----------------
-        self.header = ctk.CTkFrame(self, height=80, corner_radius=0, fg_color="#1A1A1A")
+        self.header = ctk.CTkFrame(self, height=70, corner_radius=0, fg_color="#111111")
         self.header.grid(row=0, column=0, columnspan=2, sticky="ew")
 
-        # Logo (si existe)
-        logo_path = os.path.join(self.recursos_dir, "logo_texto.png")
-        if os.path.exists(logo_path):
-            img = Image.open(logo_path)
-            logo_img = ctk.CTkImage(img, size=(200, 45))
-            self.logo = ctk.CTkLabel(self.header, image=logo_img, text="")
-            self.logo.pack(side="left", padx=20, pady=10)
-        else:
-            self.logo = ctk.CTkLabel(
-                self.header, text="FLEX-SORT", font=ctk.CTkFont(size=24, weight="bold")
-            )
-            self.logo.pack(side="left", padx=20)
+        # Contenedor Título
+        self.title_frame = ctk.CTkFrame(self.header, fg_color="transparent")
+        self.title_frame.pack(side="left", padx=20, pady=10)
 
-        self.status_indicator = ctk.CTkLabel(
-            self.header,
-            text="SISTEMA LISTO",
-            text_color="#4CAF50",
-            font=ctk.CTkFont(weight="bold"),
+        self.lbl_brand = ctk.CTkLabel(
+            self.title_frame, 
+            text="FLEX-SORT", 
+            font=ctk.CTkFont(family="Orbitron", size=24, weight="bold"),
+            text_color="#1E88E5"
         )
-        self.status_indicator.pack(side="right", padx=20)
+        self.lbl_brand.pack(side="left")
 
-        # Botón Configuración (Engranaje)
-        conf_path = os.path.join(self.recursos_dir, "config_icon.png")
-        if os.path.exists(conf_path):
-            img_c = ctk.CTkImage(Image.open(conf_path), size=(26, 26))
-            self.btn_conf = ctk.CTkButton(
-                self.header,
-                text="",
-                image=img_c,
-                width=40,
-                fg_color="transparent",
-                hover_color="#333333",
-                command=self.open_settings,
-            )
-            self.btn_conf.pack(side="right", padx=5)
+        self.lbl_subtitle = ctk.CTkLabel(
+            self.title_frame,
+            text=" Panel de Operación · Raspberry Pi 5",
+            font=ctk.CTkFont(size=12),
+            text_color="#555555"
+        )
+        self.lbl_subtitle.pack(side="left", padx=(10, 0), pady=(5, 0))
 
-        # Botón Historial (Reloj)
-        hist_path = os.path.join(self.recursos_dir, "history_icon.png")
-        if os.path.exists(hist_path):
-            img_h = ctk.CTkImage(Image.open(hist_path), size=(26, 26))
-            self.btn_hist = ctk.CTkButton(
-                self.header,
-                text="",
-                image=img_h,
-                width=40,
-                fg_color="transparent",
-                hover_color="#333333",
-                command=self.open_history,
-            )
-            self.btn_hist.pack(side="right", padx=5)
+        # Botones Derecha
+        self.btn_power_off = ctk.CTkButton(
+            self.header, text="⏻", width=40, height=40, fg_color="#1A1A1A", 
+            hover_color="#333333", font=ctk.CTkFont(size=18), command=self.confirm_shutdown
+        )
+        self.btn_power_off.pack(side="right", padx=10)
 
-        # Botón Factory Reset
+        self.btn_conf = ctk.CTkButton(
+            self.header, text="⚙", width=40, height=40, fg_color="#1A1A1A", 
+            hover_color="#333333", font=ctk.CTkFont(size=18), command=self.open_settings
+        )
+        self.btn_conf.pack(side="right", padx=5)
+
         self.btn_reset = ctk.CTkButton(
-            self.header,
-            text="RESET",
-            width=60,
-            fg_color="#b71c1c",
-            hover_color="#d32f2f",
-            command=self.confirm_reset,
+            self.header, text="RESET", width=70, height=32, fg_color="#b71c1c", 
+            hover_color="#d32f2f", font=ctk.CTkFont(size=11, weight="bold"), command=self.confirm_reset
         )
         self.btn_reset.pack(side="right", padx=15)
 
-        # ---------------- SIDEBAR (CONTROLES) ----------------
-        self.sidebar = ctk.CTkFrame(self, width=250, corner_radius=0)
-        self.sidebar.grid(row=1, column=0, sticky="nsew", padx=2, pady=2)
+        self.status_indicator = ctk.CTkLabel(
+            self.header,
+            text="● SISTEMA LISTO",
+            text_color="#4CAF50",
+            font=ctk.CTkFont(size=13, weight="bold"),
+        )
+        self.status_indicator.pack(side="right", padx=10)
 
+        # ---------------- SIDEBAR (CONTROLES) ----------------
+        self.sidebar = ctk.CTkFrame(self, width=260, corner_radius=0, fg_color="#0F0F0F")
+        self.sidebar.grid(row=1, column=0, rowspan=2, sticky="nsew", padx=0, pady=0)
+        self.sidebar.grid_propagate(False)
+
+        # Sección OPERACIÓN
         ctk.CTkLabel(
-            self.sidebar,
-            text="OPERACIÓN",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            text_color="#1E88E5",
-        ).pack(pady=(20, 10))
+            self.sidebar, text="OPERACIÓN", font=ctk.CTkFont(size=11, weight="bold"), text_color="#333333"
+        ).pack(anchor="w", padx=20, pady=(20, 5))
 
         self.btn_power = ctk.CTkButton(
             self.sidebar,
-            text="ENCENDER SCANNER",
+            text="▶ ENCENDER SCANNER",
             fg_color="#2E7D32",
             hover_color="#1B5E20",
-            font=ctk.CTkFont(weight="bold"),
-            height=50,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=45,
+            corner_radius=8,
             command=self.toggle_scanner,
         )
         self.btn_power.pack(pady=10, padx=20, fill="x")
 
-        # Sync Monitor
-        self.sync_frame = ctk.CTkFrame(self.sidebar, fg_color="#222222")
-        self.sync_frame.pack(pady=20, padx=20, fill="x")
+        # Sección CINTA
+        self.cinta_frame = ctk.CTkFrame(self.sidebar, fg_color="#161616", corner_radius=10)
+        self.cinta_frame.pack(pady=10, padx=20, fill="x")
+        
+        cinta_header = ctk.CTkFrame(self.cinta_frame, fg_color="transparent")
+        cinta_header.pack(fill="x", padx=10, pady=(10, 0))
+        
+        ctk.CTkLabel(cinta_header, text="CINTA", font=ctk.CTkFont(size=11, weight="bold"), text_color="#555555").pack(side="left")
+        self.lbl_cinta_status_badge = ctk.CTkLabel(
+            cinta_header, text="ON", fg_color="#2E7D32", text_color="white", 
+            font=ctk.CTkFont(size=9, weight="bold"), corner_radius=4, width=30
+        )
+        self.lbl_cinta_status_badge.pack(side="right")
+
+        val_row = ctk.CTkFrame(self.cinta_frame, fg_color="transparent")
+        val_row.pack(fill="x", padx=10, pady=(5, 0))
+        ctk.CTkLabel(val_row, text="Velocidad", font=ctk.CTkFont(size=11), text_color="#555555").pack(side="left")
+        self.lbl_vel_val = ctk.CTkLabel(val_row, text="1200 p/s", font=ctk.CTkFont(size=11, weight="bold"), text_color="white")
+        self.lbl_vel_val.pack(side="right")
+
+        self.cinta_slider = ctk.CTkSlider(self.cinta_frame, from_=200, to=3000, height=15, button_length=15, command=self.update_cinta_vel)
+        self.cinta_slider.set(1200)
+        self.cinta_slider.pack(padx=10, pady=(5, 5), fill="x")
+
+        limits_row = ctk.CTkFrame(self.cinta_frame, fg_color="transparent")
+        limits_row.pack(fill="x", padx=10, pady=(0, 5))
+        ctk.CTkLabel(limits_row, text="200", font=ctk.CTkFont(size=9), text_color="#333333").pack(side="left")
+        ctk.CTkLabel(limits_row, text="3000 p/s", font=ctk.CTkFont(size=9), text_color="#333333").pack(side="right")
+
+        self.lbl_cinta_activa = ctk.CTkLabel(
+            self.cinta_frame, text="● ACTIVA", font=ctk.CTkFont(size=10, weight="bold"), text_color="#4CAF50"
+        )
+        self.lbl_cinta_activa.pack(anchor="w", padx=10, pady=(0, 10))
+
+        # Sección ÚLTIMO SYNC
+        self.sync_frame = ctk.CTkFrame(self.sidebar, fg_color="#161616", corner_radius=10)
+        self.sync_frame.pack(pady=10, padx=20, fill="x")
         ctk.CTkLabel(
-            self.sync_frame,
-            text="ÚLTIMO RELEVAMIENTO (SSH)",
-            font=ctk.CTkFont(size=11, weight="bold"),
-        ).pack(pady=5)
+            self.sync_frame, text="ÚLTIMO SYNC SSH", font=ctk.CTkFont(size=11, weight="bold"), text_color="#555555"
+        ).pack(anchor="w", padx=10, pady=(10, 5))
         self.lbl_sync_info = ctk.CTkLabel(
             self.sync_frame,
-            text="Sincronizando...",
+            text="Fecha: --/--/---- --:--\nModelo: --",
             font=ctk.CTkFont(size=10),
-            text_color="#AAAAAA",
+            text_color="#888888",
+            justify="left"
         )
-        self.lbl_sync_info.pack(pady=5)
+        self.lbl_sync_info.pack(anchor="w", padx=10, pady=(0, 10))
 
-        # Monitor Hardware
-        self.hw_frame = ctk.CTkFrame(self.sidebar, fg_color="transparent")
-        self.hw_frame.pack(pady=(20, 5), padx=20, fill="x")
+        # Sección HARDWARE
         ctk.CTkLabel(
-            self.hw_frame,
-            text="ESTADO HARDWARE",
-            font=ctk.CTkFont(size=11, weight="bold"),
-            text_color="#1E88E5",
-        ).pack(anchor="center")
+            self.sidebar, text="HARDWARE", font=ctk.CTkFont(size=11, weight="bold"), text_color="#333333"
+        ).pack(anchor="w", padx=20, pady=(15, 5))
 
         self.lbl_arduino_status = ctk.CTkLabel(
-            self.hw_frame,
-            text="Arduino: DESCONECTADO",
-            font=ctk.CTkFont(size=11),
+            self.sidebar,
+            text="● microcontrolador: DESCONECTADO",
+            font=ctk.CTkFont(size=11, weight="bold"),
             text_color="#F44336",
         )
-        self.lbl_arduino_status.pack(anchor="center")
+        self.lbl_arduino_status.pack(anchor="w", padx=20)
 
-        self.lbl_temp = ctk.CTkLabel(self.sidebar, text="Temp: --°C")
-        self.lbl_temp.pack(anchor="center")
+        # Telemetría con Barras
+        self.telemetry_frame = ctk.CTkFrame(self.sidebar, fg_color="transparent")
+        self.telemetry_frame.pack(fill="x", padx=20, pady=10)
 
-        self.lbl_cpu = ctk.CTkLabel(self.sidebar, text="CPU: --%", text_color="#AAAAAA")
-        self.lbl_cpu.pack(anchor="center")
+        # TEMP
+        temp_row = ctk.CTkFrame(self.telemetry_frame, fg_color="transparent")
+        temp_row.pack(fill="x", pady=2)
+        ctk.CTkLabel(temp_row, text="TEMP", font=ctk.CTkFont(size=10), text_color="#555555").pack(side="left")
+        self.lbl_temp_val = ctk.CTkLabel(temp_row, text="--°C", font=ctk.CTkFont(size=10), text_color="white")
+        self.lbl_temp_val.pack(side="right")
+        self.bar_temp = ctk.CTkProgressBar(self.telemetry_frame, height=6, progress_color="#1E88E5", fg_color="#1A1A1A")
+        self.bar_temp.set(0)
+        self.bar_temp.pack(fill="x", pady=(0, 5))
 
-        self.lbl_ram = ctk.CTkLabel(self.sidebar, text="RAM: --%", text_color="#AAAAAA")
-        self.lbl_ram.pack(anchor="center")
+        # CPU
+        cpu_row = ctk.CTkFrame(self.telemetry_frame, fg_color="transparent")
+        cpu_row.pack(fill="x", pady=2)
+        ctk.CTkLabel(cpu_row, text="CPU", font=ctk.CTkFont(size=10), text_color="#555555").pack(side="left")
+        self.lbl_cpu_val = ctk.CTkLabel(cpu_row, text="--%", font=ctk.CTkFont(size=10), text_color="white")
+        self.lbl_cpu_val.pack(side="right")
+        self.bar_cpu = ctk.CTkProgressBar(self.telemetry_frame, height=6, progress_color="#1E88E5", fg_color="#1A1A1A")
+        self.bar_cpu.set(0)
+        self.bar_cpu.pack(fill="x", pady=(0, 5))
 
-        self.lbl_fps = ctk.CTkLabel(self.sidebar, text="FPS: --", font=ctk.CTkFont(weight="bold"), text_color="#1E88E5")
-        self.lbl_fps.pack(anchor="center", pady=(5, 0))
+        # RAM
+        ram_row = ctk.CTkFrame(self.telemetry_frame, fg_color="transparent")
+        ram_row.pack(fill="x", pady=2)
+        ctk.CTkLabel(ram_row, text="RAM", font=ctk.CTkFont(size=10), text_color="#555555").pack(side="left")
+        self.lbl_ram_val = ctk.CTkLabel(ram_row, text="--%", font=ctk.CTkFont(size=10), text_color="white")
+        self.lbl_ram_val.pack(side="right")
+        self.bar_ram = ctk.CTkProgressBar(self.telemetry_frame, height=6, progress_color="#1E88E5", fg_color="#1A1A1A")
+        self.bar_ram.set(0)
+        self.bar_ram.pack(fill="x", pady=(0, 5))
+
+        self.lbl_fps = ctk.CTkLabel(self.sidebar, text="-- FPS", font=ctk.CTkFont(size=14, weight="bold"), text_color="#333333")
+        self.lbl_fps.pack(pady=5)
+
+        # Consola (Placeholder visual)
+        ctk.CTkLabel(
+            self.sidebar, text="CONSOLA", font=ctk.CTkFont(size=11, weight="bold"), text_color="#333333"
+        ).pack(anchor="w", padx=20, pady=(10, 0))
+        self.console_frame = ctk.CTkFrame(self.sidebar, fg_color="#080808", height=100)
+        self.console_frame.pack(fill="x", padx=20, pady=5)
 
         # ---------------- MAIN (VISIÓN) ----------------
         self.main_view = ctk.CTkFrame(self, corner_radius=10, fg_color="#000000")
@@ -206,49 +252,52 @@ class RPiOperatorPanel(ctk.CTk):
         self.set_portada()
 
         # ---------------- FOOTER (SERVO HUB) ----------------
-        self.footer = ctk.CTkFrame(self, height=140, fg_color="transparent")
-        self.footer.grid(row=2, column=0, columnspan=2, sticky="ew", padx=10, pady=5)
+        self.footer = ctk.CTkFrame(self, height=150, fg_color="transparent")
+        self.footer.grid(row=2, column=1, sticky="ew", padx=10, pady=10)
 
+        self.assignment_labels = []
         self.servo_labels = []
         for i in range(1, 5):
             f = ctk.CTkFrame(
-                self.footer, height=130, border_width=2, border_color="#333333"
+                self.footer, width=180, height=140, corner_radius=10, fg_color="#161616"
             )
-            f.pack(side="left", padx=10, expand=True, fill="x")
+            f.pack(side="left", padx=5, expand=True, fill="both")
             f.pack_propagate(False)
+            
             ctk.CTkLabel(
-                f, text=f"SERVO {i}", font=ctk.CTkFont(size=12, weight="bold")
-            ).pack(pady=(8, 2))
+                f, text=f"SERVO {i}", font=ctk.CTkFont(size=10, weight="bold"), text_color="#555555"
+            ).pack(pady=(10, 2))
 
             lbl_asig = ctk.CTkLabel(
                 f,
-                text="(Sin asignar)",
-                font=ctk.CTkFont(size=11, slant="italic"),
-                text_color="#AAAAAA",
+                text="LIBRE",
+                font=ctk.CTkFont(size=14, weight="bold"),
+                text_color="#1E88E5",
             )
             lbl_asig.pack()
             self.assignment_labels.append(lbl_asig)
 
-            # Botón de Prueba Manual (Centrado y más ancho)
+            # Botón de Prueba Manual
             btn_test = ctk.CTkButton(
                 f,
                 text="TEST",
-                width=100,
-                height=24,
+                width=80,
+                height=28,
                 font=ctk.CTkFont(size=11, weight="bold"),
-                fg_color="#333333",
-                hover_color="#444444",
+                fg_color="#222222",
+                hover_color="#333333",
+                corner_radius=6,
                 command=lambda x=i: self.test_servo(x),
             )
-            btn_test.pack(pady=(5, 0), anchor="center")
+            btn_test.pack(pady=10)
 
             lbl_status = ctk.CTkLabel(
                 f,
                 text="LIBRE",
-                text_color="#666666",
-                font=ctk.CTkFont(size=16, weight="bold"),
+                text_color="#333333",
+                font=ctk.CTkFont(size=12, weight="bold"),
             )
-            lbl_status.pack(pady=(5, 8), anchor="center")
+            lbl_status.pack(pady=(0, 5))
             self.servo_labels.append(lbl_status)
 
     def toggle_scanner(self):
@@ -261,18 +310,20 @@ class RPiOperatorPanel(ctk.CTk):
             if self.engine.load_resources():
                 self.update_servo_assignments()
                 self.btn_power.configure(
-                    text="DETENER SCANNER", fg_color="#D32F2F", hover_color="#C62828"
+                    text="■ DETENER SCANNER", fg_color="#D32F2F", hover_color="#C62828"
                 )
                 self.engine.start(self.update_video_frame)
-                self.status_indicator.configure(text="ESCANEANDO", text_color="#1E88E5")
+                self.status_indicator.configure(text="● ESCANEANDO", text_color="#1E88E5")
+                self.lbl_cinta_status_badge.configure(fg_color="#2E7D32", text="ON")
             else:
                 messagebox.showerror("Error", self.engine.status_msg)
         else:
             self.engine.stop()
             self.btn_power.configure(
-                text="ENCENDER SCANNER", fg_color="#2E7D32", hover_color="#1B5E20"
+                text="▶ ENCENDER SCANNER", fg_color="#2E7D32", hover_color="#1B5E20"
             )
-            self.status_indicator.configure(text="SISTEMA LISTO", text_color="#4CAF50")
+            self.status_indicator.configure(text="● SISTEMA LISTO", text_color="#4CAF50")
+            self.lbl_cinta_status_badge.configure(fg_color="#333333", text="OFF")
             
             # Ejecucion redundante y retrasada para sobrevivir a hilos remanentes del modelo AI
             self.set_portada()
@@ -444,10 +495,12 @@ class RPiOperatorPanel(ctk.CTk):
         try:
             with open("/sys/class/thermal/thermal_zone0/temp") as f:
                 t = int(f.read()) / 1000
-                self.lbl_temp.configure(
-                    text=f"Temp: {t:.1f}°C",
-                    text_color="#F44336" if t > 70 else "#AAAAAA",
-                )
+                self.lbl_temp_val.configure(text=f"{t:.1f}°C")
+                self.bar_temp.set(min(1.0, t / 100.0))
+                if t > 75:
+                    self.bar_temp.configure(progress_color="#F44336")
+                else:
+                    self.bar_temp.configure(progress_color="#1E88E5")
         except Exception:  # noqa: BLE001
             pass
 
@@ -457,7 +510,8 @@ class RPiOperatorPanel(ctk.CTk):
             load1, _, _ = os.getloadavg()
             cpu_cores = os.cpu_count() or 4
             cpu_pct = min(100.0, (load1 / cpu_cores) * 100)
-            self.lbl_cpu.configure(text=f"CPU: {cpu_pct:.1f}%")
+            self.lbl_cpu_val.configure(text=f"{cpu_pct:.1f}%")
+            self.bar_cpu.set(cpu_pct / 100.0)
 
             # RAM
             with open("/proc/meminfo") as f:
@@ -468,7 +522,8 @@ class RPiOperatorPanel(ctk.CTk):
             cached = int(lines[4].split()[1])
             used = total - free - buffers - cached
             ram_pct = (used / total) * 100
-            self.lbl_ram.configure(text=f"RAM: {ram_pct:.1f}%")
+            self.lbl_ram_val.configure(text=f"{ram_pct:.1f}%")
+            self.bar_ram.set(ram_pct / 100.0)
         except Exception:  # noqa: BLE001
             pass
 
@@ -481,11 +536,11 @@ class RPiOperatorPanel(ctk.CTk):
         # Arduino Status
         if self.engine.is_arduino_connected():
             self.lbl_arduino_status.configure(
-                text="Arduino: CONECTADO", text_color="#4CAF50"
+                text="● microcontrolador: CONECTADO", text_color="#4CAF50"
             )
         else:
             self.lbl_arduino_status.configure(
-                text="Arduino: DESCONECTADO", text_color="#F44336"
+                text="● microcontrolador: DESCONECTADO", text_color="#F44336"
             )
 
         # Servo Status based on queue
@@ -799,6 +854,21 @@ class HistoryDialog(ctk.CTkToplevel):
         self.destroy()
         messagebox.showinfo("Modelo Cambiado", f"Se ha activado: {model_name}")
 
+    def update_cinta_vel(self, val):
+        self.lbl_vel_val.configure(text=f"{int(val)} p/s")
+
+
+    def confirm_shutdown(self):
+        res = messagebox.askyesno(
+            "Apagar Sistema",
+            "¿Desea cerrar la aplicación y apagar la Raspberry Pi?",
+            parent=self
+        )
+        if res:
+            if self.engine.running:
+                self.engine.stop()
+            self.destroy()
+            os.system("sudo shutdown -h now")
 
 if __name__ == "__main__":
     app = RPiOperatorPanel()
