@@ -137,6 +137,29 @@ class ScannerEngine:
                 return False
         return False
 
+    def set_manual_mode(self, active):
+        """Activa o desactiva el control por potenciómetro físico."""
+        if self.is_arduino_connected():
+            cmd = "M:1\n" if active else "M:0\n"
+            try:
+                self.arduino.write(cmd.encode())
+                return True
+            except Exception: # noqa: BLE001
+                self.arduino_ready = False
+                return False
+        return False
+
+    def reset_emergency(self):
+        """Envía el comando de reset de la parada de emergencia."""
+        if self.is_arduino_connected():
+            try:
+                self.arduino.write(b"E:0\n")
+                return True
+            except Exception: # noqa: BLE001
+                self.arduino_ready = False
+                return False
+        return False
+
     def _loop(self, frame_callback):
         # Esperar a que el primer frame este listo
         time.sleep(1)

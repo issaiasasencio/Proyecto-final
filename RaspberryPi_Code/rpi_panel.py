@@ -162,7 +162,8 @@ class RPiOperatorPanel(ctk.CTk):
         )
         self.btn_cinta_toggle.pack(side="right")
 
-        self.cinta_on = True
+        self.cinta_on = False
+        self.btn_cinta_toggle.configure(text="OFF", fg_color="#333333")
 
         val_row = ctk.CTkFrame(self.cinta_frame, fg_color="transparent")
         val_row.pack(fill="x", padx=10, pady=(5, 0))
@@ -180,9 +181,16 @@ class RPiOperatorPanel(ctk.CTk):
         ctk.CTkLabel(limits_row, text="3000 p/s", font=ctk.CTkFont(size=9), text_color="#333333").pack(side="right")
 
         self.lbl_cinta_activa = ctk.CTkLabel(
-            self.cinta_frame, text="● ACTIVA", font=ctk.CTkFont(size=10, weight="bold"), text_color="#4CAF50"
+            self.cinta_frame, text="○ APAGADA", font=ctk.CTkFont(size=10, weight="bold"), text_color="#555555"
         )
-        self.lbl_cinta_activa.pack(anchor="w", padx=10, pady=(0, 10))
+        self.lbl_cinta_activa.pack(anchor="w", padx=10, pady=(0, 5))
+
+        # Switch para Modo Manual (Potenciómetro)
+        self.sw_manual = ctk.CTkSwitch(
+            self.cinta_frame, text="MODO MANUAL", font=ctk.CTkFont(size=10),
+            command=self.toggle_manual, progress_color="#1E88E5"
+        )
+        self.sw_manual.pack(anchor="w", padx=10, pady=(0, 10))
 
         # Sección ÚLTIMO SYNC
         self.sync_frame = ctk.CTkFrame(self.sidebar, fg_color="#161616", corner_radius=10)
@@ -637,6 +645,19 @@ class RPiOperatorPanel(ctk.CTk):
             self.lbl_cinta_activa.configure(text="○ APAGADA", text_color="#555555")
             self.engine.set_belt_speed(0)
 
+
+    def toggle_manual(self):
+        is_manual = self.sw_manual.get()
+        if is_manual:
+            self.cinta_slider.configure(state="disabled")
+            self.lbl_vel_val.configure(text="CONTROL FÍSICO", text_color="#1E88E5")
+            self.engine.set_manual_mode(True)
+        else:
+            self.cinta_slider.configure(state="normal")
+            self.lbl_vel_val.configure(text=f"{int(self.cinta_slider.get())} p/s", text_color="white")
+            self.engine.set_manual_mode(False)
+            if self.cinta_on:
+                self.engine.set_belt_speed(int(self.cinta_slider.get()))
 
 class SettingsDialog(ctk.CTkToplevel):
     def __init__(self, parent):

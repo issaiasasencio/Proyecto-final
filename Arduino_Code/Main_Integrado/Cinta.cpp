@@ -13,13 +13,15 @@ void Cinta::iniciar() {
 void Cinta::actualizar() {
   float velocidad = 0;
 
-  if (velocidadExterna >= 0) {
-    velocidad = velocidadExterna;
-  } else {
+  if (paradaEmergencia) {
+    velocidad = 0;
+  } else if (modoManual) {
     int potValue = analogRead(pinPotenciometro);
     if (potValue >= 50) {
       velocidad = map(potValue, 50, 1023, 200, 3000);
     }
+  } else if (velocidadExterna >= 0) {
+    velocidad = velocidadExterna;
   }
 
   motor->setSpeed(velocidad);
@@ -28,4 +30,12 @@ void Cinta::actualizar() {
 
 void Cinta::setVelocidad(float v) {
   velocidadExterna = v;
+}
+
+void Cinta::setModoManual(bool m) {
+  modoManual = m;
+}
+
+void Cinta::setParadaEmergencia(bool p) {
+  paradaEmergencia = p;
 }

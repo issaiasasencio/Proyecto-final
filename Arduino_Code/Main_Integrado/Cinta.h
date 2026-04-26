@@ -14,8 +14,13 @@ class Cinta {
     void iniciar();
     void actualizar();
     void setVelocidad(float v);
+    void setModoManual(bool m);
+    void setParadaEmergencia(bool p);
+
   private:
     float velocidadExterna = -1; 
+    bool modoManual = false;
+    bool paradaEmergencia = false;
 };
 
-#endif  // ? esto faltaba
+#endif
