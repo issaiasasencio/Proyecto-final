@@ -149,17 +149,6 @@ class ScannerEngine:
                 return False
         return False
 
-    def reset_emergency(self):
-        """Envía el comando de reset de la parada de emergencia."""
-        if self.is_arduino_connected():
-            try:
-                self.arduino.write(b"E:0\n")
-                return True
-            except Exception: # noqa: BLE001
-                self.arduino_ready = False
-                return False
-        return False
-
     def _loop(self, frame_callback):
         # Esperar a que el primer frame este listo
         time.sleep(1)

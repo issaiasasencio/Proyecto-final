@@ -13,9 +13,7 @@ void Cinta::iniciar() {
 void Cinta::actualizar() {
   float velocidad = 0;
 
-  if (paradaEmergencia) {
-    velocidad = 0;
-  } else if (modoManual) {
+  if (modoManual) {
     int potValue = analogRead(pinPotenciometro);
     if (potValue >= 50) {
       velocidad = map(potValue, 50, 1023, 200, 3000);
@@ -34,8 +32,4 @@ void Cinta::setVelocidad(float v) {
 
 void Cinta::setModoManual(bool m) {
   modoManual = m;
-}
-
-void Cinta::setParadaEmergencia(bool p) {
-  paradaEmergencia = p;
 }
