@@ -88,33 +88,31 @@ class RPiOperatorPanel(ctk.CTk):
         self.lbl_subtitle.pack(side="left", padx=(10, 0), pady=(5, 0))
 
         # Botones Derecha
-        self.btn_power_off = ctk.CTkButton(
-            self.header, text="APAGAR", width=70, height=35, fg_color="#1A1A1A", 
-            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), 
-            command=lambda: [print("Click Apagar"), self.confirm_shutdown()]
-        )
-        self.btn_power_off.pack(side="right", padx=10)
-
         self.btn_conf = ctk.CTkButton(
-            self.header, text="AJUSTES", width=70, height=35, fg_color="#1A1A1A", 
-            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), 
+            self.header, text="AJUSTES", width=80, height=35, fg_color="#1A1A1A", 
+            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
             command=lambda: [print("Click Ajustes"), self.open_settings()]
         )
-        self.btn_conf.pack(side="right", padx=5)
+        self.btn_conf.pack(side="right", padx=10)
 
         self.btn_hist = ctk.CTkButton(
-            self.header, text="HISTORIAL", width=70, height=35, fg_color="#1A1A1A", 
-            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), 
+            self.header, text="HISTORIAL", width=80, height=35, fg_color="#1A1A1A", 
+            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
             command=lambda: [print("Click Historial"), self.open_history()]
         )
         self.btn_hist.pack(side="right", padx=5)
 
         self.btn_reset = ctk.CTkButton(
             self.header, text="RESET", width=70, height=35, fg_color="#b71c1c", 
-            hover_color="#d32f2f", font=ctk.CTkFont(size=11, weight="bold"), 
+            hover_color="#d32f2f", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
             command=lambda: [print("Click Reset"), self.confirm_reset()]
         )
         self.btn_reset.pack(side="right", padx=15)
+        
+        # Elevar botones para asegurar clics
+        self.btn_conf.lift()
+        self.btn_hist.lift()
+        self.btn_reset.lift()
 
         self.status_indicator = ctk.CTkLabel(
             self.header,
@@ -142,9 +140,11 @@ class RPiOperatorPanel(ctk.CTk):
             font=ctk.CTkFont(size=14, weight="bold"),
             height=45,
             corner_radius=8,
+            cursor="hand2",
             command=lambda: [print("Click Power Scanner"), self.toggle_scanner()],
         )
         self.btn_power.pack(pady=10, padx=20, fill="x")
+        self.btn_power.lift()
 
         # Sección CINTA
         self.cinta_frame = ctk.CTkFrame(self.sidebar, fg_color="#161616", corner_radius=10)
@@ -157,9 +157,11 @@ class RPiOperatorPanel(ctk.CTk):
         self.btn_cinta_toggle = ctk.CTkButton(
             cinta_header, text="ON", fg_color="#2E7D32", text_color="white", 
             font=ctk.CTkFont(size=9, weight="bold"), corner_radius=4, width=40, height=20,
+            cursor="hand2",
             command=self.toggle_cinta
         )
         self.btn_cinta_toggle.pack(side="right")
+        self.btn_cinta_toggle.lift()
 
         self.cinta_on = True
 
