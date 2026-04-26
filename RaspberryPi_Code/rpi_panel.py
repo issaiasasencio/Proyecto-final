@@ -85,27 +85,29 @@ class RPiOperatorPanel(ctk.CTk):
         )
         self.lbl_subtitle.pack(side="left", padx=(10, 0), pady=(5, 0))
 
-        # Botones Derecha
-        self.btn_reset = ctk.CTkButton(
-            self.header, text="RESET", width=80, height=35, fg_color="#b71c1c", 
-            hover_color="#d32f2f", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
-            command=lambda: [print("Reset"), self.confirm_reset()]
+        # Botones Derecha (Orden: RESET | HISTORIAL | AJUSTES)
+        # Empacamos de derecha a izquierda: AJUSTES -> HISTORIAL -> RESET
+        
+        self.btn_conf = ctk.CTkButton(
+            self.header, text="⚙ AJUSTES", width=100, height=35, fg_color="#1A1A1A", 
+            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
+            command=lambda: [print("Ajustes"), self.open_settings()]
         )
-        self.btn_reset.pack(side="right", padx=15)
+        self.btn_conf.pack(side="right", padx=(5, 15))
 
         self.btn_hist = ctk.CTkButton(
-            self.header, text="HISTORIAL", width=90, height=35, fg_color="#1A1A1A", 
+            self.header, text="🕒 HISTORIAL", width=110, height=35, fg_color="#1A1A1A", 
             hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
             command=lambda: [print("Historial"), self.open_history()]
         )
         self.btn_hist.pack(side="right", padx=5)
 
-        self.btn_conf = ctk.CTkButton(
-            self.header, text="AJUSTES", width=90, height=35, fg_color="#1A1A1A", 
-            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
-            command=lambda: [print("Ajustes"), self.open_settings()]
+        self.btn_reset = ctk.CTkButton(
+            self.header, text="↺ RESET", width=90, height=35, fg_color="#b71c1c", 
+            hover_color="#d32f2f", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
+            command=lambda: [print("Reset"), self.confirm_reset()]
         )
-        self.btn_conf.pack(side="right", padx=5)
+        self.btn_reset.pack(side="right", padx=5)
 
         self.status_indicator = ctk.CTkLabel(
             self.header,
@@ -114,6 +116,9 @@ class RPiOperatorPanel(ctk.CTk):
             font=ctk.CTkFont(size=13, weight="bold"),
         )
         self.status_indicator.pack(side="right", padx=20)
+        
+        # Asegurar que el encabezado esté siempre al frente
+        self.header.lift()
 
         # ---------------- BODY (Sidebar + Main) ----------------
         self.body_container = ctk.CTkFrame(self.root_container, fg_color="transparent")
