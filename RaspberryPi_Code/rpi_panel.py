@@ -287,11 +287,13 @@ class RPiOperatorPanel(ctk.CTk):
         # Bloquear propagación de clics al contenedor padre
         self.video_canvas.bind("<Button-1>", lambda e: "break")
         self.video_canvas.bind("<Button-3>", lambda e: "break")
+        # Recentrar imagen si el canvas cambia de tamaño
+        self.video_canvas.bind("<Configure>", self._on_canvas_resize)
         self._canvas_img_id = None
 
-        # Portada Inactiva
+        # Portada Inactiva: esperar a que el canvas tenga tamaño real
         self.portada_img = None
-        self.set_portada()
+        self.after(200, self.set_portada)
 
         # ---------------- FOOTER (SERVO HUB) ----------------
         self.footer = ctk.CTkFrame(self.main_area, height=150, fg_color="#0A0A0A")
@@ -341,6 +343,15 @@ class RPiOperatorPanel(ctk.CTk):
             )
             lbl_status.pack(pady=(0, 5))
             self.servo_labels.append(lbl_status)
+
+    def _on_canvas_resize(self, event):
+        """Recentra la imagen en el canvas cuando cambia de tamaño."""
+        if self._canvas_img_id is not None:
+            self.video_canvas.coords(
+                self._canvas_img_id,
+                event.width // 2,
+                event.height // 2
+            )
 
     def toggle_scanner(self):
         if not self.engine.running:
