@@ -638,19 +638,35 @@ class RPiOperatorPanel(ctk.CTk):
                 text="● microcontrolador: DESCONECTADO", text_color="#F44336"
             )
 
-        # Servo Status based on queue
+        # Servo Status based on queue OR recent detections
         if self.engine.running:
             occupied = [False] * 4
+            
+            # Revisar eventos inminentes en la cola
             for e in list(self.engine.cola_eventos):
                 idx = int(e["letra"]) - 1
                 if 0 <= idx < 4:
                     occupied[idx] = True
-                    self.servo_labels[idx].configure(
-                        text="OCUPADO", text_color="#F57C00"
-                    )
+
+            # Revisar detecciones recientes (Mantiene el cartel ocupado mientras viaja físicamente)
+            now = time.time()
+            if hasattr(self.engine.model, "names"):
+                names = self.engine.model.names
+                for obj_id_str, s_id_str in self.engine.mapa_categorias.items():
+                    s_idx = int(s_id_str) - 1
+                    if 0 <= s_idx < 4:
+                        nombre = names.get(int(obj_id_str), "").lower()
+                        ultimo_t = self.engine.ultimas_detecciones.get(nombre, 0)
+                        # Mantener visualmente ocupado por 3.5 segundos después de la detección
+                        if (now - ultimo_t) < 3.5:
+                            occupied[s_idx] = True
 
             for index, is_occ in enumerate(occupied):
-                if not is_occ:
+                if is_occ:
+                    self.servo_labels[index].configure(
+                        text="OCUPADO", text_color="#F57C00"
+                    )
+                else:
                     self.servo_labels[index].configure(
                         text="LIBRE", text_color="#666666"
                     )
