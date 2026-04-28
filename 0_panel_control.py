@@ -451,26 +451,15 @@ class TrainingManagerDialog(ctk.CTkToplevel):
         selected_cats = [cat for cat in self.categorias if self.selected_categories[cat].get()]
         count = len(selected_cats)
         
-        # 1. Limite de 4 objetos
-        if count >= 4:
-            for cat, cb in self.checkboxes.items():
-                if not self.selected_categories[cat].get():
-                    cb.configure(state="disabled")
-        else:
-            for cb in self.checkboxes.values():
-                cb.configure(state="normal")
+        # 1. Sin límite estricto, pero mantenemos la lógica por si acaso quieres limitar después
+        for cb in self.checkboxes.values():
+            cb.configure(state="normal")
         
-        # 2. Validacion de Servos Unicos
-        servos_usados = [self.servo_vars[cat].get() for cat in selected_cats]
-        duplicados = len(servos_usados) != len(set(servos_usados))
-        
-        # 3. Estado del Boton
-        if count == 4 and not duplicados:
-            self.btn_start.configure(state="normal", fg_color="#1E88E5", text="CONTINUAR ENTRENAMIENTO")
-        elif duplicados:
-            self.btn_start.configure(state="disabled", fg_color="#555555", text="ERROR: BRAZOS DUPLICADOS")
+        # 2. Estado del Boton (Sin restricción de duplicados)
+        if count > 0:
+            self.btn_start.configure(state="normal", fg_color="#1E88E5", text=f"CONTINUAR ENTRENAMIENTO ({count} objetos)")
         else:
-            self.btn_start.configure(state="disabled", fg_color="#555555", text=f"SELECCIONÁ 4 OBJETOS ({count}/4)")
+            self.btn_start.configure(state="disabled", fg_color="#555555", text="SELECCIONÁ AL MENOS 1 OBJETO")
 
     def delete_category(self, category):
         if not messagebox.askyesno("Confirmar Borrado", f"¿Estás seguro de eliminar '{category.upper()}' de la base de datos?\n\nEsta acción es irreversible y borrará todas sus fotos.", parent=self):
