@@ -312,20 +312,14 @@ class RPiOperatorPanel(ctk.CTk):
                 f, text=f"SERVO {i}", font=ctk.CTkFont(size=10, weight="bold"), text_color="#555555"
             ).pack(pady=(10, 2))
 
-            cmb_asig = ctk.CTkOptionMenu(
+            lbl_asig = ctk.CTkLabel(
                 f,
-                values=["LIBRE"],
-                font=ctk.CTkFont(size=12, weight="bold"),
-                fg_color="#161616",
-                button_color="#222222",
-                button_hover_color="#333333",
-                dropdown_font=ctk.CTkFont(size=12),
+                text="LIBRE",
+                font=ctk.CTkFont(size=14, weight="bold"),
                 text_color="#1E88E5",
-                width=140,
-                command=lambda val, servo_idx=i: self.change_servo_assignment(servo_idx, val)
             )
-            cmb_asig.pack(pady=(0, 5))
-            self.assignment_labels.append(cmb_asig)
+            lbl_asig.pack()
+            self.assignment_labels.append(lbl_asig)
 
             # Botón de Prueba Manual
             btn_test = ctk.CTkButton(
@@ -557,55 +551,28 @@ class RPiOperatorPanel(ctk.CTk):
         self.video_canvas.image = img_tk
 
     def update_servo_assignments(self):
+        # Reset labels
+        for lbl in self.assignment_labels:
+            lbl.configure(text="(Sin asignar)", text_color="#AAAAAA")
+
         if not self.engine.model:
             return
 
+        # Revertir el mapa: Categoría -> Servo
+        # self.engine.mapa_categorias es { "id_objeto": "id_servo" }
+        # Necesitamos los nombres reales de ScannerEngine.model.names
         names = self.engine.model.names if hasattr(self.engine.model, "names") else {}
-        
-        # Obtener todas las clases disponibles
-        all_classes = [name.upper() for name in names.values()]
-        all_classes.insert(0, "LIBRE")
-        
-        # Reset labels / comboboxes
-        for cmb in self.assignment_labels:
-            cmb.configure(values=all_classes)
-            cmb.set("LIBRE")
 
-        # Configurar qué muestra cada combobox actualmente
         for obj_id, servo_id in self.engine.mapa_categorias.items():
             try:
                 name = names.get(int(obj_id), f"ID:{obj_id}").upper()
                 s_idx = int(servo_id) - 1
                 if 0 <= s_idx < 4:
-                    self.assignment_labels[s_idx].set(name)
+                    self.assignment_labels[s_idx].configure(
+                        text=name, text_color="#1E88E5"
+                    )
             except Exception:  # noqa: BLE001
                 pass
-
-    def change_servo_assignment(self, servo_idx, object_name):
-        if not self.engine.model:
-            return
-        
-        names = self.engine.model.names if hasattr(self.engine.model, "names") else {}
-        name_to_id = {v.upper(): str(k) for k, v in names.items()}
-        
-        # Si elige LIBRE, eliminamos cualquier objeto asignado a este servo
-        if object_name == "LIBRE":
-            to_delete = [k for k, v in self.engine.mapa_categorias.items() if str(v) == str(servo_idx)]
-            for k in to_delete:
-                del self.engine.mapa_categorias[k]
-        elif object_name in name_to_id:
-            # Reasignamos el objeto seleccionado a este servo
-            obj_id = name_to_id[object_name]
-            self.engine.mapa_categorias[obj_id] = str(servo_idx)
-            
-        # Guardar configuración permanentemente
-        try:
-            with open(self.mapping_path, "w") as f:
-                json.dump(self.engine.mapa_categorias, f, indent=4)
-            # Refrescar la UI por si hubo conflictos
-            self.update_servo_assignments()
-        except Exception as e:
-            print(f"Error al guardar asignación: {e}")
 
     def check_sync_loop(self):
         if os.path.exists(self.sync_path):
