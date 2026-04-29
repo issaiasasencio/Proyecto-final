@@ -143,10 +143,15 @@ def train():
             metadata["objetos"].append(name)
             metadata["servos"][name] = servo
 
-        metadata_path = archive_path.replace(".pt", ".json")
-        with open(metadata_path, "w", encoding="utf-8") as f:
+        metadata_path_archive = archive_path.replace(".pt", ".json")
+        metadata_path_best = best_path.replace(".pt", ".json")
+        
+        with open(metadata_path_archive, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=4)
-        print(f"[INFO] Metadatos sincronizados en: {os.path.basename(metadata_path)}")
+        with open(metadata_path_best, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=4)
+            
+        print(f"[INFO] Metadatos sincronizados en: {os.path.basename(metadata_path_archive)}")
 
     print(f"Proceso MLOps completado. Modelo guardado en: {best_path}")
 
