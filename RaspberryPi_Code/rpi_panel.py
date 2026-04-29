@@ -864,7 +864,7 @@ class HistoryDialog(ctk.CTkToplevel):
         items = [
             d
             for d in os.listdir(base_dir)
-            if d.endswith("_ncnn_model") or d.endswith(".pt")
+            if d.endswith("_ncnn_model")
         ]
 
         # Recolectar datos y fechas para ordenar
@@ -927,16 +927,26 @@ class HistoryDialog(ctk.CTkToplevel):
                 font=ctk.CTkFont(size=13, weight="bold"),
                 text_color="#1E88E5",
             ).pack(side="left")
-            btn = ctk.CTkButton(
-                top_row,
-                text="Activar",
-                width=80,
-                height=24,
-                fg_color="#1E88E5",
-                hover_color="#1565C0",
-                command=lambda x=m: self.activate(x),
-            )
-            btn.pack(side="right")
+            
+            # Indicador de Activo
+            if self.parent.engine.model_path == os.path.join(base_dir, m):
+                ctk.CTkLabel(
+                    top_row,
+                    text="● ACTIVO",
+                    font=ctk.CTkFont(size=11, weight="bold"),
+                    text_color="#4CAF50"
+                ).pack(side="right", padx=10)
+            else:
+                btn = ctk.CTkButton(
+                    top_row,
+                    text="Activar",
+                    width=80,
+                    height=24,
+                    fg_color="#1E88E5",
+                    hover_color="#1565C0",
+                    command=lambda x=m: self.activate(x),
+                )
+                btn.pack(side="right")
 
             # Cuerpo: Detalles
             details = ctk.CTkFrame(f, fg_color="transparent")
@@ -1005,8 +1015,16 @@ class HistoryDialog(ctk.CTkToplevel):
         self.parent.config_data["active_model"] = full_path
         self.parent.save_config()
 
+        # Forzar carga para que lea las clases (names) del nuevo modelo
+        self.parent.engine.load_resources()
+        self.parent.update_servo_assignments()
+
         if was_running:
             self.parent.toggle_scanner()  # Reiniciar
+            
+        # Refrescar UI (indicador sincrono del modelo activo)
+        self.parent.lbl_sync_info.configure(text=f"Modelo: {model_name}")
+
         self.destroy()
         messagebox.showinfo("Modelo Cambiado", f"Se ha activado: {model_name}")
 
