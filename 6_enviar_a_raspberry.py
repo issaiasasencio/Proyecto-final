@@ -62,18 +62,23 @@ def enviar_modelo_a_raspberry(ruta_modelo_pc, ruta_destino_pi):
 
             # --- NUEVO: ENVIAR METADATOS DEL MODELO ---
             # Si enviamos un .pt, buscamos el .json con el mismo nombre
-            # Si enviamos una carpeta NCNN, buscamos el .json que la PC suele crear paralelo a ella
+            # Si enviamos una carpeta NCNN, buscamos el .json que la PC suele crear paralelo a ella (sin _ncnn_model)
             metadata_local = ""
+            metadata_remote_name = ""
             if ruta_modelo_pc.endswith(".pt"):
                 metadata_local = ruta_modelo_pc.replace(".pt", ".json")
+                metadata_remote_name = os.path.basename(metadata_local)
             else:
-                # Caso carpeta NCNN: buscamos un .json con el mismo nombre base en la carpeta padre
-                ext = ".json"
-                metadata_local = ruta_modelo_pc.rstrip("/") + ext
+                # Caso carpeta NCNN: best_ncnn_model -> busca best.json
+                metadata_local = ruta_modelo_pc.rstrip("/").replace("_ncnn_model", "") + ".json"
+                # En la Pi, rpi_panel espera que el JSON tenga el mismo nombre que la carpeta
+                # ej: best_ncnn_model -> best_ncnn_model.json
+                metadata_remote_name = os.path.basename(ruta_modelo_pc.rstrip("/")) + ".json"
             
             if os.path.exists(metadata_local):
-                print(f"Metadatos detectados: {os.path.basename(metadata_local)}. Sincronizando.")
-                scp.put(metadata_local, remote_path=ruta_destino_pi)
+                print(f"Metadatos detectados: {os.path.basename(metadata_local)}. Sincronizando como {metadata_remote_name}.")
+                # Enviamos el archivo cambiandole el nombre en destino
+                scp.put(metadata_local, remote_path=ruta_destino_pi + metadata_remote_name)
             # ------------------------------------------
 
             # 2. Enviar archivo de configuración JSON para los Servos
