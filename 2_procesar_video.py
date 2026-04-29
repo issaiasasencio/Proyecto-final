@@ -208,149 +208,157 @@ def procesar_video():
     # Avanza ~300ms por iteración.
     frames_a_saltar = max(1, int(fps * 0.3))
 
-    frame_count = 0
     guardados = 0
+    angulo_idx = 1
 
-    template_obj = None
-    bbox_w = 0
-    bbox_h = 0
+    import tkinter as tk
+    from tkinter import messagebox
 
-    if es_webcam:
-        print(f"\n[AUTO-LABELLER] SISTEMA DE MÁXIMA PRECISIÓN - CATEGORÍA: {categoria}")
-        print(">>>>> Vamos a calibrar tu objeto. Colocalo frente a la cámara.")
-        print(">>>>> PRESIONÁ LA BARRA ESPACIADORA en la ventana cuando estés listo para congelar la imagen.")
+    while True:
+        frame_count = 0
+        template_obj = None
+        bbox_w = 0
+        bbox_h = 0
+
+        if es_webcam:
+            print(f"\n[AUTO-LABELLER] SISTEMA DE MÁXIMA PRECISIÓN - CATEGORÍA: {categoria.upper()} (ÁNGULO {angulo_idx})")
+            print(">>>>> Vamos a calibrar tu objeto. Colocalo frente a la cámara.")
+            print(">>>>> PRESIONÁ LA BARRA ESPACIADORA en la ventana cuando estés listo para congelar la imagen.")
+
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    print("Error al leer la cámara.")
+                    return
+
+                cv2.imshow(f"CALIBRACION - Angulo {angulo_idx} (Presiona ESPACIO al alinear)", frame)
+                if cv2.waitKey(1) & 0xFF == ord(' '):
+                    break
+            cv2.destroyWindow(f"CALIBRACION - Angulo {angulo_idx} (Presiona ESPACIO al alinear)")
+
+            print(">>>>> MUY IMPORTANTE: Usá el mouse para DIBUJAR un recuadro MUY AJUSTADO alrededor del objeto.")
+            print(">>>>> Luego presioná 'ENTER' en tu teclado para disparar el Auto-Etiquetado Inteligente.")
+
+            bbox_roi = cv2.selectROI(f"Angulo {angulo_idx}: Dibuja recuadro y pulsa ENTER",
+                                     frame, fromCenter=False, showCrosshair=True)
+            cv2.destroyWindow(f"Angulo {angulo_idx}: Dibuja recuadro y pulsa ENTER")
+
+            if bbox_roi[2] > 0 and bbox_roi[3] > 0:
+                x_r, y_r, w_r, h_r = bbox_roi
+                template_obj = frame[y_r:y_r + h_r, x_r:x_r + w_r]
+                bbox_w = w_r
+                bbox_h = h_r
+                print("\n✅ Molde capturado con ÉXITO. Ahora tu IA aprenderá la caja exacta matemática.")
+                print("-> Mové el objeto muy lentamente frente a la cámara para generar el dataset.")
+            else:
+                print("No dibujaste nada. Usando modo genérico.")
+        else:
+            print(f"Procesando video local a {fps:.2f} FPS. Extrayendo fotogramas...")
+
+        start_time_live = time.time()
 
         while True:
             ret, frame = cap.read()
             if not ret:
-                return
-
-            # NO redimensionar forzosamente para no distorsionar la imagen nativa (aspect ratio)
-            cv2.imshow("CALIBRACION (Presiona ESPACIO cuando se vea bien)", frame)
-            if cv2.waitKey(1) & 0xFF == ord(' '):
                 break
-        cv2.destroyWindow("CALIBRACION (Presiona ESPACIO cuando se vea bien)")
 
-        print(">>>>> MUY IMPORTANTE: Usá el mouse para DIBUJAR un recuadro MUY AJUSTADO alrededor del objeto.")
-        print(">>>>> Luego presioná 'ENTER' en tu teclado para disparar el Auto-Etiquetado Inteligente.")
+            real_h, real_w = frame.shape[:2]
 
-        bbox_roi = cv2.selectROI("Dibuja un recuadro ajustado y pulsa ENTER",
-                                 frame, fromCenter=False, showCrosshair=True)
-        cv2.destroyWindow("Dibuja un recuadro ajustado y pulsa ENTER")
+            actual_x = 0.5
+            actual_y = 0.5
+            actual_w = 0.8
+            actual_h = 0.8
 
-        if bbox_roi[2] > 0 and bbox_roi[3] > 0:
-            x_r, y_r, w_r, h_r = bbox_roi
-            template_obj = frame[y_r:y_r + h_r, x_r:x_r + w_r]
-            bbox_w = w_r
-            bbox_h = h_r
-            print("\n✅ Molde capturado con ÉXITO. Ahora tu IA aprenderá la caja exacta matemática.")
-            print("-> Mové el objeto muy lentamente frente a la cámara para generar el dataset hiperpreciso.")
+            if template_obj is not None:
+                res = cv2.matchTemplate(frame, template_obj, cv2.TM_CCOEFF_NORMED)
+                _, _, _, max_loc = cv2.minMaxLoc(res)
+                x_top, y_top = max_loc
+                actual_x = (x_top + bbox_w / 2.0) / real_w
+                actual_y = (y_top + bbox_h / 2.0) / real_h
+                actual_w = bbox_w / real_w
+                actual_h = bbox_h / real_h
+
+            if es_webcam:
+                vis_frame = frame.copy()
+                x_vis = int((actual_x - actual_w / 2) * real_w)
+                y_vis = int((actual_y - actual_h / 2) * real_h)
+                w_vis = int(actual_w * real_w)
+                h_vis = int(actual_h * real_h)
+
+                cv2.rectangle(vis_frame, (x_vis, y_vis), (x_vis + w_vis, y_vis + h_vis), (0, 255, 0), 2)
+                cv2.putText(vis_frame, f"Auto-Etiquetado Inteligente (A. {angulo_idx})", (x_vis, y_vis - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+                if frame_count % frames_a_saltar <= 2:
+                    cv2.circle(vis_frame, (30, 30), 10, (0, 0, 255), -1)
+                    cv2.putText(vis_frame, "REC", (50, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
+                tiempo_actual = time.time() - start_time_live
+                if tiempo_actual < MIN_DURACION:
+                    color_msg = (0, 165, 255)
+                    txt_msg = f"TIEMPO RESTANTE: {int(MIN_DURACION - tiempo_actual)}s"
+                    cv2.rectangle(vis_frame, (10, real_h - 40), (400, real_h - 10), (0, 0, 0), -1)
+                    cv2.putText(vis_frame, txt_msg, (20, real_h - 15),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, color_msg, 2)
+                else:
+                    cv2.rectangle(vis_frame, (10, real_h - 40), (250, real_h - 10), (0, 0, 0), -1)
+                    cv2.putText(vis_frame, "LISTO (Q para parar)", (20, real_h - 15),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+                nombre_ventana = f"Grabando automaticamente - {categoria} (Presiona 'q' para salir)"
+                cv2.imshow(nombre_ventana, vis_frame)
+                tecla = cv2.waitKey(1) & 0xFF
+                if tecla == ord('q'):
+                    if tiempo_actual >= MIN_DURACION:
+                        cv2.destroyWindow(nombre_ventana)
+                        break
+                    else:
+                        print(f"\n[ATENCION] Grabacion muy corta ({int(tiempo_actual)}s). Falta llegar a {MIN_DURACION}s.")
+
+                if frame_count == 0:
+                    cv2.setWindowProperty(nombre_ventana, cv2.WND_PROP_TOPMOST, 1)
+
+            if frame_count % frames_a_saltar == 0:
+                is_train = random.random() < 0.8
+                split_folder = "train" if is_train else "val"
+                timestamp = int(time.time() * 1000)
+                filename_base = f"{categoria}_{timestamp}_{guardados}"
+                img_filename = f"{filename_base}.jpg"
+                txt_filename = f"{filename_base}.txt"
+                img_path = os.path.join(base_dir, "dataset", "images", split_folder, img_filename)
+                txt_path = os.path.join(base_dir, "dataset", "labels", split_folder, txt_filename)
+
+                cv2.imwrite(img_path, frame)
+                with open(txt_path, 'w') as f:
+                    f.write(f"{class_id} {actual_x:.6f} {actual_y:.6f} {actual_w:.6f} {actual_h:.6f}\n")
+
+                guardados += 1
+
+            frame_count += 1
+            
+        if es_webcam:
+            # Preguntar si se desea añadir otro ángulo
+            root = tk.Tk()
+            root.withdraw()
+            root.attributes('-topmost', True)
+            resp = messagebox.askyesno(
+                "Multi-Ángulo Inteligente",
+                f"¡Ángulo {angulo_idx} capturado exitosamente!\n\n"
+                f"¿Desea grabar OTRO ÁNGULO o variación de '{categoria.upper()}'?\n"
+                "(Ej: Si lo grabaste parado, ahora podés grabarlo acostado para que la IA sea a prueba de fallos)."
+            )
+            root.destroy()
+            
+            if resp:
+                angulo_idx += 1
+                continue
+            else:
+                break
         else:
-            print("No dibujaste nada. Usando modo genérico.")
-    else:
-        print(f"Procesando video local a {fps:.2f} FPS. Extrayendo fotogramas...")
-
-    # Tiempo de inicio para control de grabación
-    start_time_live = time.time()
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:  # Si no hay más frames, romper ciclo
             break
 
-        real_h, real_w = frame.shape[:2]
-
-        # Lógica de Rastreo Matemático (Template Matching) para etiquetado perfecto
-        actual_x = 0.5
-        actual_y = 0.5
-        actual_w = 0.8
-        actual_h = 0.8
-
-        if template_obj is not None:
-            # Buscar en la imagen nativa dónde se movió el objeto
-            res = cv2.matchTemplate(frame, template_obj, cv2.TM_CCOEFF_NORMED)
-            _, _, _, max_loc = cv2.minMaxLoc(res)
-            x_top, y_top = max_loc
-
-            # Transformar a formato normalizado de YOLO usando las dimensiones REALES de la cámara
-            actual_x = (x_top + bbox_w / 2.0) / real_w
-            actual_y = (y_top + bbox_h / 2.0) / real_h
-            actual_w = bbox_w / real_w
-            actual_h = bbox_h / real_h
-
-        if es_webcam:
-            vis_frame = frame.copy()
-
-            # Dibujar la Bounding Box exacta rastreada en TIPO TIEMPO REAL
-            x_vis = int((actual_x - actual_w / 2) * real_w)
-            y_vis = int((actual_y - actual_h / 2) * real_h)
-            w_vis = int(actual_w * real_w)
-            h_vis = int(actual_h * real_h)
-
-            cv2.rectangle(
-                vis_frame, (x_vis, y_vis), (x_vis + w_vis, y_vis + h_vis), (0, 255, 0), 2
-            )
-            cv2.putText(vis_frame, "Auto-Etiquetado Inteligente", (x_vis, y_vis - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-            if frame_count % frames_a_saltar <= 2:
-                cv2.circle(vis_frame, (30, 30), 10, (0, 0, 255), -1)
-                cv2.putText(vis_frame, "REC", (50, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-
-            # --- FEEDBACK DE TIEMPO MÍNIMO ---
-            tiempo_actual = time.time() - start_time_live
-            if tiempo_actual < MIN_DURACION:
-                color_msg = (0, 165, 255)  # Naranja
-                txt_msg = f"TIEMPO RESTANTE: {int(MIN_DURACION - tiempo_actual)}s"
-                cv2.rectangle(vis_frame, (10, real_h - 40), (400, real_h - 10), (0, 0, 0), -1)
-                cv2.putText(vis_frame, txt_msg, (20, real_h - 15),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color_msg, 2)
-            else:
-                cv2.rectangle(vis_frame, (10, real_h - 40), (250, real_h - 10), (0, 0, 0), -1)
-                cv2.putText(vis_frame, "LISTO (Q para parar)", (20, real_h - 15),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
-            nombre_ventana = f"Grabando automaticamente - {categoria} (Presiona 'q' para salir)"
-            cv2.imshow(nombre_ventana, vis_frame)
-            tecla = cv2.waitKey(1) & 0xFF
-            if tecla == ord('q'):
-                if tiempo_actual >= MIN_DURACION:
-                    break
-                else:
-                    print(f"\n[ATENCION] Grabacion muy corta ({int(tiempo_actual)}s). Falta llegar a {MIN_DURACION}s.")
-
-            if frame_count == 0:
-                cv2.setWindowProperty(nombre_ventana, cv2.WND_PROP_TOPMOST, 1)
-
-        # Si el conteo coincide con nuestro paso de 300 ms, capturamos el frame
-        if frame_count % frames_a_saltar == 0:
-
-            # 6. Guardar usando proporción 80/20 (train/val)
-            is_train = random.random() < 0.8
-            split_folder = "train" if is_train else "val"
-
-            # Generar Timestamp sumitido al nombre para prevenir que se sobrescriban
-            timestamp = int(time.time() * 1000)
-            filename_base = f"{categoria}_{timestamp}_{guardados}"
-            img_filename = f"{filename_base}.jpg"
-            txt_filename = f"{filename_base}.txt"
-
-            img_path = os.path.join(base_dir, "dataset", "images", split_folder, img_filename)
-            txt_path = os.path.join(base_dir, "dataset", "labels", split_folder, txt_filename)
-
-            # Escribiendo el frame anatómico nativo en disco
-            cv2.imwrite(img_path, frame)
-
-            # 7. Guardar coordenadas Matemáticas ajustadas dinámicamente al movimiento
-            with open(txt_path, 'w') as f:
-                f.write(f"{class_id} {actual_x:.6f} {actual_y:.6f} {actual_w:.6f} {actual_h:.6f}\n")
-
-            guardados += 1
-
-        frame_count += 1
-
     cap.release()
-    print(f"¡Proceso finalizado con éxito! Se guardaron {guardados} fotogramas pre-etiquetados.")
+    print(f"\n¡Proceso finalizado con éxito! Se guardaron {guardados} fotogramas pre-etiquetados en total.")
 
     # Apagar servidor de camara inalambrica si es raspberry
     if video_path == "raspberry" and ssh:
