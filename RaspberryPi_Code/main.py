@@ -43,7 +43,7 @@ class ScannerEngine:
         self.X_CINTA_DER = 540
         self.DISTANCIAS = {"1": 0.20, "2": 0.20, "3": 0.45, "4": 0.45}
         self.VELOCIDAD_CINTA_NEAR = 0.07  # Servos 1 y 2
-        self.VELOCIDAD_CINTA_FAR = 0.07   # Servos 3 y 4
+        self.VELOCIDAD_CINTA_FAR = 0.07  # Servos 3 y 4
         self.TIEMPO_ANTICIPACION = 2.5
         self.TIEMPO_COOLDOWN = 5.0
 
@@ -74,7 +74,7 @@ class ScannerEngine:
             if not os.path.exists(self.model_path):
                 self.status_msg = "Error: No se ha detectado ningun modelo entrenado en la ruta especificada."
                 return False
-            
+
             # Optimizacion para Pi 5: Cargar modelo con task detect explícito
             self.model = YOLO(self.model_path, task="detect")
             self.status_msg = "Modelo cargado."
@@ -84,7 +84,9 @@ class ScannerEngine:
 
         try:
             if self.arduino is None or not self.arduino.is_open:
-                self.arduino = serial.Serial(self.arduino_port, self.baudrate, timeout=1)
+                self.arduino = serial.Serial(
+                    self.arduino_port, self.baudrate, timeout=1
+                )
                 time.sleep(2)
                 self.arduino_ready = True
             self.status_msg = "Arduino conectado."
@@ -132,7 +134,7 @@ class ScannerEngine:
             try:
                 self.arduino.write(f"C:{speed}\n".encode())
                 return True
-            except Exception: # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 self.arduino_ready = False
                 return False
         return False
@@ -144,7 +146,7 @@ class ScannerEngine:
             try:
                 self.arduino.write(cmd.encode())
                 return True
-            except Exception: # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 self.arduino_ready = False
                 return False
         return False
@@ -202,7 +204,11 @@ class ScannerEngine:
                             ultimo = self.ultimas_detecciones.get(nombre, 0)
                             if (current_time - ultimo) > self.TIEMPO_COOLDOWN:
                                 dist = self.DISTANCIAS.get(servo_id, 0.30)
-                                v_cinta = self.VELOCIDAD_CINTA_NEAR if servo_id in ["1", "2"] else self.VELOCIDAD_CINTA_FAR
+                                v_cinta = (
+                                    self.VELOCIDAD_CINTA_NEAR
+                                    if servo_id in ["1", "2"]
+                                    else self.VELOCIDAD_CINTA_FAR
+                                )
                                 t_viaje = dist / v_cinta
                                 t_prog = (
                                     current_time + t_viaje - self.TIEMPO_ANTICIPACION

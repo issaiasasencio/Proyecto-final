@@ -47,7 +47,6 @@ class RPiOperatorPanel(ctk.CTk):
         self.servo_labels = []
         self.assignment_labels = []
 
-
         self.setup_ui()
 
         # Intentar conectar hardware desde el arranque
@@ -66,10 +65,10 @@ class RPiOperatorPanel(ctk.CTk):
         self.title_frame.pack(side="left", padx=20, pady=10)
 
         self.lbl_brand = ctk.CTkLabel(
-            self.title_frame, 
-            text="FLEX-SORT", 
+            self.title_frame,
+            text="FLEX-SORT",
             font=ctk.CTkFont(family="Orbitron", size=24, weight="bold"),
-            text_color="#1E88E5"
+            text_color="#1E88E5",
         )
         self.lbl_brand.pack(side="left")
 
@@ -77,29 +76,47 @@ class RPiOperatorPanel(ctk.CTk):
             self.title_frame,
             text=" Panel de Operación · Raspberry Pi 5",
             font=ctk.CTkFont(size=12),
-            text_color="#555555"
+            text_color="#555555",
         )
         self.lbl_subtitle.pack(side="left", padx=(10, 0), pady=(5, 0))
 
         # Botones Derecha (Orden: RESET | HISTORIAL | AJUSTES)
         self.btn_conf = ctk.CTkButton(
-            self.header, text="⚙ AJUSTES", width=100, height=35, fg_color="#1A1A1A", 
-            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
-            command=lambda: [print("Ajustes"), self.open_settings()]
+            self.header,
+            text="⚙ AJUSTES",
+            width=100,
+            height=35,
+            fg_color="#1A1A1A",
+            hover_color="#333333",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            cursor="hand2",
+            command=lambda: [print("Ajustes"), self.open_settings()],
         )
         self.btn_conf.pack(side="right", padx=(5, 15))
 
         self.btn_hist = ctk.CTkButton(
-            self.header, text="🕒 HISTORIAL", width=110, height=35, fg_color="#1A1A1A", 
-            hover_color="#333333", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
-            command=lambda: [print("Historial"), self.open_history()]
+            self.header,
+            text="🕒 HISTORIAL",
+            width=110,
+            height=35,
+            fg_color="#1A1A1A",
+            hover_color="#333333",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            cursor="hand2",
+            command=lambda: [print("Historial"), self.open_history()],
         )
         self.btn_hist.pack(side="right", padx=5)
 
         self.btn_reset = ctk.CTkButton(
-            self.header, text="↺ RESET", width=90, height=35, fg_color="#b71c1c", 
-            hover_color="#d32f2f", font=ctk.CTkFont(size=11, weight="bold"), cursor="hand2",
-            command=lambda: [print("Reset"), self.confirm_reset()]
+            self.header,
+            text="↺ RESET",
+            width=90,
+            height=35,
+            fg_color="#b71c1c",
+            hover_color="#d32f2f",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            cursor="hand2",
+            command=lambda: [print("Reset"), self.confirm_reset()],
         )
         self.btn_reset.pack(side="right", padx=5)
 
@@ -110,7 +127,7 @@ class RPiOperatorPanel(ctk.CTk):
             font=ctk.CTkFont(size=13, weight="bold"),
         )
         self.status_indicator.pack(side="right", padx=20)
-        
+
         self.header.lift()
 
         # ---------------- BODY (Sidebar + Main) ----------------
@@ -118,7 +135,9 @@ class RPiOperatorPanel(ctk.CTk):
         self.body_container.pack(side="top", fill="both", expand=True)
 
         # SIDEBAR
-        self.sidebar = ctk.CTkFrame(self.body_container, width=280, corner_radius=0, fg_color="#0F0F0F")
+        self.sidebar = ctk.CTkFrame(
+            self.body_container, width=280, corner_radius=0, fg_color="#0F0F0F"
+        )
         self.sidebar.pack(side="left", fill="y")
         self.sidebar.pack_propagate(False)
 
@@ -128,7 +147,10 @@ class RPiOperatorPanel(ctk.CTk):
 
         # Sección OPERACIÓN
         ctk.CTkLabel(
-            self.sidebar, text="OPERACIÓN", font=ctk.CTkFont(size=11, weight="bold"), text_color="#333333"
+            self.sidebar,
+            text="OPERACIÓN",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#333333",
         ).pack(anchor="w", padx=20, pady=(20, 5))
 
         self.btn_power = ctk.CTkButton(
@@ -145,18 +167,31 @@ class RPiOperatorPanel(ctk.CTk):
         self.btn_power.pack(pady=10, padx=20, fill="x")
 
         # Sección CINTA
-        self.cinta_frame = ctk.CTkFrame(self.sidebar, fg_color="#161616", corner_radius=10)
+        self.cinta_frame = ctk.CTkFrame(
+            self.sidebar, fg_color="#161616", corner_radius=10
+        )
         self.cinta_frame.pack(pady=10, padx=20, fill="x")
-        
+
         cinta_header = ctk.CTkFrame(self.cinta_frame, fg_color="transparent")
         cinta_header.pack(fill="x", padx=10, pady=(10, 0))
-        
-        ctk.CTkLabel(cinta_header, text="CINTA", font=ctk.CTkFont(size=11, weight="bold"), text_color="#555555").pack(side="left")
+
+        ctk.CTkLabel(
+            cinta_header,
+            text="CINTA",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#555555",
+        ).pack(side="left")
         self.btn_cinta_toggle = ctk.CTkButton(
-            cinta_header, text="ON", fg_color="#2E7D32", text_color="white", 
-            font=ctk.CTkFont(size=9, weight="bold"), corner_radius=4, width=40, height=20,
+            cinta_header,
+            text="ON",
+            fg_color="#2E7D32",
+            text_color="white",
+            font=ctk.CTkFont(size=9, weight="bold"),
+            corner_radius=4,
+            width=40,
+            height=20,
             cursor="hand2",
-            command=self.toggle_cinta
+            command=self.toggle_cinta,
         )
         self.btn_cinta_toggle.pack(side="right")
 
@@ -165,52 +200,84 @@ class RPiOperatorPanel(ctk.CTk):
 
         val_row = ctk.CTkFrame(self.cinta_frame, fg_color="transparent")
         val_row.pack(fill="x", padx=10, pady=(5, 0))
-        ctk.CTkLabel(val_row, text="Velocidad", font=ctk.CTkFont(size=11), text_color="#555555").pack(side="left")
-        self.lbl_vel_val = ctk.CTkLabel(val_row, text="1200 p/s", font=ctk.CTkFont(size=11, weight="bold"), text_color="white")
+        ctk.CTkLabel(
+            val_row, text="Velocidad", font=ctk.CTkFont(size=11), text_color="#555555"
+        ).pack(side="left")
+        self.lbl_vel_val = ctk.CTkLabel(
+            val_row,
+            text="1200 p/s",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="white",
+        )
         self.lbl_vel_val.pack(side="right")
 
         # Cargar velocidad guardada
         saved_speed = self.config_data.get("belt_speed_steps", 1200)
-        self.cinta_slider = ctk.CTkSlider(self.cinta_frame, from_=200, to=1600, height=15, button_length=15, command=self.update_cinta_vel)
+        self.cinta_slider = ctk.CTkSlider(
+            self.cinta_frame,
+            from_=200,
+            to=1600,
+            height=15,
+            button_length=15,
+            command=self.update_cinta_vel,
+        )
         self.cinta_slider.set(saved_speed)
         self.cinta_slider.pack(padx=10, pady=(5, 5), fill="x")
         self.lbl_vel_val.configure(text=f"{saved_speed} p/s")
 
         limits_row = ctk.CTkFrame(self.cinta_frame, fg_color="transparent")
         limits_row.pack(fill="x", padx=10, pady=(0, 5))
-        ctk.CTkLabel(limits_row, text="200", font=ctk.CTkFont(size=9), text_color="#333333").pack(side="left")
-        ctk.CTkLabel(limits_row, text="1600 p/s", font=ctk.CTkFont(size=9), text_color="#333333").pack(side="right")
+        ctk.CTkLabel(
+            limits_row, text="200", font=ctk.CTkFont(size=9), text_color="#333333"
+        ).pack(side="left")
+        ctk.CTkLabel(
+            limits_row, text="1600 p/s", font=ctk.CTkFont(size=9), text_color="#333333"
+        ).pack(side="right")
 
         self.lbl_cinta_activa = ctk.CTkLabel(
-            self.cinta_frame, text="○ APAGADA", font=ctk.CTkFont(size=10, weight="bold"), text_color="#555555"
+            self.cinta_frame,
+            text="○ APAGADA",
+            font=ctk.CTkFont(size=10, weight="bold"),
+            text_color="#555555",
         )
         self.lbl_cinta_activa.pack(anchor="w", padx=10, pady=(0, 5))
 
         # Switch para Modo Manual (Potenciómetro)
         self.sw_manual = ctk.CTkSwitch(
-            self.cinta_frame, text="MODO MANUAL", font=ctk.CTkFont(size=10),
-            command=self.toggle_manual, progress_color="#1E88E5"
+            self.cinta_frame,
+            text="MODO MANUAL",
+            font=ctk.CTkFont(size=10),
+            command=self.toggle_manual,
+            progress_color="#1E88E5",
         )
         self.sw_manual.pack(anchor="w", padx=10, pady=(0, 10))
 
         # Sección ÚLTIMO SYNC
-        self.sync_frame = ctk.CTkFrame(self.sidebar, fg_color="#161616", corner_radius=10)
+        self.sync_frame = ctk.CTkFrame(
+            self.sidebar, fg_color="#161616", corner_radius=10
+        )
         self.sync_frame.pack(pady=10, padx=20, fill="x")
         ctk.CTkLabel(
-            self.sync_frame, text="ÚLTIMO SYNC SSH", font=ctk.CTkFont(size=11, weight="bold"), text_color="#555555"
+            self.sync_frame,
+            text="ÚLTIMO SYNC SSH",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#555555",
         ).pack(anchor="w", padx=10, pady=(10, 5))
         self.lbl_sync_info = ctk.CTkLabel(
             self.sync_frame,
             text="Fecha: --/--/---- --:--\nModelo: --",
             font=ctk.CTkFont(size=10),
             text_color="#888888",
-            justify="left"
+            justify="left",
         )
         self.lbl_sync_info.pack(anchor="w", padx=10, pady=(0, 10))
 
         # Sección HARDWARE
         ctk.CTkLabel(
-            self.sidebar, text="HARDWARE", font=ctk.CTkFont(size=11, weight="bold"), text_color="#333333"
+            self.sidebar,
+            text="HARDWARE",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#333333",
         ).pack(anchor="w", padx=20, pady=(15, 5))
 
         self.lbl_arduino_status = ctk.CTkLabel(
@@ -228,60 +295,94 @@ class RPiOperatorPanel(ctk.CTk):
         # TEMP
         temp_row = ctk.CTkFrame(self.telemetry_frame, fg_color="transparent")
         temp_row.pack(fill="x", pady=2)
-        ctk.CTkLabel(temp_row, text="TEMP", font=ctk.CTkFont(size=10), text_color="#555555").pack(side="left")
-        self.lbl_temp_val = ctk.CTkLabel(temp_row, text="--°C", font=ctk.CTkFont(size=10), text_color="white")
+        ctk.CTkLabel(
+            temp_row, text="TEMP", font=ctk.CTkFont(size=10), text_color="#555555"
+        ).pack(side="left")
+        self.lbl_temp_val = ctk.CTkLabel(
+            temp_row, text="--°C", font=ctk.CTkFont(size=10), text_color="white"
+        )
         self.lbl_temp_val.pack(side="right")
-        self.bar_temp = ctk.CTkProgressBar(self.telemetry_frame, height=6, progress_color="#1E88E5", fg_color="#1A1A1A")
+        self.bar_temp = ctk.CTkProgressBar(
+            self.telemetry_frame, height=6, progress_color="#1E88E5", fg_color="#1A1A1A"
+        )
         self.bar_temp.set(0)
         self.bar_temp.pack(fill="x", pady=(0, 5))
 
         # CPU
         cpu_row = ctk.CTkFrame(self.telemetry_frame, fg_color="transparent")
         cpu_row.pack(fill="x", pady=2)
-        ctk.CTkLabel(cpu_row, text="CPU", font=ctk.CTkFont(size=10), text_color="#555555").pack(side="left")
-        self.lbl_cpu_val = ctk.CTkLabel(cpu_row, text="--%", font=ctk.CTkFont(size=10), text_color="white")
+        ctk.CTkLabel(
+            cpu_row, text="CPU", font=ctk.CTkFont(size=10), text_color="#555555"
+        ).pack(side="left")
+        self.lbl_cpu_val = ctk.CTkLabel(
+            cpu_row, text="--%", font=ctk.CTkFont(size=10), text_color="white"
+        )
         self.lbl_cpu_val.pack(side="right")
-        self.bar_cpu = ctk.CTkProgressBar(self.telemetry_frame, height=6, progress_color="#1E88E5", fg_color="#1A1A1A")
+        self.bar_cpu = ctk.CTkProgressBar(
+            self.telemetry_frame, height=6, progress_color="#1E88E5", fg_color="#1A1A1A"
+        )
         self.bar_cpu.set(0)
         self.bar_cpu.pack(fill="x", pady=(0, 5))
 
         # RAM
         ram_row = ctk.CTkFrame(self.telemetry_frame, fg_color="transparent")
         ram_row.pack(fill="x", pady=2)
-        ctk.CTkLabel(ram_row, text="RAM", font=ctk.CTkFont(size=10), text_color="#555555").pack(side="left")
-        self.lbl_ram_val = ctk.CTkLabel(ram_row, text="--%", font=ctk.CTkFont(size=10), text_color="white")
+        ctk.CTkLabel(
+            ram_row, text="RAM", font=ctk.CTkFont(size=10), text_color="#555555"
+        ).pack(side="left")
+        self.lbl_ram_val = ctk.CTkLabel(
+            ram_row, text="--%", font=ctk.CTkFont(size=10), text_color="white"
+        )
         self.lbl_ram_val.pack(side="right")
-        self.bar_ram = ctk.CTkProgressBar(self.telemetry_frame, height=6, progress_color="#1E88E5", fg_color="#1A1A1A")
+        self.bar_ram = ctk.CTkProgressBar(
+            self.telemetry_frame, height=6, progress_color="#1E88E5", fg_color="#1A1A1A"
+        )
         self.bar_ram.set(0)
         self.bar_ram.pack(fill="x", pady=(0, 5))
 
-        self.lbl_fps = ctk.CTkLabel(self.sidebar, text="-- FPS", font=ctk.CTkFont(size=14, weight="bold"), text_color="#333333")
+        self.lbl_fps = ctk.CTkLabel(
+            self.sidebar,
+            text="-- FPS",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color="#333333",
+        )
         self.lbl_fps.pack(pady=5)
 
         # Consola (Simplificada para evitar problemas de eventos)
         ctk.CTkLabel(
-            self.sidebar, text="CONSOLA DE EVENTOS", font=ctk.CTkFont(size=11, weight="bold"), text_color="#333333"
+            self.sidebar,
+            text="CONSOLA DE EVENTOS",
+            font=ctk.CTkFont(size=11, weight="bold"),
+            text_color="#333333",
         ).pack(anchor="w", padx=20, pady=(10, 0))
         self.console_frame = ctk.CTkFrame(self.sidebar, fg_color="#080808", height=150)
         self.console_frame.pack(fill="x", padx=15, pady=5)
         self.console_frame.pack_propagate(False)
-        
+
         self.lbl_console = ctk.CTkLabel(
-            self.console_frame, text="> Sistema iniciado...\n> Esperando instrucciones.",
-            font=("Consolas", 10), text_color="#4CAF50", justify="left", anchor="nw",
-            padx=10, pady=10
+            self.console_frame,
+            text="> Sistema iniciado...\n> Esperando instrucciones.",
+            font=("Consolas", 10),
+            text_color="#4CAF50",
+            justify="left",
+            anchor="nw",
+            padx=10,
+            pady=10,
         )
         self.lbl_console.pack(fill="both", expand=True)
 
         # ---------------- MAIN (VISIÓN) ----------------
-        self.main_view = ctk.CTkFrame(self.main_area, corner_radius=10, fg_color="#000000")
+        self.main_view = ctk.CTkFrame(
+            self.main_area, corner_radius=10, fg_color="#000000"
+        )
         self.main_view.pack(fill="both", expand=True, padx=10, pady=10)
 
         # Canvas fijo para el video - NO usa fill/expand para no invadir el sidebar
         self.video_canvas = tk.Canvas(
-            self.main_view, bg="black",
+            self.main_view,
+            bg="black",
             highlightthickness=0,
-            cursor="none"  # Sin cursor encima del video
+            cursor="none",  # Sin cursor encima del video
         )
         self.video_canvas.pack(fill="both", expand=True)
         # Bloquear propagación de clics al contenedor padre
@@ -307,9 +408,12 @@ class RPiOperatorPanel(ctk.CTk):
             )
             f.pack(side="left", padx=5, expand=True, fill="both")
             f.pack_propagate(False)
-            
+
             ctk.CTkLabel(
-                f, text=f"SERVO {i}", font=ctk.CTkFont(size=10, weight="bold"), text_color="#555555"
+                f,
+                text=f"SERVO {i}",
+                font=ctk.CTkFont(size=10, weight="bold"),
+                text_color="#555555",
             ).pack(pady=(10, 2))
 
             lbl_asig = ctk.CTkLabel(
@@ -348,9 +452,7 @@ class RPiOperatorPanel(ctk.CTk):
         """Recentra la imagen en el canvas cuando cambia de tamaño."""
         if self._canvas_img_id is not None:
             self.video_canvas.coords(
-                self._canvas_img_id,
-                event.width // 2,
-                event.height // 2
+                self._canvas_img_id, event.width // 2, event.height // 2
             )
 
     def toggle_scanner(self):
@@ -366,7 +468,9 @@ class RPiOperatorPanel(ctk.CTk):
                     text="■ DETENER SCANNER", fg_color="#D32F2F", hover_color="#C62828"
                 )
                 self.engine.start(self.update_video_frame)
-                self.status_indicator.configure(text="● ESCANEANDO", text_color="#1E88E5")
+                self.status_indicator.configure(
+                    text="● ESCANEANDO", text_color="#1E88E5"
+                )
                 # Al iniciar el scanner, forzar la velocidad actual de la cinta si está ON
                 if self.cinta_on:
                     self.engine.set_belt_speed(int(self.cinta_slider.get()))
@@ -377,9 +481,11 @@ class RPiOperatorPanel(ctk.CTk):
             self.btn_power.configure(
                 text="▶ ENCENDER SCANNER", fg_color="#2E7D32", hover_color="#1B5E20"
             )
-            self.status_indicator.configure(text="● SISTEMA LISTO", text_color="#4CAF50")
+            self.status_indicator.configure(
+                text="● SISTEMA LISTO", text_color="#4CAF50"
+            )
             # No forzamos el badge de cinta aquí, ya tiene su propio botón
-            
+
             # Ejecucion redundante y retrasada para sobrevivir a hilos remanentes del modelo AI
             self.set_portada()
             self.after(200, self.set_portada)
@@ -387,37 +493,41 @@ class RPiOperatorPanel(ctk.CTk):
 
     def set_portada(self):
         # Crear una imagen negra dinámica de 740x480 (o tamaño del video_label)
-        w, h = 800, 520 # Ajustado al nuevo tamaño de ventana
+        w, h = 800, 520  # Ajustado al nuevo tamaño de ventana
         img = Image.new("RGB", (w, h), color="#0F0F0F")
         draw = ImageDraw.Draw(img)
-        
+
         # Dibujar guías verdes (Escaladas de 640x480 a 800x520)
         y_sup = int(90 * (h / 480))
         y_inf = int(400 * (h / 480))
         draw.line([(0, y_sup), (w, y_sup)], fill="#2E7D32", width=2)
         draw.line([(0, y_inf), (w, y_inf)], fill="#2E7D32", width=1)
-        
+
         # Icono Pausa (Dos rectángulos)
         cx, cy = w // 2, h // 2
         draw.rectangle([cx - 10, cy - 60, cx - 4, cy - 30], fill="#333333")
         draw.rectangle([cx + 4, cy - 60, cx + 10, cy - 30], fill="#333333")
-        
+
         # Texto Principal
         txt_main = "SCANNER INACTIVO"
         txt_sub = "Presiona ENCENDER SCANNER para iniciar"
-        
+
         # Intentar cargar fuente, si falla usar default
         try:
-            font_main = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 24)
-            font_sub = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
-        except:
+            font_main = ImageFont.truetype(
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 24
+            )
+            font_sub = ImageFont.truetype(
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14
+            )
+        except Exception:
             font_main = ImageFont.load_default()
             font_sub = ImageFont.load_default()
-            
+
         # Centrar texto
         draw.text((cx, cy), txt_main, fill="#555555", anchor="mm", font=font_main)
         draw.text((cx, cy + 35), txt_sub, fill="#333333", anchor="mm", font=font_sub)
-        
+
         self.portada_img = ImageTk.PhotoImage(img)
         # Dibujar portada en el canvas
         cw = self.video_canvas.winfo_width() or w
@@ -531,12 +641,12 @@ class RPiOperatorPanel(ctk.CTk):
         # Abortar dibujado de frames retrasados en caso de apagado
         if not self.engine.running:
             return
-            
+
         # Convertir a imagen de Tkinter
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img)
         img_tk = ImageTk.PhotoImage(image=img)
-        
+
         # Dibujar en el canvas en lugar de usar .configure(image=...)
         w = self.video_canvas.winfo_width()
         h = self.video_canvas.winfo_height()
@@ -641,7 +751,7 @@ class RPiOperatorPanel(ctk.CTk):
         # Servo Status based on queue OR recent detections
         if self.engine.running:
             occupied = [False] * 4
-            
+
             # Revisar eventos inminentes en la cola
             for e in list(self.engine.cola_eventos):
                 idx = int(e["letra"]) - 1
@@ -677,7 +787,7 @@ class RPiOperatorPanel(ctk.CTk):
         res = messagebox.askyesno(
             "Apagar Sistema",
             "¿Desea cerrar la aplicación y apagar la Raspberry Pi?",
-            parent=self
+            parent=self,
         )
         if res:
             if self.engine.running:
@@ -705,7 +815,6 @@ class RPiOperatorPanel(ctk.CTk):
             self.lbl_cinta_activa.configure(text="○ APAGADA", text_color="#555555")
             self.engine.set_belt_speed(0)
 
-
     def toggle_manual(self):
         is_manual = self.sw_manual.get()
         if is_manual:
@@ -714,10 +823,13 @@ class RPiOperatorPanel(ctk.CTk):
             self.engine.set_manual_mode(True)
         else:
             self.cinta_slider.configure(state="normal")
-            self.lbl_vel_val.configure(text=f"{int(self.cinta_slider.get())} p/s", text_color="white")
+            self.lbl_vel_val.configure(
+                text=f"{int(self.cinta_slider.get())} p/s", text_color="white"
+            )
             self.engine.set_manual_mode(False)
             if self.cinta_on:
                 self.engine.set_belt_speed(int(self.cinta_slider.get()))
+
 
 class SettingsDialog(ctk.CTkToplevel):
     def __init__(self, parent):
@@ -738,19 +850,20 @@ class SettingsDialog(ctk.CTkToplevel):
             self, text=f"Umbral de Confianza: {self.parent.engine.conf_threshold:.2f}"
         )
         self.lbl_conf_val.pack(pady=(10, 0))
-        
+
         self.conf_slider = ctk.CTkSlider(
             self, from_=0.1, to=0.9, command=self.update_conf
         )
         self.conf_slider.set(self.parent.engine.conf_threshold)
         self.conf_slider.pack(pady=5, padx=20, fill="x")
-        
+
         # Velocidad de la Cinta (Cerca: 1 y 2)
         self.lbl_speed_near = ctk.CTkLabel(
-            self, text=f"Velocidad (1 y 2) - Cerca: {self.parent.engine.VELOCIDAD_CINTA_NEAR:.2f}"
+            self,
+            text=f"Velocidad (1 y 2) - Cerca: {self.parent.engine.VELOCIDAD_CINTA_NEAR:.2f}",
         )
         self.lbl_speed_near.pack(pady=(20, 0))
-        
+
         self.speed_near_slider = ctk.CTkSlider(
             self, from_=0.01, to=0.30, command=self.update_speed_near
         )
@@ -759,10 +872,11 @@ class SettingsDialog(ctk.CTkToplevel):
 
         # Velocidad de la Cinta (Lejos: 3 y 4)
         self.lbl_speed_far = ctk.CTkLabel(
-            self, text=f"Velocidad (3 y 4) - Lejos: {self.parent.engine.VELOCIDAD_CINTA_FAR:.2f}"
+            self,
+            text=f"Velocidad (3 y 4) - Lejos: {self.parent.engine.VELOCIDAD_CINTA_FAR:.2f}",
         )
         self.lbl_speed_far.pack(pady=(15, 0))
-        
+
         self.speed_far_slider = ctk.CTkSlider(
             self, from_=0.01, to=0.30, command=self.update_speed_far
         )
@@ -770,7 +884,10 @@ class SettingsDialog(ctk.CTkToplevel):
         self.speed_far_slider.pack(pady=5, padx=20, fill="x")
 
         ctk.CTkButton(
-            self, text="Calibrar Servos de Arduino", fg_color="#1E88E5", command=self.open_calibration
+            self,
+            text="Calibrar Servos de Arduino",
+            fg_color="#1E88E5",
+            command=self.open_calibration,
         ).pack(pady=10)
 
         ctk.CTkButton(
@@ -780,10 +897,12 @@ class SettingsDialog(ctk.CTkToplevel):
     def open_calibration(self):
         # Asegurar que el arduino esta inicializado por la app
         if not self.parent.engine.arduino_ready:
-            messagebox.showwarning("Error Hardware", "El Arduino no esta conectado. Verifique la conexion USB y encienda el Scanner al menos una vez para inicializar los puertos.")
+            messagebox.showwarning(
+                "Error Hardware",
+                "El Arduino no esta conectado. Verifique la conexion USB y encienda el Scanner al menos una vez para inicializar los puertos.",
+            )
             return
         HardwareCalibrationDialog(self.parent)
-
 
     def update_speed_near(self, val):
         self.lbl_speed_near.configure(text=f"Velocidad (1 y 2) - Cerca: {val:.2f}")
@@ -804,6 +923,7 @@ class SettingsDialog(ctk.CTkToplevel):
         self.parent.save_config()
         self.destroy()
 
+
 class HardwareCalibrationDialog(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
@@ -811,22 +931,38 @@ class HardwareCalibrationDialog(ctk.CTkToplevel):
         self.title("Calibrar Servos de Arduino")
         self.geometry("450x300")
         self.transient(parent)
-        self.attributes('-topmost', True)
-        
-        ctk.CTkLabel(self, text="Ajuste de Límites Maximos (Golpe)", font=ctk.CTkFont(size=16, weight="bold")).pack(pady=10)
-        ctk.CTkLabel(self, text="Mueve los sliders. Se enviará la instruccion directa por Serial.", font=ctk.CTkFont(size=11), text_color="#FF9800").pack(pady=(0,10))
-        
+        self.attributes("-topmost", True)
+
+        ctk.CTkLabel(
+            self,
+            text="Ajuste de Límites Maximos (Golpe)",
+            font=ctk.CTkFont(size=16, weight="bold"),
+        ).pack(pady=10)
+        ctk.CTkLabel(
+            self,
+            text="Mueve los sliders. Se enviará la instruccion directa por Serial.",
+            font=ctk.CTkFont(size=11),
+            text_color="#FF9800",
+        ).pack(pady=(0, 10))
+
         self.sliders = []
         for i in range(1, 5):
             f = ctk.CTkFrame(self, fg_color="transparent")
             f.pack(fill="x", padx=20, pady=5)
-            
+
             ctk.CTkLabel(f, text=f"Servo {i}", width=50).pack(side="left")
-            
+
             val_lbl = ctk.CTkLabel(f, text="90°", width=40)
             val_lbl.pack(side="right")
-            
-            sl = ctk.CTkSlider(f, from_=0, to=180, command=lambda val, idx=i, lbl=val_lbl: self.update_and_send(idx, val, lbl))
+
+            sl = ctk.CTkSlider(
+                f,
+                from_=0,
+                to=180,
+                command=lambda val, idx=i, lbl=val_lbl: self.update_and_send(
+                    idx, val, lbl
+                ),
+            )
             sl.set(90)
             sl.pack(side="left", fill="x", expand=True, padx=10)
             self.sliders.append(sl)
@@ -841,6 +977,7 @@ class HardwareCalibrationDialog(ctk.CTkToplevel):
             self.parent.engine.arduino.write(packet)
         except Exception as e:
             print(f"Error escribiendo al serial: {e}")
+
 
 class HistoryDialog(ctk.CTkToplevel):
     def __init__(self, parent):
@@ -861,11 +998,7 @@ class HistoryDialog(ctk.CTkToplevel):
 
     def load_models(self):
         base_dir = self.parent.modelos_dir
-        items = [
-            d
-            for d in os.listdir(base_dir)
-            if d.endswith("_ncnn_model")
-        ]
+        items = [d for d in os.listdir(base_dir) if d.endswith("_ncnn_model")]
 
         # Recolectar datos y fechas para ordenar
         model_data_list = []
@@ -927,14 +1060,14 @@ class HistoryDialog(ctk.CTkToplevel):
                 font=ctk.CTkFont(size=13, weight="bold"),
                 text_color="#1E88E5",
             ).pack(side="left")
-            
+
             # Indicador de Activo
             if self.parent.engine.model_path == os.path.join(base_dir, m):
                 ctk.CTkLabel(
                     top_row,
                     text="● ACTIVO",
                     font=ctk.CTkFont(size=11, weight="bold"),
-                    text_color="#4CAF50"
+                    text_color="#4CAF50",
                 ).pack(side="right", padx=10)
             else:
                 btn = ctk.CTkButton(
@@ -1021,12 +1154,13 @@ class HistoryDialog(ctk.CTkToplevel):
 
         if was_running:
             self.parent.toggle_scanner()  # Reiniciar
-            
+
         # Refrescar UI (indicador sincrono del modelo activo)
         self.parent.lbl_sync_info.configure(text=f"Modelo: {model_name}")
 
         self.destroy()
         messagebox.showinfo("Modelo Cambiado", f"Se ha activado: {model_name}")
+
 
 if __name__ == "__main__":
     app = RPiOperatorPanel()
