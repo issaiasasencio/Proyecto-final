@@ -467,6 +467,14 @@ class RPiOperatorPanel(ctk.CTk):
                 self.btn_power.configure(
                     text="■ DETENER SCANNER", fg_color="#D32F2F", hover_color="#C62828"
                 )
+                
+                # Enviar retardo de retorno al Arduino
+                try:
+                    ms = self.config_data.get("sweep_return_ms", 15)
+                    self.engine.arduino.write(f"R:{ms}\n".encode())
+                except Exception:
+                    pass
+
                 self.engine.start(self.update_video_frame)
                 self.status_indicator.configure(
                     text="● ESCANEANDO", text_color="#1E88E5"
@@ -836,7 +844,7 @@ class SettingsDialog(ctk.CTkToplevel):
         super().__init__(parent)
         self.parent = parent
         self.title("Ajustes de Operación")
-        self.geometry("400x450")
+        self.geometry("400x520")
         # Cambio fundamental: transient en vez de topmost evita bloqueos de clicks en Linux/Wayland
         self.transient(parent)
         self.grid_columnconfigure(0, weight=1)
@@ -883,6 +891,19 @@ class SettingsDialog(ctk.CTkToplevel):
         self.speed_far_slider.set(self.parent.engine.VELOCIDAD_CINTA_FAR)
         self.speed_far_slider.pack(pady=5, padx=20, fill="x")
 
+        # Velocidad de Retorno (Suavidad de barrido)
+        self.lbl_speed_ret = ctk.CTkLabel(
+            self,
+            text=f"Retardo de Retorno (ms): {self.parent.config_data.get('sweep_return_ms', 15)}",
+        )
+        self.lbl_speed_ret.pack(pady=(15, 0))
+
+        self.speed_ret_slider = ctk.CTkSlider(
+            self, from_=5, to=80, command=self.update_speed_ret
+        )
+        self.speed_ret_slider.set(self.parent.config_data.get("sweep_return_ms", 15))
+        self.speed_ret_slider.pack(pady=5, padx=20, fill="x")
+
         ctk.CTkButton(
             self,
             text="Calibrar Servos de Arduino",
@@ -913,6 +934,17 @@ class SettingsDialog(ctk.CTkToplevel):
         self.lbl_speed_far.configure(text=f"Velocidad (3 y 4) - Lejos: {val:.2f}")
         self.parent.engine.VELOCIDAD_CINTA_FAR = val
         self.parent.config_data["belt_speed_far"] = val
+
+    def update_speed_ret(self, val):
+        ms = int(val)
+        self.lbl_speed_ret.configure(text=f"Retardo de Retorno (ms): {ms}")
+        self.parent.config_data["sweep_return_ms"] = ms
+        # Enviar en tiempo real al Arduino si está conectado
+        if self.parent.engine.arduino_ready:
+            try:
+                self.parent.engine.arduino.write(f"R:{ms}\n".encode())
+            except Exception:
+                pass
 
     def update_conf(self, val):
         self.lbl_conf_val.configure(text=f"Umbral de Confianza: {val:.2f}")

@@ -27,7 +27,7 @@ class Clasificador {
 
     const int RETARDO_ANTES_ACTUAR = 100;
     const int DURACION_GOLPE = 800;
-    const int PASO_MS = 15;        // Tiempo entre cada pasito del barrido (milisegundos)
+    int PASO_MS = 15;              // Tiempo entre cada pasito del barrido (milisegundos)
     const int PASO_GRADOS = 2;     // Cuántos grados avanza en cada paso
 
 

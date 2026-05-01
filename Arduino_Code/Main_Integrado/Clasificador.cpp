@@ -105,6 +105,12 @@ void Clasificador::actualizar_sin_serial() {
 }
 
 void Clasificador::procesarComando(String cmd) {
+  if (cmd.startsWith("R:")) {
+    int speed = cmd.substring(2).toInt();
+    if (speed > 0) PASO_MS = speed;
+    return;
+  }
+
   if (cmd.startsWith("M")) { // M1:90
     if (cmd.length() >= 4 && cmd[2] == ':') {
       int sID = cmd[1] - '0';
