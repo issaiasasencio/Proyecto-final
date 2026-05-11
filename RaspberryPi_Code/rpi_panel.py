@@ -205,14 +205,14 @@ class RPiOperatorPanel(ctk.CTk):
         ).pack(side="left")
         self.lbl_vel_val = ctk.CTkLabel(
             val_row,
-            text="1200 p/s",
+            text="1100 p/s",
             font=ctk.CTkFont(size=11, weight="bold"),
             text_color="white",
         )
         self.lbl_vel_val.pack(side="right")
 
         # Cargar velocidad guardada
-        saved_speed = self.config_data.get("belt_speed_steps", 1200)
+        saved_speed = self.config_data.get("belt_speed_steps", 1100)
         self.cinta_slider = ctk.CTkSlider(
             self.cinta_frame,
             from_=200,
