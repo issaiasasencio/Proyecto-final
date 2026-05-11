@@ -216,7 +216,7 @@ class RPiOperatorPanel(ctk.CTk):
         self.cinta_slider = ctk.CTkSlider(
             self.cinta_frame,
             from_=200,
-            to=1600,
+            to=1100,
             height=15,
             button_length=15,
             command=self.update_cinta_vel,
@@ -231,7 +231,7 @@ class RPiOperatorPanel(ctk.CTk):
             limits_row, text="200", font=ctk.CTkFont(size=9), text_color="#333333"
         ).pack(side="left")
         ctk.CTkLabel(
-            limits_row, text="1600 p/s", font=ctk.CTkFont(size=9), text_color="#333333"
+            limits_row, text="1100 p/s", font=ctk.CTkFont(size=9), text_color="#333333"
         ).pack(side="right")
 
         self.lbl_cinta_activa = ctk.CTkLabel(
